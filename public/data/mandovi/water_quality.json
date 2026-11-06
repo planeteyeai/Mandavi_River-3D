@@ -1,0 +1,478 @@
+{
+  "start_date": "2026-10-20",
+  "end_date": "2026-10-21",
+  "analysis_area_ha": 1288.28,
+  "water_area_ha": 1054.81,
+  "dw_water_threshold": 0.3,
+  "latest_sentinel2_date": "2026-10-20 05:44",
+  "latest_dynamic_world_date": "2026-10-20 05:44",
+  "landsat9_image_count": 6,
+  "landsat9_window": {
+    "start": "2026-09-27",
+    "end": "2026-10-28"
+  },
+  "wst": {
+    "layer": "wst",
+    "title": "Water Surface Temperature (WST)",
+    "percent_basis": "valid_wst_water_area",
+    "valid_area_ha": 1055.03,
+    "categories": [
+      {
+        "id": 1,
+        "name": "Very Low",
+        "range": "<27 \u00b0C",
+        "color": "#1565C0",
+        "area_ha": 0.0,
+        "percent": 0.0
+      },
+      {
+        "id": 2,
+        "name": "Low",
+        "range": "27\u2013<30 \u00b0C",
+        "color": "#64B5F6",
+        "area_ha": 12.75,
+        "percent": 1.2
+      },
+      {
+        "id": 3,
+        "name": "Moderate",
+        "range": "30\u2013<33 \u00b0C",
+        "color": "#FFD54F",
+        "area_ha": 936.5,
+        "percent": 88.8
+      },
+      {
+        "id": 4,
+        "name": "High",
+        "range": "33\u2013<36 \u00b0C",
+        "color": "#E53935",
+        "area_ha": 75.59,
+        "percent": 7.2
+      },
+      {
+        "id": 5,
+        "name": "Very High",
+        "range": "\u226536 \u00b0C",
+        "color": "#8E0000",
+        "area_ha": 30.19,
+        "percent": 2.9
+      }
+    ],
+    "legend": [
+      {
+        "id": 1,
+        "name": "Very Low",
+        "range": "<27 \u00b0C",
+        "color": "#1565C0"
+      },
+      {
+        "id": 2,
+        "name": "Low",
+        "range": "27\u2013<30 \u00b0C",
+        "color": "#64B5F6"
+      },
+      {
+        "id": 3,
+        "name": "Moderate",
+        "range": "30\u2013<33 \u00b0C",
+        "color": "#FFD54F"
+      },
+      {
+        "id": 4,
+        "name": "High",
+        "range": "33\u2013<36 \u00b0C",
+        "color": "#E53935"
+      },
+      {
+        "id": 5,
+        "name": "Very High",
+        "range": "\u226536 \u00b0C",
+        "color": "#8E0000"
+      }
+    ],
+    "export_scale_m": 5,
+    "kml_id": "edf4801bbc8744f78a012e539d758fb2",
+    "kml_download_url": "http://jalnetra-software-production.up.railway.app/api/water-quality/kml/edf4801bbc8744f78a012e539d758fb2",
+    "kml_filename": "wst.kml"
+  },
+  "tss": {
+    "layer": "tss",
+    "title": "Turbidity / TSS Proxy",
+    "percent_basis": "class_area_only",
+    "valid_area_ha": null,
+    "categories": [
+      {
+        "id": 1,
+        "name": "Low",
+        "range": "TSS \u2264 0.62",
+        "color": "#2196F3",
+        "area_ha": 68.59
+      },
+      {
+        "id": 2,
+        "name": "Medium",
+        "range": "0.62\u20131.17",
+        "color": "#FFC107",
+        "area_ha": 22.18
+      },
+      {
+        "id": 3,
+        "name": "High",
+        "range": "TSS > 1.17",
+        "color": "#F44336",
+        "area_ha": 963.19
+      }
+    ],
+    "legend": [
+      {
+        "id": 1,
+        "name": "Low",
+        "range": "TSS \u2264 0.62",
+        "color": "#2196F3"
+      },
+      {
+        "id": 2,
+        "name": "Medium",
+        "range": "0.62\u20131.17",
+        "color": "#FFC107"
+      },
+      {
+        "id": 3,
+        "name": "High",
+        "range": "TSS > 1.17",
+        "color": "#F44336"
+      }
+    ],
+    "export_scale_m": 5,
+    "kml_id": "d0537307f6ed40a78bb2e344897d866a",
+    "kml_download_url": "http://jalnetra-software-production.up.railway.app/api/water-quality/kml/d0537307f6ed40a78bb2e344897d866a",
+    "kml_filename": "tss_turbidity.kml"
+  },
+  "ndwi": {
+    "layer": "ndwi",
+    "title": "NDWI \u2014 Permanent Water",
+    "percent_basis": "analysis_area",
+    "valid_area_ha": 1288.28,
+    "categories": [
+      {
+        "id": 1,
+        "name": "Non-water",
+        "range": "NDWI \u2264 0",
+        "color": "#8D6E63",
+        "area_ha": 228.91,
+        "percent": 17.8
+      },
+      {
+        "id": 2,
+        "name": "Water",
+        "range": "NDWI > 0",
+        "color": "#0D47A1",
+        "area_ha": 1054.81,
+        "percent": 81.9
+      }
+    ],
+    "legend": [
+      {
+        "id": 1,
+        "name": "Non-water",
+        "range": "NDWI \u2264 0",
+        "color": "#8D6E63"
+      },
+      {
+        "id": 2,
+        "name": "Water",
+        "range": "NDWI > 0",
+        "color": "#0D47A1"
+      }
+    ],
+    "export_scale_m": 5,
+    "kml_id": "5cdc8d4ce1e645cf8b05471699a7ec57",
+    "kml_download_url": "http://jalnetra-software-production.up.railway.app/api/water-quality/kml/5cdc8d4ce1e645cf8b05471699a7ec57",
+    "kml_filename": "ndwi_permanent_water.kml"
+  },
+  "ndci": {
+    "layer": "ndci",
+    "title": "NDCI \u2014 Chlorophyll Proxy",
+    "percent_basis": "valid_water_area",
+    "valid_area_ha": 1054.81,
+    "categories": [
+      {
+        "id": 1,
+        "name": "Low Chlorophyll",
+        "range": "NDCI < 0",
+        "color": "#C8E6C9",
+        "area_ha": 643.69,
+        "percent": 61.0
+      },
+      {
+        "id": 2,
+        "name": "High Chlorophyll",
+        "range": "NDCI \u2265 0",
+        "color": "#1B5E20",
+        "area_ha": 411.12,
+        "percent": 39.0
+      }
+    ],
+    "legend": [
+      {
+        "id": 1,
+        "name": "Low Chlorophyll",
+        "range": "NDCI < 0",
+        "color": "#C8E6C9"
+      },
+      {
+        "id": 2,
+        "name": "High Chlorophyll",
+        "range": "NDCI \u2265 0",
+        "color": "#1B5E20"
+      }
+    ],
+    "export_scale_m": 5,
+    "kml_id": "8355d48fe9944235bc4bbba2e12cb984",
+    "kml_download_url": "http://jalnetra-software-production.up.railway.app/api/water-quality/kml/8355d48fe9944235bc4bbba2e12cb984",
+    "kml_filename": "ndci_chlorophyll.kml"
+  },
+  "aoi": {
+    "centroid": {
+      "latitude": 15.49403,
+      "longitude": 73.8193
+    },
+    "input_line_coords": [
+      [
+        [
+          73.776257,
+          15.490961
+        ],
+        [
+          73.793389,
+          15.467507
+        ],
+        [
+          73.783835,
+          15.499724
+        ],
+        [
+          73.807022,
+          15.491621
+        ],
+        [
+          73.818016,
+          15.5049
+        ],
+        [
+          73.829087,
+          15.506952
+        ],
+        [
+          73.834022,
+          15.505374
+        ],
+        [
+          73.84093,
+          15.509845
+        ],
+        [
+          73.861403,
+          15.509256
+        ],
+        [
+          73.867071,
+          15.512571
+        ],
+        [
+          73.876401,
+          15.508462
+        ],
+        [
+          73.872183,
+          15.500396
+        ],
+        [
+          73.866815,
+          15.503527
+        ],
+        [
+          73.862413,
+          15.500262
+        ],
+        [
+          73.842272,
+          15.500893
+        ],
+        [
+          73.8362,
+          15.496578
+        ],
+        [
+          73.828901,
+          15.497908
+        ],
+        [
+          73.823536,
+          15.49761
+        ],
+        [
+          73.808038,
+          15.482629
+        ],
+        [
+          73.792241,
+          15.495814
+        ],
+        [
+          73.798581,
+          15.459995
+        ],
+        [
+          73.769433,
+          15.484797
+        ],
+        [
+          73.776257,
+          15.490961
+        ]
+      ]
+    ],
+    "input_polygon_coords": [
+      [
+        [
+          73.776257,
+          15.490961
+        ],
+        [
+          73.793389,
+          15.467507
+        ],
+        [
+          73.783835,
+          15.499724
+        ],
+        [
+          73.807022,
+          15.491621
+        ],
+        [
+          73.818016,
+          15.5049
+        ],
+        [
+          73.829087,
+          15.506952
+        ],
+        [
+          73.834022,
+          15.505374
+        ],
+        [
+          73.84093,
+          15.509845
+        ],
+        [
+          73.861403,
+          15.509256
+        ],
+        [
+          73.867071,
+          15.512571
+        ],
+        [
+          73.876401,
+          15.508462
+        ],
+        [
+          73.872183,
+          15.500396
+        ],
+        [
+          73.866815,
+          15.503527
+        ],
+        [
+          73.862413,
+          15.500262
+        ],
+        [
+          73.842272,
+          15.500893
+        ],
+        [
+          73.8362,
+          15.496578
+        ],
+        [
+          73.828901,
+          15.497908
+        ],
+        [
+          73.823536,
+          15.49761
+        ],
+        [
+          73.808038,
+          15.482629
+        ],
+        [
+          73.792241,
+          15.495814
+        ],
+        [
+          73.798581,
+          15.459995
+        ],
+        [
+          73.769433,
+          15.484797
+        ],
+        [
+          73.776257,
+          15.490961
+        ]
+      ]
+    ]
+  },
+  "scene_selection": {
+    "sensor": "Sentinel-2",
+    "selected_date": "2026-10-20",
+    "start_date": "2026-10-20",
+    "end_date": "2026-10-21",
+    "selection": "nearest_clear_date",
+    "aoi_cloud_percent": 0.0,
+    "aoi_coverage_percent": 100.0,
+    "tile_cloud_percent": 1.15,
+    "window_start": "2026-09-27",
+    "window_end": "2026-10-27",
+    "window_days": 30,
+    "max_tile_cloud_percent": 40,
+    "clear_aoi_cloud_threshold_percent": 5.0,
+    "candidates": [
+      {
+        "date": "2026-10-22",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 8.4,
+        "tile_cloud_percent": 28.96
+      },
+      {
+        "date": "2026-10-20",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 0.0,
+        "tile_cloud_percent": 1.15
+      },
+      {
+        "date": "2026-10-10",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 0.0,
+        "tile_cloud_percent": 0.83
+      },
+      {
+        "date": "2026-10-02",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 1.43,
+        "tile_cloud_percent": 12.71
+      }
+    ]
+  }
+}

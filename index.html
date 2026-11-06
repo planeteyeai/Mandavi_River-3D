@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Planet Eye — Mandovi River Intelligence Digital Twin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <div id="ui-root"></div>
+      <div id="upload-gate" class="gate" hidden>
+        <form class="gate-card" id="upload-form">
+          <div class="gate-kicker">PLANET EYE AI</div>
+          <h1>MANDOVI RIVER INTELLIGENCE</h1>
+          <p>One KML builds the same river view for any river. Satellite layers use the month ending on the day you choose. That day is the last date, not today.</p>
+          <label class="gate-row">
+            River KML
+            <input class="gate-file" id="kml-file" type="file" accept=".kml,application/vnd.google-earth.kml+xml" required />
+          </label>
+          <label class="gate-row">
+            Data through
+            <input id="kml-end" type="date" required />
+          </label>
+          <div class="gate-actions">
+            <button class="gate-go" type="submit">Open river</button>
+          </div>
+          <div id="saved-river" hidden></div>
+        </form>
+      </div>
+      <div id="api-status" class="gate-status" hidden></div>
+      <div id="loading">
+        <!-- Big Full-Screen Tactical Hydrology Background Loader -->
+        <div class="loading-bg-loader" aria-hidden="true">
+          <div class="bg-loader-grid"></div>
+          <div class="bg-loader-vignette"></div>
+          <div class="bg-loader-core-glow"></div>
+          <div class="bg-loader-radar-sweep"></div>
+          <div class="bg-loader-ripple ripple-1"></div>
+          <div class="bg-loader-ripple ripple-2"></div>
+          <div class="bg-loader-ripple ripple-3"></div>
+          <div class="bg-loader-ripple ripple-4"></div>
+          <div class="bg-loader-ring ring-outer-dashed"></div>
+          <div class="bg-loader-ring ring-mid-ticks"></div>
+          <div class="bg-loader-ring ring-inner-scanner"></div>
+          <div class="bg-loader-crosshairs">
+            <span class="ch-line ch-h"></span>
+            <span class="ch-line ch-v"></span>
+            <span class="ch-badge ch-n">000&deg; N</span>
+            <span class="ch-badge ch-e">090&deg; E</span>
+            <span class="ch-badge ch-s">180&deg; S</span>
+            <span class="ch-badge ch-w">270&deg; W</span>
+            <span class="ch-dist d-1">5 KM</span>
+            <span class="ch-dist d-2">10 KM</span>
+            <span class="ch-dist d-3">15 KM</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-kicker"><span class="card-kicker-dot"></span> RIVER EYE</div>
+          <h1 id="load-title">MANDOVI RIVER 3D</h1>
+          <p id="load-msg" hidden style="display:none"></p>
+          <div class="loading-progress"><div class="bar"><i id="load-bar"></i></div><output id="load-percent">0%</output></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

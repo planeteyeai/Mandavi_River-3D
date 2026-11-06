@@ -1,0 +1,3707 @@
+{
+ "type": "FeatureCollection",
+ "properties": {
+  "run_id": "S1-20261105T054303-2bb1",
+  "scene": {
+   "id": "S1D_IW_GRDH_1SDV_20261019T005521_20261019T005535_005077_0099B3_B03F_COG.SAFE",
+   "datetime": "2026-10-19T00:55:21Z",
+   "sensor": "S1",
+   "sensor_name": "C-band SAR · Sentinel-1"
+  },
+  "aoi_name": "Mandvi river.kml",
+  "synthetic": false
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.878079,
+     15.517073
+    ]
+   },
+   "properties": {
+    "id": "S1-006",
+    "sensor": "S1 SAR",
+    "lat": 15.517073,
+    "lon": 73.878079,
+    "length_m": 43.6,
+    "width_m": 15.4,
+    "raw_length_m": 43.9,
+    "raw_width_m": 41.5,
+    "aspect": 2.83,
+    "heading_axis_deg": 76,
+    "pixels": 27,
+    "contrast_db": 19.3,
+    "confidence": 0.97,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 39.1,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 31.2,
+    "length_sd_m": 18.7,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.74,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.74,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.74,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.74
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.23
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.74,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.74
+     }
+    ],
+    "type_basis": "length 44 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.876189,
+     15.515741
+    ]
+   },
+   "properties": {
+    "id": "S1-007",
+    "sensor": "S1 SAR",
+    "lat": 15.515741,
+    "lon": 73.876189,
+    "length_m": 42.5,
+    "width_m": 19.8,
+    "raw_length_m": 41.6,
+    "raw_width_m": 32.2,
+    "aspect": 2.15,
+    "heading_axis_deg": 20,
+    "pixels": 28,
+    "contrast_db": 26.2,
+    "confidence": 1,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": true,
+    "blob_length_m": 36.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 30.4,
+    "length_sd_m": 18.2,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.75,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.75,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.75,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.75
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.22
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.75,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.75
+     }
+    ],
+    "type_basis": "length 42 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.877704,
+     15.513136
+    ]
+   },
+   "properties": {
+    "id": "S1-008",
+    "sensor": "S1 SAR",
+    "lat": 15.513136,
+    "lon": 73.877704,
+    "length_m": 53.3,
+    "width_m": 17.4,
+    "raw_length_m": 46.8,
+    "raw_width_m": 42.8,
+    "aspect": 3.06,
+    "heading_axis_deg": 23,
+    "pixels": 19,
+    "contrast_db": 15.3,
+    "confidence": 0.78,
+    "size_reliable": true,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": true,
+    "blob_length_m": 42.3,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 38.1,
+    "length_sd_m": 22.9,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.68,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.68,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.68,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.68
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.28
+     },
+     {
+      "type": "Tanker",
+      "p": 0.04
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.68,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.68
+     }
+    ],
+    "type_basis": "length 53 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": null,
+    "fuel_t_day_high": null,
+    "co2_t_day_low": null,
+    "co2_t_day_high": null,
+    "fuel_basis": "No estimate (class unknown or fixed structure)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.869053,
+     15.51109
+    ]
+   },
+   "properties": {
+    "id": "S1-009",
+    "sensor": "S1 SAR",
+    "lat": 15.51109,
+    "lon": 73.869053,
+    "length_m": 42.4,
+    "width_m": 5.2,
+    "raw_length_m": 41.6,
+    "raw_width_m": 32.2,
+    "aspect": 8.15,
+    "heading_axis_deg": 70,
+    "pixels": 14,
+    "contrast_db": 16.5,
+    "confidence": 0.84,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 36.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 30.3,
+    "length_sd_m": 18.2,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.75,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.75,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.75,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.75
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.22
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.75,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.75
+     }
+    ],
+    "type_basis": "length 42 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.84941,
+     15.507948
+    ]
+   },
+   "properties": {
+    "id": "S1-010",
+    "sensor": "S1 SAR",
+    "lat": 15.507948,
+    "lon": 73.84941,
+    "length_m": 88.5,
+    "width_m": 12.9,
+    "raw_length_m": 82,
+    "raw_width_m": 37.4,
+    "aspect": 6.86,
+    "heading_axis_deg": 31,
+    "pixels": 44,
+    "contrast_db": 24.2,
+    "confidence": 1,
+    "size_reliable": true,
+    "vessel_class": "Medium vessel",
+    "beam_resolved": false,
+    "blob_length_m": 79.6,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "sig_fill": 0.22,
+    "sig_end_bias": 0.5,
+    "length_meas": 63.3,
+    "length_sd_m": 38,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Container ship",
+    "image_type_conf": 0.23,
+    "image_family": "Cargo",
+    "image_family_conf": 0.53,
+    "predicted_family": "Cargo",
+    "family_confidence": 0.53,
+    "family_candidates": [
+     {
+      "type": "Cargo ship",
+      "p": 0.53
+     },
+     {
+      "type": "Harbour craft",
+      "p": 0.34
+     },
+     {
+      "type": "Tanker",
+      "p": 0.11
+     }
+    ],
+    "predicted_type": "Container ship",
+    "predicted_subclass": "Feeder",
+    "type_confidence": 0.23,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Container ship",
+      "p": 0.23
+     },
+     {
+      "type": "Bulk carrier",
+      "p": 0.15
+     },
+     {
+      "type": "General cargo",
+      "p": 0.13
+     }
+    ],
+    "type_basis": "length 88 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing); beam not used (13 m measured is blurred)",
+    "power_kw": 12000,
+    "design_speed_kn": 18,
+    "fuel_t_day_low": 1.09,
+    "fuel_t_day_high": 9.58,
+    "co2_t_day_low": 3.4,
+    "co2_t_day_high": 29.8,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed for a typical Feeder (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.83015,
+     15.504525
+    ]
+   },
+   "properties": {
+    "id": "S1-011",
+    "sensor": "S1 SAR",
+    "lat": 15.504525,
+    "lon": 73.83015,
+    "length_m": 36.8,
+    "width_m": 11.7,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 3.15,
+    "heading_axis_deg": 135,
+    "pixels": 3,
+    "contrast_db": 9.2,
+    "confidence": 0.32,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 26.3,
+    "length_sd_m": 15.8,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.78,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.78,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.78,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.78
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.2
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.78,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.78
+     }
+    ],
+    "type_basis": "length 37 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.878328,
+     15.504318
+    ]
+   },
+   "properties": {
+    "id": "S1-012",
+    "sensor": "S1 SAR",
+    "lat": 15.504318,
+    "lon": 73.878328,
+    "length_m": 33.8,
+    "width_m": 12,
+    "raw_length_m": 38.3,
+    "raw_width_m": 31.2,
+    "aspect": 2.82,
+    "heading_axis_deg": 45,
+    "pixels": 10,
+    "contrast_db": 14.2,
+    "confidence": 0.73,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 32.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 24.2,
+    "length_sd_m": 14.5,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.2
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 34 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.829987,
+     15.504056
+    ]
+   },
+   "properties": {
+    "id": "S1-013",
+    "sensor": "S1 SAR",
+    "lat": 15.504056,
+    "lon": 73.829987,
+    "length_m": 54.2,
+    "width_m": 20.8,
+    "raw_length_m": 40,
+    "raw_width_m": 30,
+    "aspect": 2.61,
+    "heading_axis_deg": 90,
+    "pixels": 14,
+    "contrast_db": 13.9,
+    "confidence": 0.72,
+    "size_reliable": true,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": true,
+    "blob_length_m": 34.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 38.8,
+    "length_sd_m": 23.3,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.67,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.67,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.67,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.67
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.29
+     },
+     {
+      "type": "Tanker",
+      "p": 0.04
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.67,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.67
+     }
+    ],
+    "type_basis": "length 54 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.833254,
+     15.503849
+    ]
+   },
+   "properties": {
+    "id": "S1-014",
+    "sensor": "S1 SAR",
+    "lat": 15.503849,
+    "lon": 73.833254,
+    "length_m": 45.3,
+    "width_m": 0,
+    "raw_length_m": 40.9,
+    "raw_width_m": 27.2,
+    "aspect": 45.3,
+    "heading_axis_deg": 149,
+    "pixels": 14,
+    "contrast_db": 19.2,
+    "confidence": 0.96,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 35.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 32.4,
+    "length_sd_m": 19.4,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.73,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.73,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.73,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.73
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.24
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.73,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.73
+     }
+    ],
+    "type_basis": "length 45 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.844887,
+     15.503141
+    ]
+   },
+   "properties": {
+    "id": "S1-015",
+    "sensor": "S1 SAR",
+    "lat": 15.503141,
+    "lon": 73.844887,
+    "length_m": 19.2,
+    "width_m": 8.5,
+    "raw_length_m": 30,
+    "raw_width_m": 30,
+    "aspect": 2.26,
+    "heading_axis_deg": 0,
+    "pixels": 7,
+    "contrast_db": 13.7,
+    "confidence": 0.71,
+    "size_reliable": false,
+    "vessel_class": "Small craft",
+    "beam_resolved": false,
+    "blob_length_m": 22.4,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 19.2,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Small craft (fishing / tug / launch)",
+    "image_type_conf": null,
+    "image_family": null,
+    "image_family_conf": null,
+    "predicted_type": "Small craft (fishing / tug / launch)",
+    "predicted_subclass": null,
+    "type_confidence": null,
+    "type_source": "size only",
+    "type_candidates": [],
+    "type_basis": "19 m is too small at this resolution to tell types apart",
+    "fuel_t_day_low": 0.01,
+    "fuel_t_day_high": 0.12,
+    "co2_t_day_low": 0,
+    "co2_t_day_high": 0.4,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.84294,
+     15.502841
+    ]
+   },
+   "properties": {
+    "id": "S1-016",
+    "sensor": "S1 SAR",
+    "lat": 15.502841,
+    "lon": 73.84294,
+    "length_m": 41.8,
+    "width_m": 13,
+    "raw_length_m": 100.5,
+    "raw_width_m": 31.5,
+    "aspect": 3.22,
+    "heading_axis_deg": 176,
+    "pixels": 24,
+    "contrast_db": 15.2,
+    "confidence": 0.78,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 98.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 29.9,
+    "length_sd_m": 17.9,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.75,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.75,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.75,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.75
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.22
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.75,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.75
+     }
+    ],
+    "type_basis": "length 42 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.843975,
+     15.502969
+    ]
+   },
+   "properties": {
+    "id": "S1-017",
+    "sensor": "S1 SAR",
+    "lat": 15.502969,
+    "lon": 73.843975,
+    "length_m": 37.5,
+    "width_m": 10.2,
+    "raw_length_m": 32.1,
+    "raw_width_m": 22.7,
+    "aspect": 3.68,
+    "heading_axis_deg": 162,
+    "pixels": 5,
+    "contrast_db": 10,
+    "confidence": 0.48,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 25.2,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 26.8,
+    "length_sd_m": 16.1,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.77,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.77,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.77,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.77
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.2
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.77,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.77
+     }
+    ],
+    "type_basis": "length 38 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.838935,
+     15.502365
+    ]
+   },
+   "properties": {
+    "id": "S1-018",
+    "sensor": "S1 SAR",
+    "lat": 15.502365,
+    "lon": 73.838935,
+    "length_m": 45.4,
+    "width_m": 7.8,
+    "raw_length_m": 41.6,
+    "raw_width_m": 22.7,
+    "aspect": 5.82,
+    "heading_axis_deg": 162,
+    "pixels": 6,
+    "contrast_db": 10.8,
+    "confidence": 0.57,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 36.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 32.5,
+    "length_sd_m": 19.5,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.73,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.73,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.73,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.73
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.24
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.73,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.73
+     }
+    ],
+    "type_basis": "length 45 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.839748,
+     15.502342
+    ]
+   },
+   "properties": {
+    "id": "S1-019",
+    "sensor": "S1 SAR",
+    "lat": 15.502342,
+    "lon": 73.839748,
+    "length_m": 33.4,
+    "width_m": 9.4,
+    "raw_length_m": 30,
+    "raw_width_m": 30,
+    "aspect": 3.55,
+    "heading_axis_deg": 0,
+    "pixels": 11,
+    "contrast_db": 14.3,
+    "confidence": 0.74,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 22.4,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 23.9,
+    "length_sd_m": 14.3,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.19
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 33 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.819405,
+     15.502326
+    ]
+   },
+   "properties": {
+    "id": "S1-020",
+    "sensor": "S1 SAR",
+    "lat": 15.502326,
+    "lon": 73.819405,
+    "length_m": 28,
+    "width_m": 0,
+    "raw_length_m": 38.3,
+    "raw_width_m": 24.1,
+    "aspect": 28,
+    "heading_axis_deg": 45,
+    "pixels": 7,
+    "contrast_db": 12.9,
+    "confidence": 0.67,
+    "size_reliable": false,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": false,
+    "blob_length_m": 32.7,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 20,
+    "length_sd_m": 12,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.19
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 28 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": null,
+    "fuel_t_day_high": null,
+    "co2_t_day_low": null,
+    "co2_t_day_high": null,
+    "fuel_basis": "No estimate (class unknown or fixed structure)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.841035,
+     15.502384
+    ]
+   },
+   "properties": {
+    "id": "S1-021",
+    "sensor": "S1 SAR",
+    "lat": 15.502384,
+    "lon": 73.841035,
+    "length_m": 37.6,
+    "width_m": 0,
+    "raw_length_m": 32.4,
+    "raw_width_m": 14.7,
+    "aspect": 37.6,
+    "heading_axis_deg": 62,
+    "pixels": 3,
+    "contrast_db": 8.9,
+    "confidence": 0.31,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 25.4,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 26.9,
+    "length_sd_m": 16.1,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.77,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.77,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.77,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.77
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.21
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.77,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.77
+     }
+    ],
+    "type_basis": "length 38 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.822718,
+     15.502099
+    ]
+   },
+   "properties": {
+    "id": "S1-022",
+    "sensor": "S1 SAR",
+    "lat": 15.502099,
+    "lon": 73.822718,
+    "length_m": 18.7,
+    "width_m": 18.9,
+    "raw_length_m": 20,
+    "raw_width_m": 20,
+    "aspect": 0.99,
+    "heading_axis_deg": 90,
+    "pixels": 4,
+    "contrast_db": 9.1,
+    "confidence": 0.38,
+    "size_reliable": false,
+    "vessel_class": "Small craft",
+    "beam_resolved": true,
+    "blob_length_m": 10,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 18.7,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Small craft (fishing / tug / launch)",
+    "image_type_conf": null,
+    "image_family": null,
+    "image_family_conf": null,
+    "predicted_type": "Small craft (fishing / tug / launch)",
+    "predicted_subclass": null,
+    "type_confidence": null,
+    "type_source": "size only",
+    "type_candidates": [],
+    "type_basis": "19 m is too small at this resolution to tell types apart",
+    "fuel_t_day_low": 0.01,
+    "fuel_t_day_high": 0.12,
+    "co2_t_day_low": 0,
+    "co2_t_day_high": 0.4,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.822244,
+     15.501893
+    ]
+   },
+   "properties": {
+    "id": "S1-023",
+    "sensor": "S1 SAR",
+    "lat": 15.501893,
+    "lon": 73.822244,
+    "length_m": 15,
+    "width_m": 0,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 15,
+    "heading_axis_deg": 45,
+    "pixels": 3,
+    "contrast_db": 13.2,
+    "confidence": 0.51,
+    "size_reliable": false,
+    "vessel_class": "Small craft",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 15,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Small craft (fishing / tug / launch)",
+    "image_type_conf": null,
+    "image_family": null,
+    "image_family_conf": null,
+    "predicted_type": "Small craft (fishing / tug / launch)",
+    "predicted_subclass": null,
+    "type_confidence": null,
+    "type_source": "size only",
+    "type_candidates": [],
+    "type_basis": "15 m is too small at this resolution to tell types apart",
+    "fuel_t_day_low": 0.01,
+    "fuel_t_day_high": 0.12,
+    "co2_t_day_low": 0,
+    "co2_t_day_high": 0.4,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.840411,
+     15.501897
+    ]
+   },
+   "properties": {
+    "id": "S1-024",
+    "sensor": "S1 SAR",
+    "lat": 15.501897,
+    "lon": 73.840411,
+    "length_m": 32.4,
+    "width_m": 4.6,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 7.04,
+    "heading_axis_deg": 135,
+    "pixels": 3,
+    "contrast_db": 9.7,
+    "confidence": 0.35,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 23.2,
+    "length_sd_m": 13.9,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.19
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 32 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.789394,
+     15.497988
+    ]
+   },
+   "properties": {
+    "id": "S1-025",
+    "sensor": "S1 SAR",
+    "lat": 15.497988,
+    "lon": 73.789394,
+    "length_m": 44,
+    "width_m": 0,
+    "raw_length_m": 30,
+    "raw_width_m": 20,
+    "aspect": 44,
+    "heading_axis_deg": 0,
+    "pixels": 4,
+    "contrast_db": 9.5,
+    "confidence": 0.4,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 22.4,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 31.5,
+    "length_sd_m": 18.9,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.74,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.74,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.74,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.74
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.23
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.74,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.74
+     }
+    ],
+    "type_basis": "length 44 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.788529,
+     15.497817
+    ]
+   },
+   "properties": {
+    "id": "S1-026",
+    "sensor": "S1 SAR",
+    "lat": 15.497817,
+    "lon": 73.788529,
+    "length_m": 67.8,
+    "width_m": 6.3,
+    "raw_length_m": 43.6,
+    "raw_width_m": 29.5,
+    "aspect": 10.76,
+    "heading_axis_deg": 102,
+    "pixels": 9,
+    "contrast_db": 9.8,
+    "confidence": 0.53,
+    "size_reliable": true,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 38.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 48.5,
+    "length_sd_m": 29.1,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.55,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.55,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.55,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.55
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.39
+     },
+     {
+      "type": "Tanker",
+      "p": 0.06
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.55,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.55
+     }
+    ],
+    "type_basis": "length 68 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.788377,
+     15.497329
+    ]
+   },
+   "properties": {
+    "id": "S1-027",
+    "sensor": "S1 SAR",
+    "lat": 15.497329,
+    "lon": 73.788377,
+    "length_m": 61.9,
+    "width_m": 21.3,
+    "raw_length_m": 46.1,
+    "raw_width_m": 29.3,
+    "aspect": 2.91,
+    "heading_axis_deg": 57,
+    "pixels": 8,
+    "contrast_db": 9.7,
+    "confidence": 0.52,
+    "size_reliable": true,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": true,
+    "blob_length_m": 41.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 44.3,
+    "length_sd_m": 26.6,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.6,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.6,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.6,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.6
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.34
+     },
+     {
+      "type": "Tanker",
+      "p": 0.05
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.6,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.6
+     }
+    ],
+    "type_basis": "length 62 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.815995,
+     15.497287
+    ]
+   },
+   "properties": {
+    "id": "S1-028",
+    "sensor": "S1 SAR",
+    "lat": 15.497287,
+    "lon": 73.815995,
+    "length_m": 34.9,
+    "width_m": 9.8,
+    "raw_length_m": 45.5,
+    "raw_width_m": 37.6,
+    "aspect": 3.56,
+    "heading_axis_deg": 23,
+    "pixels": 13,
+    "contrast_db": 15.8,
+    "confidence": 0.81,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 40.8,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 25,
+    "length_sd_m": 15,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.78,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.78,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.78,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.78
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.2
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.78,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.78
+     }
+    ],
+    "type_basis": "length 35 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.789049,
+     15.497078
+    ]
+   },
+   "properties": {
+    "id": "S1-029",
+    "sensor": "S1 SAR",
+    "lat": 15.497078,
+    "lon": 73.789049,
+    "length_m": 47.4,
+    "width_m": 16.4,
+    "raw_length_m": 32.3,
+    "raw_width_m": 18.5,
+    "aspect": 2.89,
+    "heading_axis_deg": 148,
+    "pixels": 4,
+    "contrast_db": 7.7,
+    "confidence": 0.31,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 25.3,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 33.9,
+    "length_sd_m": 20.3,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.72,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.72,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.72,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.72
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.25
+     },
+     {
+      "type": "Tanker",
+      "p": 0.03
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.72,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.72
+     }
+    ],
+    "type_basis": "length 47 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.789759,
+     15.497044
+    ]
+   },
+   "properties": {
+    "id": "S1-030",
+    "sensor": "S1 SAR",
+    "lat": 15.497044,
+    "lon": 73.789759,
+    "length_m": 38.3,
+    "width_m": 5.4,
+    "raw_length_m": 40,
+    "raw_width_m": 30,
+    "aspect": 7.09,
+    "heading_axis_deg": 0,
+    "pixels": 11,
+    "contrast_db": 13.6,
+    "confidence": 0.7,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 34.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 27.4,
+    "length_sd_m": 16.4,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.77,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.77,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.77,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.77
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.21
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.77,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.77
+     }
+    ],
+    "type_basis": "length 38 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.81281,
+     15.493667
+    ]
+   },
+   "properties": {
+    "id": "S1-031",
+    "sensor": "S1 SAR",
+    "lat": 15.493667,
+    "lon": 73.81281,
+    "length_m": 43.6,
+    "width_m": 17,
+    "raw_length_m": 41.3,
+    "raw_width_m": 36.8,
+    "aspect": 2.56,
+    "heading_axis_deg": 153,
+    "pixels": 29,
+    "contrast_db": 22.5,
+    "confidence": 1,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": true,
+    "blob_length_m": 36.1,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 31.2,
+    "length_sd_m": 18.7,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.74,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.74,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.74,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.74
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.23
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.74,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.74
+     }
+    ],
+    "type_basis": "length 44 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.812034,
+     15.491406
+    ]
+   },
+   "properties": {
+    "id": "S1-034",
+    "sensor": "S1 SAR",
+    "lat": 15.491406,
+    "lon": 73.812034,
+    "length_m": 102.9,
+    "width_m": 16.2,
+    "raw_length_m": 89.8,
+    "raw_width_m": 35.9,
+    "aspect": 6.35,
+    "heading_axis_deg": 69,
+    "pixels": 49,
+    "contrast_db": 24.5,
+    "confidence": 1,
+    "size_reliable": true,
+    "vessel_class": "Medium vessel",
+    "beam_resolved": false,
+    "blob_length_m": 87.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "sig_fill": 0.22,
+    "sig_end_bias": 0.75,
+    "length_meas": 73.6,
+    "length_sd_m": 44.1,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Container ship",
+    "image_type_conf": 0.24,
+    "image_family": "Cargo",
+    "image_family_conf": 0.6,
+    "predicted_family": "Cargo",
+    "family_confidence": 0.6,
+    "family_candidates": [
+     {
+      "type": "Cargo ship",
+      "p": 0.6
+     },
+     {
+      "type": "Harbour craft",
+      "p": 0.22
+     },
+     {
+      "type": "Tanker",
+      "p": 0.13
+     },
+     {
+      "type": "Other vessel",
+      "p": 0.05
+     }
+    ],
+    "predicted_type": "Container ship",
+    "predicted_subclass": "Feeder",
+    "type_confidence": 0.24,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Container ship",
+      "p": 0.24
+     },
+     {
+      "type": "Bulk carrier",
+      "p": 0.19
+     },
+     {
+      "type": "General cargo",
+      "p": 0.13
+     }
+    ],
+    "type_basis": "length 103 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing); beam not used (16 m measured is blurred)",
+    "power_kw": 12000,
+    "design_speed_kn": 18,
+    "fuel_t_day_low": 1.09,
+    "fuel_t_day_high": 9.58,
+    "co2_t_day_low": 3.4,
+    "co2_t_day_high": 29.8,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed for a typical Feeder (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.777238,
+     15.491339
+    ]
+   },
+   "properties": {
+    "id": "S1-035",
+    "sensor": "S1 SAR",
+    "lat": 15.491339,
+    "lon": 73.777238,
+    "length_m": 12.7,
+    "width_m": 0,
+    "raw_length_m": 51.2,
+    "raw_width_m": 13.8,
+    "aspect": 12.7,
+    "heading_axis_deg": 17,
+    "pixels": 6,
+    "contrast_db": 16.9,
+    "confidence": 0.86,
+    "size_reliable": false,
+    "vessel_class": "Small craft",
+    "beam_resolved": false,
+    "blob_length_m": 47.1,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 12.7,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Small craft (fishing / tug / launch)",
+    "image_type_conf": null,
+    "image_family": null,
+    "image_family_conf": null,
+    "predicted_type": "Small craft (fishing / tug / launch)",
+    "predicted_subclass": null,
+    "type_confidence": null,
+    "type_source": "size only",
+    "type_candidates": [],
+    "type_basis": "13 m is too small at this resolution to tell types apart",
+    "fuel_t_day_low": 0.01,
+    "fuel_t_day_high": 0.12,
+    "co2_t_day_low": 0,
+    "co2_t_day_high": 0.4,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.768233,
+     15.490625
+    ]
+   },
+   "properties": {
+    "id": "S1-036",
+    "sensor": "S1 SAR",
+    "lat": 15.490625,
+    "lon": 73.768233,
+    "length_m": 90.6,
+    "width_m": 44.1,
+    "raw_length_m": 72.9,
+    "raw_width_m": 39.3,
+    "aspect": 2.05,
+    "heading_axis_deg": 102,
+    "pixels": 15,
+    "contrast_db": 9.8,
+    "confidence": 0.53,
+    "size_reliable": true,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": true,
+    "blob_length_m": 70.1,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "sig_fill": 0.5,
+    "sig_end_bias": 0.43,
+    "length_meas": 64.8,
+    "length_sd_m": 38.9,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Container ship",
+    "image_type_conf": 0.23,
+    "image_family": "Cargo",
+    "image_family_conf": 0.54,
+    "predicted_family": "Cargo",
+    "family_confidence": 0.54,
+    "family_candidates": [
+     {
+      "type": "Cargo ship",
+      "p": 0.54
+     },
+     {
+      "type": "Harbour craft",
+      "p": 0.32
+     },
+     {
+      "type": "Tanker",
+      "p": 0.11
+     },
+     {
+      "type": "Other vessel",
+      "p": 0.03
+     }
+    ],
+    "predicted_type": "Container ship",
+    "predicted_subclass": "Feeder",
+    "type_confidence": 0.23,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Container ship",
+      "p": 0.23
+     },
+     {
+      "type": "Bulk carrier",
+      "p": 0.15
+     },
+     {
+      "type": "General cargo",
+      "p": 0.13
+     }
+    ],
+    "type_basis": "length 91 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing); beam not used (44 m measured is blurred)",
+    "power_kw": 12000,
+    "design_speed_kn": 18,
+    "fuel_t_day_low": 1.09,
+    "fuel_t_day_high": 9.58,
+    "co2_t_day_low": 3.4,
+    "co2_t_day_high": 29.8,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed for a typical Feeder (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.780259,
+     15.485267
+    ]
+   },
+   "properties": {
+    "id": "S1-038",
+    "sensor": "S1 SAR",
+    "lat": 15.485267,
+    "lon": 73.780259,
+    "length_m": 53.1,
+    "width_m": 3.7,
+    "raw_length_m": 54.5,
+    "raw_width_m": 32.3,
+    "aspect": 14.35,
+    "heading_axis_deg": 32,
+    "pixels": 30,
+    "contrast_db": 19.2,
+    "confidence": 0.96,
+    "size_reliable": true,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 50.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 38,
+    "length_sd_m": 22.8,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.68,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.68,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.68,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.68
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.28
+     },
+     {
+      "type": "Tanker",
+      "p": 0.04
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.68,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.68
+     }
+    ],
+    "type_basis": "length 53 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.787659,
+     15.484012
+    ]
+   },
+   "properties": {
+    "id": "S1-039",
+    "sensor": "S1 SAR",
+    "lat": 15.484012,
+    "lon": 73.787659,
+    "length_m": 99.3,
+    "width_m": 12.1,
+    "raw_length_m": 82,
+    "raw_width_m": 33.5,
+    "aspect": 8.21,
+    "heading_axis_deg": 83,
+    "pixels": 54,
+    "contrast_db": 24.5,
+    "confidence": 1,
+    "size_reliable": true,
+    "vessel_class": "Medium vessel",
+    "beam_resolved": false,
+    "blob_length_m": 79.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "sig_fill": 0.33,
+    "sig_end_bias": 0.75,
+    "length_meas": 71,
+    "length_sd_m": 42.6,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Container ship",
+    "image_type_conf": 0.24,
+    "image_family": "Cargo",
+    "image_family_conf": 0.58,
+    "predicted_family": "Cargo",
+    "family_confidence": 0.58,
+    "family_candidates": [
+     {
+      "type": "Cargo ship",
+      "p": 0.58
+     },
+     {
+      "type": "Harbour craft",
+      "p": 0.25
+     },
+     {
+      "type": "Tanker",
+      "p": 0.13
+     },
+     {
+      "type": "Other vessel",
+      "p": 0.05
+     }
+    ],
+    "predicted_type": "Container ship",
+    "predicted_subclass": "Feeder",
+    "type_confidence": 0.24,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Container ship",
+      "p": 0.24
+     },
+     {
+      "type": "Bulk carrier",
+      "p": 0.18
+     },
+     {
+      "type": "General cargo",
+      "p": 0.13
+     }
+    ],
+    "type_basis": "length 99 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing); beam not used (12 m measured is blurred)",
+    "power_kw": 12000,
+    "design_speed_kn": 18,
+    "fuel_t_day_low": 1.09,
+    "fuel_t_day_high": 9.58,
+    "co2_t_day_low": 3.4,
+    "co2_t_day_high": 29.8,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed for a typical Feeder (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.806178,
+     15.483924
+    ]
+   },
+   "properties": {
+    "id": "S1-040",
+    "sensor": "S1 SAR",
+    "lat": 15.483924,
+    "lon": 73.806178,
+    "length_m": 56.6,
+    "width_m": 10.8,
+    "raw_length_m": 39.9,
+    "raw_width_m": 20.9,
+    "aspect": 5.24,
+    "heading_axis_deg": 5,
+    "pixels": 5,
+    "contrast_db": 8.9,
+    "confidence": 0.43,
+    "size_reliable": true,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 34.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 40.5,
+    "length_sd_m": 24.3,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.65,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.65,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.65,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.65
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.31
+     },
+     {
+      "type": "Tanker",
+      "p": 0.04
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.65,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.65
+     }
+    ],
+    "type_basis": "length 57 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.770172,
+     15.475946
+    ]
+   },
+   "properties": {
+    "id": "S1-044",
+    "sensor": "S1 SAR",
+    "lat": 15.475946,
+    "lon": 73.770172,
+    "length_m": 32.2,
+    "width_m": 13.4,
+    "raw_length_m": 40,
+    "raw_width_m": 30,
+    "aspect": 2.4,
+    "heading_axis_deg": 0,
+    "pixels": 9,
+    "contrast_db": 13.7,
+    "confidence": 0.71,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 34.7,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 23,
+    "length_sd_m": 13.8,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.19
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 32 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.777598,
+     15.474974
+    ]
+   },
+   "properties": {
+    "id": "S1-045",
+    "sensor": "S1 SAR",
+    "lat": 15.474974,
+    "lon": 73.777598,
+    "length_m": 40.5,
+    "width_m": 0,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 40.5,
+    "heading_axis_deg": 135,
+    "pixels": 3,
+    "contrast_db": 7.3,
+    "confidence": 0.24,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 29,
+    "length_sd_m": 17.4,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.76,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.76,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.76,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.76
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.22
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.76,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.76
+     }
+    ],
+    "type_basis": "length 40 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.804796,
+     15.471059
+    ]
+   },
+   "properties": {
+    "id": "S1-046",
+    "sensor": "S1 SAR",
+    "lat": 15.471059,
+    "lon": 73.804796,
+    "length_m": 67.7,
+    "width_m": 22.5,
+    "raw_length_m": 40,
+    "raw_width_m": 20,
+    "aspect": 3.01,
+    "heading_axis_deg": 0,
+    "pixels": 6,
+    "contrast_db": 10.3,
+    "confidence": 0.55,
+    "size_reliable": true,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": true,
+    "blob_length_m": 34.7,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 48.4,
+    "length_sd_m": 29,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.55,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.55,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.55,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.55
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.39
+     },
+     {
+      "type": "Tanker",
+      "p": 0.06
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.55,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.55
+     }
+    ],
+    "type_basis": "length 68 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": null,
+    "fuel_t_day_high": null,
+    "co2_t_day_low": null,
+    "co2_t_day_high": null,
+    "fuel_basis": "No estimate (class unknown or fixed structure)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.804591,
+     15.46989
+    ]
+   },
+   "properties": {
+    "id": "S1-047",
+    "sensor": "S1 SAR",
+    "lat": 15.46989,
+    "lon": 73.804591,
+    "length_m": 83.9,
+    "width_m": 15.5,
+    "raw_length_m": 54.7,
+    "raw_width_m": 32.4,
+    "aspect": 5.41,
+    "heading_axis_deg": 153,
+    "pixels": 12,
+    "contrast_db": 10.6,
+    "confidence": 0.57,
+    "size_reliable": true,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": false,
+    "blob_length_m": 50.9,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "sig_fill": 0.67,
+    "sig_end_bias": 0.2,
+    "length_meas": 60,
+    "length_sd_m": 36,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Container ship",
+    "image_type_conf": 0.22,
+    "image_family": "Cargo",
+    "image_family_conf": 0.5,
+    "predicted_family": "Cargo",
+    "family_confidence": 0.5,
+    "family_candidates": [
+     {
+      "type": "Cargo ship",
+      "p": 0.5
+     },
+     {
+      "type": "Harbour craft",
+      "p": 0.38
+     },
+     {
+      "type": "Tanker",
+      "p": 0.1
+     }
+    ],
+    "predicted_type": "Container ship",
+    "predicted_subclass": "Feeder",
+    "type_confidence": 0.22,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Container ship",
+      "p": 0.22
+     },
+     {
+      "type": "General cargo",
+      "p": 0.13
+     },
+     {
+      "type": "Bulk carrier",
+      "p": 0.13
+     }
+    ],
+    "type_basis": "length 84 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing); beam not used (16 m measured is blurred)",
+    "power_kw": 12000,
+    "design_speed_kn": 18,
+    "fuel_t_day_low": 1.09,
+    "fuel_t_day_high": 9.58,
+    "co2_t_day_low": 3.4,
+    "co2_t_day_high": 29.8,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed for a typical Feeder (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.804394,
+     15.469331
+    ]
+   },
+   "properties": {
+    "id": "S1-048",
+    "sensor": "S1 SAR",
+    "lat": 15.469331,
+    "lon": 73.804394,
+    "length_m": 51.2,
+    "width_m": 27.6,
+    "raw_length_m": 30,
+    "raw_width_m": 20,
+    "aspect": 1.86,
+    "heading_axis_deg": 90,
+    "pixels": 4,
+    "contrast_db": 8.7,
+    "confidence": 0.36,
+    "size_reliable": true,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": true,
+    "blob_length_m": 22.4,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 36.6,
+    "length_sd_m": 22,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.69,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.69,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.69,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.69
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.27
+     },
+     {
+      "type": "Tanker",
+      "p": 0.04
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.69,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.69
+     }
+    ],
+    "type_basis": "length 51 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": null,
+    "fuel_t_day_high": null,
+    "co2_t_day_low": null,
+    "co2_t_day_high": null,
+    "fuel_basis": "No estimate (class unknown or fixed structure)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.787546,
+     15.468822
+    ]
+   },
+   "properties": {
+    "id": "S1-049",
+    "sensor": "S1 SAR",
+    "lat": 15.468822,
+    "lon": 73.787546,
+    "length_m": 37.5,
+    "width_m": 0,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 37.5,
+    "heading_axis_deg": 45,
+    "pixels": 3,
+    "contrast_db": 9.2,
+    "confidence": 0.32,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 26.8,
+    "length_sd_m": 16.1,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.77,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.77,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.77,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.77
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.2
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.77,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.77
+     }
+    ],
+    "type_basis": "length 38 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.78612,
+     15.468441
+    ]
+   },
+   "properties": {
+    "id": "S1-050",
+    "sensor": "S1 SAR",
+    "lat": 15.468441,
+    "lon": 73.78612,
+    "length_m": 45.3,
+    "width_m": 2.5,
+    "raw_length_m": 32.3,
+    "raw_width_m": 18.5,
+    "aspect": 18.12,
+    "heading_axis_deg": 58,
+    "pixels": 4,
+    "contrast_db": 9.8,
+    "confidence": 0.41,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 25.3,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 32.4,
+    "length_sd_m": 19.4,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.73,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.73,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.73,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.73
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.24
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.73,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.73
+     }
+    ],
+    "type_basis": "length 45 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.803953,
+     15.468066
+    ]
+   },
+   "properties": {
+    "id": "S1-051",
+    "sensor": "S1 SAR",
+    "lat": 15.468066,
+    "lon": 73.803953,
+    "length_m": 39,
+    "width_m": 15.5,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 2.52,
+    "heading_axis_deg": 135,
+    "pixels": 3,
+    "contrast_db": 8.8,
+    "confidence": 0.31,
+    "size_reliable": false,
+    "vessel_class": "Moored vessel (persistent)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "persistent": true,
+    "detection_method": "CFAR",
+    "yolo_conf": 0,
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 27.9,
+    "length_sd_m": 16.7,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.77,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.77,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.77,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.77
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.21
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.77,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.77
+     }
+    ],
+    "type_basis": "length 39 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": null,
+    "fuel_t_day_high": null,
+    "co2_t_day_low": null,
+    "co2_t_day_high": null,
+    "fuel_basis": "No estimate (class unknown or fixed structure)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.779636,
+     15.467538
+    ]
+   },
+   "properties": {
+    "id": "S1-052",
+    "sensor": "S1 SAR",
+    "lat": 15.467538,
+    "lon": 73.779636,
+    "length_m": 33.3,
+    "width_m": 15.7,
+    "raw_length_m": 20,
+    "raw_width_m": 20,
+    "aspect": 2.12,
+    "heading_axis_deg": 90,
+    "pixels": 4,
+    "contrast_db": 8.8,
+    "confidence": 0.36,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 10,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 23.8,
+    "length_sd_m": 14.3,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.19
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 33 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.803796,
+     15.467518
+    ]
+   },
+   "properties": {
+    "id": "S1-053",
+    "sensor": "S1 SAR",
+    "lat": 15.467518,
+    "lon": 73.803796,
+    "length_m": 47.7,
+    "width_m": 18.9,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 2.52,
+    "heading_axis_deg": 45,
+    "pixels": 3,
+    "contrast_db": 9.1,
+    "confidence": 0.32,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": true,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 34.1,
+    "length_sd_m": 20.5,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.72,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.72,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.72,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.72
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.25
+     },
+     {
+      "type": "Tanker",
+      "p": 0.03
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.72,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.72
+     }
+    ],
+    "type_basis": "length 48 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.803523,
+     15.466535
+    ]
+   },
+   "properties": {
+    "id": "S1-054",
+    "sensor": "S1 SAR",
+    "lat": 15.466535,
+    "lon": 73.803523,
+    "length_m": 49.9,
+    "width_m": 15.1,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 3.3,
+    "heading_axis_deg": 45,
+    "pixels": 3,
+    "contrast_db": 8.3,
+    "confidence": 0.28,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 35.7,
+    "length_sd_m": 21.4,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.7,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.7,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.7,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.7
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.26
+     },
+     {
+      "type": "Tanker",
+      "p": 0.03
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.7,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.7
+     }
+    ],
+    "type_basis": "length 50 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.803404,
+     15.466051
+    ]
+   },
+   "properties": {
+    "id": "S1-055",
+    "sensor": "S1 SAR",
+    "lat": 15.466051,
+    "lon": 73.803404,
+    "length_m": 90.7,
+    "width_m": 14.1,
+    "raw_length_m": 69.9,
+    "raw_width_m": 22.9,
+    "aspect": 6.43,
+    "heading_axis_deg": 176,
+    "pixels": 11,
+    "contrast_db": 9.2,
+    "confidence": 0.5,
+    "size_reliable": true,
+    "vessel_class": "Medium vessel",
+    "beam_resolved": false,
+    "blob_length_m": 66.9,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "sig_fill": 0.86,
+    "sig_end_bias": 0.33,
+    "length_meas": 64.9,
+    "length_sd_m": 38.9,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Container ship",
+    "image_type_conf": 0.23,
+    "image_family": "Cargo",
+    "image_family_conf": 0.54,
+    "predicted_family": "Cargo",
+    "family_confidence": 0.54,
+    "family_candidates": [
+     {
+      "type": "Cargo ship",
+      "p": 0.54
+     },
+     {
+      "type": "Harbour craft",
+      "p": 0.32
+     },
+     {
+      "type": "Tanker",
+      "p": 0.11
+     },
+     {
+      "type": "Other vessel",
+      "p": 0.03
+     }
+    ],
+    "predicted_type": "Container ship",
+    "predicted_subclass": "Feeder",
+    "type_confidence": 0.23,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Container ship",
+      "p": 0.23
+     },
+     {
+      "type": "Bulk carrier",
+      "p": 0.15
+     },
+     {
+      "type": "General cargo",
+      "p": 0.13
+     }
+    ],
+    "type_basis": "length 91 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing); beam not used (14 m measured is blurred)",
+    "power_kw": 12000,
+    "design_speed_kn": 18,
+    "fuel_t_day_low": 1.09,
+    "fuel_t_day_high": 9.58,
+    "co2_t_day_low": 3.4,
+    "co2_t_day_high": 29.8,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed for a typical Feeder (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.802551,
+     15.464278
+    ]
+   },
+   "properties": {
+    "id": "S1-056",
+    "sensor": "S1 SAR",
+    "lat": 15.464278,
+    "lon": 73.802551,
+    "length_m": 57.7,
+    "width_m": 24.4,
+    "raw_length_m": 32.1,
+    "raw_width_m": 22.7,
+    "aspect": 2.36,
+    "heading_axis_deg": 72,
+    "pixels": 5,
+    "contrast_db": 7.9,
+    "confidence": 0.38,
+    "size_reliable": true,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": true,
+    "blob_length_m": 25.2,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 41.3,
+    "length_sd_m": 24.8,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.64,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.64,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.64,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.64
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.31
+     },
+     {
+      "type": "Tanker",
+      "p": 0.05
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.64,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.64
+     }
+    ],
+    "type_basis": "length 58 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.798635,
+     15.461824
+    ]
+   },
+   "properties": {
+    "id": "S1-057",
+    "sensor": "S1 SAR",
+    "lat": 15.461824,
+    "lon": 73.798635,
+    "length_m": 17.1,
+    "width_m": 0,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 17.1,
+    "heading_axis_deg": 135,
+    "pixels": 3,
+    "contrast_db": 8.9,
+    "confidence": 0.31,
+    "size_reliable": false,
+    "vessel_class": "Small craft",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 17.1,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Small craft (fishing / tug / launch)",
+    "image_type_conf": null,
+    "image_family": null,
+    "image_family_conf": null,
+    "predicted_type": "Small craft (fishing / tug / launch)",
+    "predicted_subclass": null,
+    "type_confidence": null,
+    "type_source": "size only",
+    "type_candidates": [],
+    "type_basis": "17 m is too small at this resolution to tell types apart",
+    "fuel_t_day_low": 0.01,
+    "fuel_t_day_high": 0.12,
+    "co2_t_day_low": 0,
+    "co2_t_day_high": 0.4,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.784558,
+     15.460231
+    ]
+   },
+   "properties": {
+    "id": "S1-058",
+    "sensor": "S1 SAR",
+    "lat": 15.460231,
+    "lon": 73.784558,
+    "length_m": 34.4,
+    "width_m": 14.6,
+    "raw_length_m": 24.1,
+    "raw_width_m": 17.1,
+    "aspect": 2.36,
+    "heading_axis_deg": 45,
+    "pixels": 3,
+    "contrast_db": 8.2,
+    "confidence": 0.28,
+    "size_reliable": false,
+    "vessel_class": "Small vessel (size approx.)",
+    "beam_resolved": false,
+    "blob_length_m": 13.5,
+    "size_method": "rotated outline, sub-pixel",
+    "yolo_conf": 0,
+    "detection_method": "CFAR",
+    "wake_detected": false,
+    "wake_length_m": 0,
+    "wake_sign": null,
+    "course_deg": null,
+    "length_meas": 24.6,
+    "length_sd_m": 14.8,
+    "length_calibrated": true,
+    "ais_status": "no AIS data at image time",
+    "ais_mmsi": null,
+    "ais_name": null,
+    "ais_distance_m": null,
+    "threat": "unknown",
+    "threat_reason": "No AIS data recorded at image time",
+    "image_type": "Harbour craft (tug / ferry / supply)",
+    "image_type_conf": 0.79,
+    "image_family": "Harbour craft",
+    "image_family_conf": 0.79,
+    "predicted_family": "Harbour craft",
+    "family_confidence": 0.79,
+    "family_candidates": [
+     {
+      "type": "Harbour craft",
+      "p": 0.79
+     },
+     {
+      "type": "Cargo ship",
+      "p": 0.2
+     }
+    ],
+    "predicted_type": "Harbour craft (tug / ferry / supply)",
+    "predicted_subclass": null,
+    "type_confidence": 0.79,
+    "type_source": "learned from AIS",
+    "type_candidates": [
+     {
+      "type": "Harbour craft (tug / ferry / supply)",
+      "p": 0.79
+     }
+    ],
+    "type_basis": "length 34 m; local fleet mix of 240 AIS-verified detections (family right 67% in testing)",
+    "fuel_t_day_low": 0.05,
+    "fuel_t_day_high": 0.48,
+    "co2_t_day_low": 0.2,
+    "co2_t_day_high": 1.5,
+    "fuel_basis": "No wake: anchored or slow; auxiliary load up to half design speed (modelled estimate, not measured)"
+   }
+  }
+ ]
+}

@@ -1,0 +1,139 @@
+{
+  "type": "FeatureCollection",
+  "name": "mandovi_river_bridges",
+  "attribution": "© OpenStreetMap contributors / Survey of Goa / GSIDC / PWD Goa / KRCL",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osmId": "900000001",
+        "name": "Atal Setu",
+        "bridgeType": "cable-stayed",
+        "highway": "trunk",
+        "lanes": 4,
+        "widthM": 21,
+        "lengthM": 620,
+        "deckClearanceM": 28,
+        "source": "Goa State Infrastructure Development Corporation (GSIDC) / L&T",
+        "structureType": "Cable-Stayed Box Girder Bridge"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.837180, 15.500000],
+          [73.836931, 15.502609],
+          [73.836756, 15.504429],
+          [73.836620, 15.505580]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osmId": "900000002",
+        "name": "Mandovi Bridge (New)",
+        "bridgeType": "girder",
+        "highway": "primary",
+        "lanes": 2,
+        "widthM": 14,
+        "lengthM": 600,
+        "deckClearanceM": 15,
+        "source": "Public Works Department (PWD) Goa",
+        "structureType": "Prestressed Concrete Girder Bridge (Northbound)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.837419, 15.499929],
+          [73.837250, 15.501486],
+          [73.837095, 15.503001],
+          [73.836947, 15.504449],
+          [73.836788, 15.505887],
+          [73.836766, 15.506126]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osmId": "900000003",
+        "name": "Mandovi Bridge (Old)",
+        "bridgeType": "girder",
+        "highway": "primary",
+        "lanes": 2,
+        "widthM": 12,
+        "lengthM": 600,
+        "deckClearanceM": 14,
+        "source": "Public Works Department (PWD) Goa",
+        "structureType": "Prestressed Concrete Girder Bridge (Southbound)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.836845, 15.499959],
+          [73.836656, 15.501830],
+          [73.836488, 15.503326],
+          [73.836340, 15.504773],
+          [73.836239, 15.505734]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osmId": "900000004",
+        "name": "Ribandar Causeway (Ponte Conde de Linhares)",
+        "bridgeType": "causeway",
+        "highway": "secondary",
+        "lanes": 2,
+        "widthM": 10,
+        "lengthM": 3141,
+        "deckClearanceM": 4,
+        "source": "Archaeological Survey of India / Goa Tourism / Goa Heritage Survey",
+        "structureType": "Historic Stone Masonry Causeway with Arched Culverts"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.838524, 15.499071], [73.839177, 15.499215], [73.841504, 15.499756],
+          [73.845631, 15.500785], [73.845876, 15.500837], [73.846063, 15.500875],
+          [73.847279, 15.501136], [73.848231, 15.501368], [73.851315, 15.502103],
+          [73.853477, 15.502446], [73.856213, 15.502846], [73.859398, 15.503258],
+          [73.860931, 15.503494], [73.861378, 15.503544], [73.861494, 15.503562],
+          [73.861803, 15.503609], [73.862246, 15.503676], [73.862499, 15.503713],
+          [73.862632, 15.503742], [73.863165, 15.503751], [73.863349, 15.503794],
+          [73.863510, 15.503852], [73.863617, 15.503931], [73.863695, 15.504039],
+          [73.863743, 15.504255], [73.863773, 15.504457], [73.863788, 15.504756],
+          [73.863811, 15.504942], [73.863880, 15.505106], [73.864045, 15.505356],
+          [73.864141, 15.505445], [73.864289, 15.505479], [73.864973, 15.505439],
+          [73.865063, 15.505414], [73.865211, 15.505344], [73.865246, 15.505337],
+          [73.865640, 15.505362], [73.865733, 15.505367], [73.866057, 15.505348]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osmId": "900000005",
+        "name": "Konkan Railway Mandovi Viaduct",
+        "bridgeType": "railway",
+        "highway": "railway",
+        "lanes": 1,
+        "widthM": 9,
+        "lengthM": 946,
+        "deckClearanceM": 16,
+        "source": "Konkan Railway Corporation Limited (KRCL)",
+        "structureType": "Prestressed Concrete Viaduct with 124.2m Steel Through-Girder Navigational Span"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.870850, 15.502450],
+          [73.871150, 15.504800],
+          [73.871500, 15.507600],
+          [73.871900, 15.510950]
+        ]
+      }
+    }
+  ]
+}

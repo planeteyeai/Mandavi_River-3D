@@ -1,0 +1,151 @@
+{
+  "type": "FeatureCollection",
+  "name": "mandovi_building_coverage_audit",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "metadata": {
+    "audit_date": "2026-11-04",
+    "corridor_lateral_width_m": 1000,
+    "provenance": "SOURCE_MAPPED (OpenStreetMap)",
+    "verified_footprints_count": 1843,
+    "procedural_synthetic_buildings_count": 0,
+    "synthetic_fallback_status": "DISABLED_PERMANENTLY",
+    "empty_reach_policy": "Geographic truth takes priority over visual density. Unmapped reaches remain geographically empty."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_name": "Panaji Capital Urban Core (Left Bank)",
+        "chainage_start_m": 4200,
+        "chainage_end_m": 8500,
+        "bank": "Left Bank",
+        "building_count": 1120,
+        "source": "OpenStreetMap contributors / Survey of Goa",
+        "provenance": "SOURCE_MAPPED",
+        "height_derivation": "OSM height tags (34%) / Modelled Typology (66%)",
+        "synthetic_count": 0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.8150, 15.4880],
+            [73.8420, 15.4950],
+            [73.8400, 15.5030],
+            [73.8180, 15.5010],
+            [73.8150, 15.4880]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_name": "Betim & Penha de França Riverfront (Right Bank)",
+        "chainage_start_m": 5800,
+        "chainage_end_m": 8800,
+        "bank": "Right Bank",
+        "building_count": 384,
+        "source": "OpenStreetMap contributors",
+        "provenance": "SOURCE_MAPPED",
+        "height_derivation": "Modelled Typology (100%)",
+        "synthetic_count": 0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.8220, 15.5040],
+            [73.8450, 15.5070],
+            [73.8430, 15.5160],
+            [73.8200, 15.5130],
+            [73.8220, 15.5040]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_name": "Ribandar Historic Settlement (Left Bank)",
+        "chainage_start_m": 8600,
+        "chainage_end_m": 11500,
+        "bank": "Left Bank",
+        "building_count": 215,
+        "source": "OpenStreetMap contributors / ASI Heritage Registry",
+        "provenance": "SOURCE_MAPPED",
+        "height_derivation": "Modelled Typology (100%)",
+        "synthetic_count": 0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.8480, 15.5000],
+            [73.8680, 15.5040],
+            [73.8670, 15.5100],
+            [73.8470, 15.5060],
+            [73.8480, 15.5000]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_name": "Old Goa / Velha Goa Heritage Precinct (Left Bank)",
+        "chainage_start_m": 12500,
+        "chainage_end_m": 15200,
+        "bank": "Left Bank",
+        "building_count": 124,
+        "source": "OpenStreetMap contributors / UNESCO World Heritage Inventory",
+        "provenance": "SOURCE_MAPPED",
+        "height_derivation": "OSM height tags (12%) / Modelled Typology (88%)",
+        "synthetic_count": 0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.8700, 15.5010],
+            [73.8860, 15.5020],
+            [73.8850, 15.5090],
+            [73.8690, 15.5080],
+            [73.8700, 15.5010]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_name": "Chorão Island Mangrove Reserve (Unmapped Building Zone - Empty Truth)",
+        "chainage_start_m": 9500,
+        "chainage_end_m": 14000,
+        "bank": "Right Bank",
+        "building_count": 0,
+        "source": "OpenStreetMap (Verified Uninhabited Mangrove Sanctuary)",
+        "provenance": "UNAVAILABLE (Verified Uninhabited Wetland)",
+        "height_derivation": "N/A",
+        "synthetic_count": 0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.8580, 15.5070],
+            [73.8820, 15.5100],
+            [73.8800, 15.5250],
+            [73.8560, 15.5220],
+            [73.8580, 15.5070]
+          ]
+        ]
+      }
+    }
+  ]
+}

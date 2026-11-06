@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:ex="http://earth.google.com/kml/ext">
+<Document id="document">
+	<ex:extension>base64;CooBCoEBCn8KAggBEnkKdwokCiAKAwjQDxoHCNLtZRD_ASEAAAAAAADwPykAAAAAAAAAABgAEg8KCAitgO8HEP8BEKAfGAAaGgoHCP___wcQQBIICK2A7wcQ_wEYoB8gACgAIgkIARIFCP___wcqFwgBEggI____BxD_ARkAAAAAAADwPyAAEgQIARAA</ex:extension>
+	<name>Untitled KML file</name>
+	<gx:CascadingStyle kml:id="__managed_style_0829A2443F42DFFC7B20_highlight">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>6</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0829A2443F42DFFC7B20_normal">
+		<ex:extension>base64;EgIYAQ</ex:extension>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LabelStyle>
+			</LabelStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>4</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+			<BalloonStyle>
+				<displayMode>hide</displayMode>
+			</BalloonStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0829A2443F42DFFC7B20">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0829A2443F42DFFC7B20_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0829A2443F42DFFC7B20_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="0DE13CE58C42DFFC7B03">
+		<name>Lucky Seven</name>
+		<LookAt>
+			<longitude>73.82269452705017</longitude>
+			<latitude>15.50154884951107</latitude>
+			<altitude>15.26549085919833</altitude>
+			<heading>0.007900183483022695</heading>
+			<tilt>29.82800212955665</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>1073.692648459983</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0829A2443F42DFFC7B20</styleUrl>
+		<Point>
+			<coordinates>73.8219166213493,15.50257539196934,15.26491093823388</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="0D9E7A2FD642DFFC870B">
+		<name>Pride Goa 2</name>
+		<LookAt>
+			<longitude>73.82269452705017</longitude>
+			<latitude>15.50154884951107</latitude>
+			<altitude>15.26549085919833</altitude>
+			<heading>0.007900183483009911</heading>
+			<tilt>29.82800212955659</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>1073.692648459983</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0829A2443F42DFFC7B20</styleUrl>
+		<Point>
+			<coordinates>73.82402295470713,15.5027018127309,15.26544330437777</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="0EFDFF4C7142DFFCA86B">
+		<name>Pride of Goa</name>
+		<LookAt>
+			<longitude>73.82527053880769</longitude>
+			<latitude>15.50263714276365</latitude>
+			<altitude>16.00169834359404</altitude>
+			<heading>0.007900183211234306</heading>
+			<tilt>29.82799833249806</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>1072.843884771428</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0829A2443F42DFFC7B20</styleUrl>
+		<Point>
+			<coordinates>73.8264454485803,15.50234808589805,16.71552157335436</coordinates>
+		</Point>
+	</Placemark>
+</Document>
+</kml>

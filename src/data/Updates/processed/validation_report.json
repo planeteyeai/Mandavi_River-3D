@@ -1,0 +1,239 @@
+{
+  "generatedAt": "2026-11-04T06:20:50.680Z",
+  "title": "Mandavi Updates — Import & Coordinate Validation Report",
+  "filesImported": [
+    "Betim Fishing Jetty.kmz",
+    "Chimbel Creek Mouth.kmz",
+    "Chorao Island.kmz",
+    "Indoor Stadium.kmz",
+    "live_water_mandavi.kml",
+    "Miramar Beach.kmz",
+    "Offshore Casinos.kmz",
+    "Ourem Creek Mouth.kmz",
+    "Reis Magos Fort.kmz",
+    "Santa Monica Jetty.kmz",
+    "St Inez Creek Mouth.kmz",
+    "SV Road Main Drain.kmz",
+    "water_depth_mandavi.kml"
+  ],
+  "filesRejected": [],
+  "crs": {
+    "input": "EPSG:4326",
+    "projected": "EPSG:32643",
+    "localOriginLonLat": {
+      "lon": 73.82988667993372,
+      "lat": 15.499774677103085
+    },
+    "localOriginUtm": {
+      "easting": 374493.48726320016,
+      "northing": 1713947.027085836
+    },
+    "flipX": true,
+    "note": "Same pipeline as src/eye/geo/geoReference.js geoToWorld"
+  },
+  "overlayBounds": {
+    "liveWater": {
+      "north": 15.52859903,
+      "south": 15.4593098,
+      "east": 73.88313675,
+      "west": 73.76545998
+    },
+    "relativeDepth": {
+      "north": 15.52859903,
+      "south": 15.4593098,
+      "east": 73.88313675,
+      "west": 73.76545998
+    }
+  },
+  "landmarks": [
+    {
+      "name": "Betim Fishing Jetty",
+      "lon": 73.83427421853877,
+      "lat": 15.50408776548442,
+      "sourceFilename": "Betim Fishing Jetty.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": -473.26,
+      "worldZ": 474.59
+    },
+    {
+      "name": "Chimbel Creek Mouth",
+      "lon": 73.86206282619113,
+      "lat": 15.50445364616762,
+      "sourceFilename": "Chimbel Creek Mouth.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": -3454.36,
+      "worldZ": 499.05
+    },
+    {
+      "name": "Chorao Island",
+      "lon": 73.8721560442885,
+      "lat": 15.51329707853288,
+      "sourceFilename": "Chorao Island.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": -4542.21,
+      "worldZ": 1471.65
+    },
+    {
+      "name": "Indoor Stadium",
+      "lon": 73.81238628918399,
+      "lat": 15.49096546062906,
+      "sourceFilename": "Indoor Stadium.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 1882.72,
+      "worldZ": -964.24
+    },
+    {
+      "name": "Miramar Beach",
+      "lon": 73.8050435051637,
+      "lat": 15.48367283017295,
+      "sourceFilename": "Miramar Beach.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 2674.94,
+      "worldZ": -1766.65
+    },
+    {
+      "name": "Offshore Casinos",
+      "lon": 73.82493497645032,
+      "lat": 15.50294501787134,
+      "sourceFilename": "Offshore Casinos.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 529.26,
+      "worldZ": 353.64
+    },
+    {
+      "name": "Ourem Creek Mouth",
+      "lon": 73.83445671053612,
+      "lat": 15.49900990657919,
+      "sourceFilename": "Ourem Creek Mouth.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": -489.78,
+      "worldZ": -87.28
+    },
+    {
+      "name": "Reis Magos Fort",
+      "lon": 73.81056978933869,
+      "lat": 15.49574320538338,
+      "sourceFilename": "Reis Magos Fort.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 2074.66,
+      "worldZ": -434.6
+    },
+    {
+      "name": "Santa Monica Jetty",
+      "lon": 73.82820933370128,
+      "lat": 15.50186063645763,
+      "sourceFilename": "Santa Monica Jetty.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 178.67,
+      "worldZ": 231.75
+    },
+    {
+      "name": "St Inez Creek Mouth",
+      "lon": 73.82082911643074,
+      "lat": 15.50043610908947,
+      "sourceFilename": "St Inez Creek Mouth.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 971.23,
+      "worldZ": 78.5
+    },
+    {
+      "name": "SV Road Main Drain",
+      "lon": 73.82383066944772,
+      "lat": 15.50104979176601,
+      "sourceFilename": "SV Road Main Drain.kmz",
+      "geometryType": "Point",
+      "provenance": "OBSERVED",
+      "worldX": 648.87,
+      "worldZ": 144.62
+    }
+  ],
+  "coordinateControlPoints": [
+    {
+      "id": "CTRL-1",
+      "name": "Betim Fishing Jetty",
+      "lon": 73.83427421853877,
+      "lat": 15.50408776548442,
+      "worldX": -473.259,
+      "worldZ": 474.589,
+      "roundTripErrorM": 0,
+      "sourceMatch": true,
+      "passed": true
+    },
+    {
+      "id": "CTRL-2",
+      "name": "Reis Magos Fort",
+      "lon": 73.81056978933869,
+      "lat": 15.49574320538338,
+      "worldX": 2074.661,
+      "worldZ": -434.597,
+      "roundTripErrorM": 0,
+      "sourceMatch": true,
+      "passed": true
+    },
+    {
+      "id": "CTRL-3",
+      "name": "Chorao Island",
+      "lon": 73.8721560442885,
+      "lat": 15.51329707853288,
+      "worldX": -4542.206,
+      "worldZ": 1471.652,
+      "roundTripErrorM": 0,
+      "sourceMatch": true,
+      "passed": true
+    },
+    {
+      "id": "CTRL-4",
+      "name": "Miramar Beach",
+      "lon": 73.8050435051637,
+      "lat": 15.48367283017295,
+      "worldX": 2674.937,
+      "worldZ": -1766.647,
+      "roundTripErrorM": 0,
+      "sourceMatch": true,
+      "passed": true
+    }
+  ],
+  "coordinateAlignmentSummary": {
+    "controlPointsChecked": 4,
+    "allPassed": true,
+    "maxRoundTripErrorM": 0
+  },
+  "bathymetryProvenance": {
+    "verifiedSurveyBathymetry": "OBSERVED / existing CSIR-NIO survey layer in app (separate)",
+    "relativeWaterDepth": {
+      "source": "water_depth_mandavi.kml",
+      "provenance": "RELATIVE ESTIMATE",
+      "depthRangeM": [
+        0.5,
+        8
+      ],
+      "method": "Sentinel-2 relative band-ratio",
+      "notSurveyGrade": true
+    },
+    "liveWaterExtent": {
+      "source": "live_water_mandavi.kml",
+      "provenance": "DERIVED",
+      "method": "Sentinel-2 MNDWI",
+      "notLiveSensor": true
+    }
+  },
+  "missingDatasets": [
+    "No GeoTIFF DEM packaged in Updates (terrain uses existing FABDEM pipeline)",
+    "No water_depth.tif — source is GroundOverlay PNG only"
+  ],
+  "limitations": [
+    "Relative depth must not be labelled as observed sonar / hydrographic survey.",
+    "Live water extent is a composite observation window, not real-time telemetry.",
+    "Landmark elevations in KMZ are 0 (clamp-to-ground); markers sit on terrain height."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "sourceKml": "public/data/mandovi/live_water_mandavi.kml",
+  "overlay": "/data/mandovi/live_water_extent.png",
+  "bounds": {
+    "north": 15.52859903,
+    "south": 15.4593098,
+    "east": 73.88313675,
+    "west": 73.76545998
+  },
+  "extractedBytes": 310837,
+  "extractedAt": "2026-11-05T04:09:15.175Z"
+}

@@ -1,0 +1,113 @@
+{
+  "analysis_date": "2026-10-27",
+  "image_date": "2026-10-20",
+  "sentinel1_image_date": "2026-10-19",
+  "sentinel1_image_dates": [
+    "2026-10-19"
+  ],
+  "sentinel2_image_date": "2026-10-20",
+  "sentinel1_window": {
+    "start": "2026-09-27",
+    "end": "2026-10-27"
+  },
+  "sentinel2_window": {
+    "start": "2026-09-27",
+    "end": "2026-10-27"
+  },
+  "sentinel1_selection": {
+    "sensor": "Sentinel-1",
+    "selected_date": "2026-10-19",
+    "start_date": "2026-10-19",
+    "end_date": "2026-10-20",
+    "selection": "nearest_date_covering_aoi",
+    "aoi_coverage_percent": 100.0,
+    "window_start": "2026-09-27",
+    "window_end": "2026-10-27",
+    "window_days": 30,
+    "candidates": [
+      {
+        "date": "2026-10-19",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1
+      }
+    ]
+  },
+  "sentinel2_selection": {
+    "sensor": "Sentinel-2",
+    "selected_date": "2026-10-20",
+    "start_date": "2026-10-20",
+    "end_date": "2026-10-21",
+    "selection": "nearest_clear_date",
+    "aoi_cloud_percent": 0.0,
+    "aoi_coverage_percent": 100.0,
+    "tile_cloud_percent": 1.15,
+    "window_start": "2026-09-27",
+    "window_end": "2026-10-27",
+    "window_days": 30,
+    "max_tile_cloud_percent": 40,
+    "clear_aoi_cloud_threshold_percent": 5.0,
+    "candidates": [
+      {
+        "date": "2026-10-25",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 17.95,
+        "tile_cloud_percent": 7.09
+      },
+      {
+        "date": "2026-10-22",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 8.4,
+        "tile_cloud_percent": 28.96
+      },
+      {
+        "date": "2026-10-20",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 0.0,
+        "tile_cloud_percent": 1.15
+      },
+      {
+        "date": "2026-10-10",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 0.0,
+        "tile_cloud_percent": 0.83
+      },
+      {
+        "date": "2026-10-02",
+        "aoi_coverage_percent": 100.0,
+        "tiles": 1,
+        "aoi_cloud_percent": 1.43,
+        "tile_cloud_percent": 12.71
+      }
+    ]
+  },
+  "input_depth_range_m": {
+    "min": 1.5,
+    "max": 8.0
+  },
+  "water_area_ha": 986.5016539191915,
+  "depth": {
+    "min_m": 1.5,
+    "max_m": 7.685694710336167,
+    "mean_m": 5.061568148012747,
+    "kml_id": "e647b5758e274fc9b45fd9fb7a922da5",
+    "kml_download_url": "http://jalnetra-software-production.up.railway.app/api/water-depth/kml/e647b5758e274fc9b45fd9fb7a922da5",
+    "kml_filename": "water_depth_2026-10-20.kml"
+  },
+  "legend": {
+    "water": "#0000FF",
+    "low_depth": "#00A651",
+    "medium_low_depth": "#FFFF00",
+    "medium_high_depth": "#FFA500",
+    "high_depth": "#FF0000"
+  },
+  "permanent_water": {
+    "kml_id": "56db36744acc4ed58a1811af39958a54",
+    "kml_download_url": "http://jalnetra-software-production.up.railway.app/api/water-depth/kml/56db36744acc4ed58a1811af39958a54",
+    "kml_filename": "permanent_water_2026-10-19.kml",
+    "color": "#0000FF"
+  }
+}

@@ -1,0 +1,1979 @@
+import { state } from "../state.js";
+import { SURFACE_Y } from "../scene/river.js";
+import { sceneName } from "../scene/cinematic.js";
+import { whenChainageSettled } from "../scene/riverJourney.js";
+import { mountProjectIdentity } from "./components/projectIdentity.js";
+import { mountWeatherWidget } from "./components/weatherWidget.js";
+import { mountAnalyticsControls } from "./components/analyticsControls.js";
+import { mountShipsFocusToggle } from "./components/shipsFocusToggle.js";
+import { mountRiverDataPanel } from "./components/riverDataPanel.js";
+import { mountProfileAnalysisPanel } from "./components/profileAnalysisPanel.js";
+import { interpolateChainage, formatStation } from "../geo/chainage.js";
+import { mountNavigationControls } from "./components/navigationControls.js";
+import { mountCompassNavigation } from "./components/compassNavigation.js";
+import { mountZoomControls } from "./components/zoomControls.js";
+import { mountLayersPanel } from "./components/layersPanel.js";
+import { mountSettingsPanel } from "./components/settingsPanel.js";
+import { mountWaterFlowControl } from "./components/waterFlowControl.js";
+import { mountChainageRuler } from "./components/chainageRuler.js";
+import { mountMap2dDataPanel } from "./components/map2dDataPanel.js";
+import { mountSiltAnalysisOverlay } from "./components/siltAnalysisOverlay.js";
+import { mountJoiningStreamsNav } from "./components/joiningStreamsNav.js";
+import { mountChainageStepHud } from "./components/chainageStepHud.js";
+import { mountChainagePanel } from "./components/chainagePanel.js";
+import { mountFloodResultPanel } from "./floodResultPanel.js";
+import { mountFloodPlaybackControls } from "./floodPlaybackControls.js";
+import { mountFloodComparePanel } from "./components/floodComparePanel.js";
+import { mountFloodListPanel } from "./components/floodListPanel.js";
+import { validYmd, validNumber, fmtYmd, fmtHa, joinValid } from "./floodFieldFormat.js";
+import { mountTwinAnalyticsDock } from "./components/twinAnalyticsDock.js";
+import { mountCrossSectionModal } from "./components/crossSectionModal.js";
+import { mountThresholdGraph } from "./components/thresholdGraph.js";
+import { isDigitalTwinActive } from "./dtMode.js";
+import { mountHydroIntelPanel } from "./components/hydroIntelPanel.js";
+import { mountHydrologySimulationControls } from "./components/hydrologySimulationControls.js";
+import { bindLayerIndicator } from "./components/layerToggle.js";
+import {
+  cancelJalnetraFloodRequest,
+  fetchFloodCatalog,
+  loadFloodSimulationForDate,
+  getFloodSceneForDate,
+} from "../services/jalnetraFloodService.js";
+import { showLoader, hideLoader, failLoader, updateLoader, LOADER_STATUS } from "./appLoader.js";
+
+/** Re-check JalNetra for new scenes when the cached catalog is older than this. */
+const FLOOD_CATALOG_MAX_AGE_MS = 10 * 60 * 1000;
+
+function tipEsc(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function tipNum(v, digits, suffix = "") {
+  const n = Number(v);
+  return v != null && v !== "" && Number.isFinite(n) ? `${n.toFixed(digits)}${suffix}` : null;
+}
+
+/** Key/value rows; rows without a value are omitted rather than shown as blanks. */
+function tipRows(rows) {
+  return rows
+    .filter(([, v]) => v != null && String(v).trim() !== "")
+    .map(([k, v]) => `<div class="kv"><span class="k">${tipEsc(k)}</span><span class="v">${tipEsc(v)}</span></div>`)
+    .join("");
+}
+
+export function createTooltip(root) {
+  const el = document.createElement("div");
+  el.className = "hud tooltip";
+  root.appendChild(el);
+  return {
+    show(x, y, info) {
+      el.classList.add("visible");
+      
+      const isClickPanel = info.lithologyClick || info.hydrologyInspect || info.garbageSelected || info.rawSurveyPoint || info.projectLandmark || info.shipClick;
+      
+      if (!isClickPanel) {
+        let what = "OBJECT";
+        let val = "—";
+        const matchAreaNameSize = !!(info.landHover || info.depthZoneHover || info.depth != null);
+        const areaNameFontSize = 20;
+        
+        if (info.bankErosionHover) {
+          what = "BANK EROSION";
+          val = info.label || info.class_label || "—";
+        } else if (info.landUseHover) {
+          what = info.layerTitle || "LAND USE";
+          const isVolume = info.siltVolume || /volume/i.test(String(info.layerTitle));
+          if (isVolume) {
+             if (info.valueText) {
+               val = info.valueText;
+             } else if (info.value != null) {
+               const n = Number(info.value);
+               val = `${n.toFixed(n >= 10 ? 1 : 2)} m³`;
+             } else {
+               const raw = info.label || info.class_label || "—";
+               val = /m³|m3/i.test(String(raw)) ? raw : raw === "—" ? raw : `${raw} m³`;
+             }
+          } else {
+             val = info.label || info.class_label || "—";
+          }
+        } else if (info.landHover) {
+          what = "TERRAIN";
+          val = info.elevationM != null ? info.elevationM.toFixed(1) + " m" : "—";
+        } else if (info.bridgeHover) {
+          what = String(info.name || "BRIDGE");
+          val = info.chainageLabel || "—";
+        } else if (info.fishingHover) {
+          what = String(info.name || "FISHING POINT");
+          val = info.activity || "—";
+        } else if (info.chainageHover) {
+          what = "CHAINAGE";
+          val = info.label || "—";
+        } else if (info.nullahHover) {
+          what = info.joiningHover ? "JOINING STREAM" : "DRAINAGE CHANNEL";
+          val = info.name && !/^unnamed\b/i.test(String(info.name)) ? info.name : info.chainageLabel || "—";
+        } else if (info.hydrologyPollution) {
+          what = "POLLUTION";
+          val = info.displayName || info.name || "—";
+        } else if (info.hydrologySalinity || info.hydrologyWaterQuality) {
+          what = info.hydrologySalinity ? "SALINITY" : info.layerTitle || "WATER QUALITY";
+          const isNumericWq = info.hydrologySalinity || info.layer === "water_quality_tss" || info.layer === "water_quality_ndci";
+          val = info.valueText ? info.valueText : (isNumericWq && info.range ? info.range : info.class_label || info.class || "—");
+        } else if (info.depthZoneHover) {
+          what = "DEPTH ZONE";
+          val = info.depthClass ? info.depthClass + " m" : "—";
+        } else if (info.compact || info.depth != null) {
+          what = "DEPTH";
+          if (info.compact) what = "RIVER";
+          val = info.depth != null ? info.depth.toFixed(2) + " m" : "—";
+        } else if (info.featureType) {
+          const isTree = info.featureType === "tree";
+          what = info.name || (isTree ? "TREE" : "BUILDING");
+          val = info.height != null ? info.height.toFixed(1) + " m" : (info.levels ? info.levels + " levels" : "—");
+        }
+        
+        el.className = "hud tooltip visible"; // clear out previous modifiers
+        el.style.left = `${x + 15}px`;
+        el.style.top = `${y + 15}px`;
+        el.style.padding = "5px 8px";
+        el.style.borderRadius = "5px";
+        el.style.minWidth = "auto";
+        el.style.maxWidth = matchAreaNameSize ? "200px" : "150px";
+        el.style.background = "rgba(12, 18, 28, 0.9)";
+        el.style.border = "1px solid rgba(154, 212, 224, 0.2)";
+        el.style.boxShadow = "0 4px 12px rgba(0,0,0,0.5)";
+        
+        el.innerHTML = `
+          <div class="hover-title" style="font-weight: 800; font-size: ${matchAreaNameSize ? areaNameFontSize : 9}px; color: #fff; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.04em; line-height: 1.15; text-shadow: 0 1px 3px #000;">${tipEsc(what)}</div>
+          <div class="hover-value" style="font-size: ${matchAreaNameSize ? areaNameFontSize : 11}px; color: #fff; font-weight: 750; font-family: ${matchAreaNameSize ? 'Inter, "Segoe UI", system-ui, sans-serif' : 'var(--font-mono, monospace)'}; line-height: 1.15; text-shadow: 0 1px 3px #000;">(${tipEsc(val)})</div>
+        `;
+        return;
+      }
+
+      // If it's a click panel, restore default tooltip styles
+      el.className = "hud tooltip visible";
+      el.style.padding = "";
+      el.style.borderRadius = "";
+      el.style.minWidth = "";
+      el.style.maxWidth = "";
+      el.style.background = "";
+      el.style.border = "";
+      el.style.boxShadow = "";
+
+      el.classList.toggle("tooltip--survey", !!info.rawSurveyPoint);
+      el.classList.toggle("tooltip--lithology", !!info.lithologyClick);
+      el.classList.toggle("tooltip--ship", !!info.shipClick);
+      el.classList.toggle("is-garbage-panel", !!info.hydrologyPollution);
+      if (info.lithologyClick) {
+        // Anchor at geographic screen point; CSS translates card above + leader to tip
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        const color = info.color || "#94A3B8";
+        const label = info.label || "—";
+        const pct = info.pct || "—";
+        el.innerHTML = `
+          <div class="litho-card">
+            <span class="litho-swatch" style="background:${color}"></span>
+            <span class="litho-label">${label}</span>
+            <span class="litho-pct">${pct}</span>
+          </div>
+        `;
+        return;
+      }
+      el.style.left = `${Math.min(x, window.innerWidth - 220)}px`;
+      el.style.top = `${Math.min(y, window.innerHeight - 180)}px`;
+      if (info.projectLandmark) {
+        el.innerHTML = `
+          <div class="be-card" style="min-width:210px">
+            <div class="be-body">
+              <div class="be-title">PROJECT LANDMARK</div>
+              <div class="be-row"><span class="be-label">${tipEsc(info.name || "—")}</span></div>
+              <div class="be-row" style="margin-top:6px;font-size:10px;opacity:.9">
+                <span>Lat ${Number(info.lat).toFixed(6)}</span>
+              </div>
+              <div class="be-row" style="font-size:10px;opacity:.9">
+                <span>Lon ${Number(info.lon).toFixed(6)}</span>
+              </div>
+              <div class="be-row" style="margin-top:6px;font-size:10px;opacity:.85">
+                <span>${tipEsc(info.geometryType || "Point")} · ${tipEsc(info.provenance || "OBSERVED")}</span>
+              </div>
+              <div class="be-row" style="font-size:9px;opacity:.75;margin-top:4px">
+                <span>${tipEsc(info.sourceFilename || "")}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      if (info.shipClick) {
+        const ship = info.ship || {};
+        const shipEsc = (value) => tipEsc(value ?? "—");
+        const title = ship.aisName || ship.name || ship.id || "DETECTION";
+        const sizeText =
+          ship.sizeText ||
+          (ship.lengthM != null && ship.widthM != null
+            ? `${Number(ship.lengthM).toFixed(2)} m × ${Number(ship.widthM).toFixed(1)} m`
+            : null);
+        const shipRows = [
+          ["Type", ship.type || ship.vesselClass],
+          ["IMO", ship.imo],
+          ["Flag", ship.flag],
+          ["Size (LOA × beam)", sizeText],
+          ["Length (LOA)", tipNum(ship.lengthM, 2, " m")],
+          ["Width (beam)", tipNum(ship.widthM, 1, " m")],
+          ["Confidence", tipNum(ship.confidence != null ? Number(ship.confidence) * 100 : null, 0, "%")],
+          ["Heading", ship.heading != null ? `${Math.round(Number(ship.heading))}°` : null],
+          ["Position", ship.lat != null && ship.lon != null ? `${Number(ship.lat).toFixed(6)}° N, ${Number(ship.lon).toFixed(6)}° E` : null],
+          ["Area", ship.locationNote],
+          ["Time", ship.datetime ? new Date(ship.datetime).toLocaleString() : null],
+          ["AIS name", ship.aisName],
+          ["MMSI", ship.aisMmsi],
+          ["Status", ship.aisStatus],
+          ["Model", ship.modelSource],
+          ["Wake", ship.wake],
+        ];
+        if (info.shipPinned) {
+          el.style.left = `${Math.max(12, window.innerWidth - 340)}px`;
+          el.style.top = `96px`;
+        } else {
+          el.style.left = `${Math.min(x, window.innerWidth - 300)}px`;
+          el.style.top = `${Math.min(y, window.innerHeight - 280)}px`;
+        }
+        el.innerHTML = `
+          <div class="be-card ship-info-card">
+            <div class="be-body">
+              <div class="be-title">VESSEL · ${shipEsc(title)}</div>
+              ${sizeText ? `<div class="be-row ship-size-row"><span class="be-label">LOA × beam</span><span class="be-pct">${shipEsc(sizeText)}</span></div>` : ""}
+              ${shipRows
+                .filter(([label, value]) => value != null && String(value).trim() !== "" && label !== "Size (LOA × beam)")
+                .map(([label, value]) => `<div class="be-row"><span class="be-label">${shipEsc(label)}</span><span class="be-pct">${shipEsc(value)}</span></div>`)
+                .join("")}
+              ${info.shipPinned ? `<em class="tip-garbage-foot">Selected · click elsewhere to clear</em>` : `<em class="tip-garbage-foot">Click ship to pin details</em>`}
+            </div>
+          </div>`;
+        return;
+      }
+      if (info.bankErosionHover) {
+        const color = info.color || "#7CFF2A";
+        const label = info.label || info.class_label || "—";
+        const pct = info.pct || "—";
+        el.innerHTML = `
+          <div class="be-card">
+            <span class="be-swatch" style="background:${color}"></span>
+            <div class="be-body">
+              <div class="be-title">BANK EROSION</div>
+              <div class="be-row">
+                <span class="be-label">${label}</span>
+                <span class="be-pct">${pct}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      if (info.landUseHover) {
+        const color = info.sampleColor || info.color || "#9fd98a";
+        const title = info.layerTitle || "LAND USE";
+        const isVolume = info.siltVolume || /volume/i.test(String(title));
+        const label = isVolume
+          ? info.valueText
+            ? info.valueText
+            : info.value != null
+              ? `${Number(info.value).toFixed(Number(info.value) >= 10 ? 1 : 2)} m³`
+              : info.label || "—"
+          : info.label || info.class_label || "—";
+        const extra = isVolume
+          ? `<span class="be-pct">/ ${Number(info.valueMax ?? 96.37).toFixed(2)} m³</span>`
+          : info.pct
+            ? `<span class="be-pct">${info.pct}</span>`
+            : "";
+        const sub = isVolume
+          ? `<div class="be-row be-row-muted"><span class="be-label">${info.rampLabel ? `Near ${info.rampLabel}` : "Volume scale (m³)"}</span></div>`
+          : "";
+        el.innerHTML = `
+          <div class="be-card lu-hover-card">
+            <span class="be-swatch" style="background:${color}"></span>
+            <div class="be-body">
+              <div class="be-title">${title}</div>
+              <div class="be-row">
+                <span class="be-label">${label}</span>
+                ${extra}
+              </div>
+              ${sub}
+            </div>
+          </div>
+        `;
+        return;
+      }
+      if (info.landHover || info.bridgeHover || info.fishingHover) {
+        const swatch = info.landCoverColor
+          ? `<span class="swatch" style="background:${info.landCoverColor}"></span>`
+          : "";
+        const title = info.landHover
+          ? `${swatch}LAND · HOVER`
+          : info.bridgeHover
+            ? `BRIDGE · ${tipEsc(info.name)}`
+            : `FISHING POINT · ${tipEsc(info.name)}`;
+        const rows = info.landHover
+          ? [
+              ["Land cover", info.landCover ? `${info.landCover}${info.lulcYear ? ` (LULC ${info.lulcYear})` : ""}` : null],
+              ["Terrain elevation", tipNum(info.elevationM, 1, " m")],
+              ["Distance to river", tipNum(info.distToRiverM, 0, " m")],
+              ["Nearest chainage", info.chainageLabel],
+            ]
+          : info.bridgeHover
+            ? [
+                ["Road", info.highway],
+                ["Span", tipNum(info.lengthM, 0, " m")],
+                ["Deck width", tipNum(info.widthM, 0, " m")],
+                ["River width here", tipNum(info.channelWidthM, 0, " m")],
+                ["Chainage", info.chainageLabel],
+                ["OSM ID", info.osmId],
+              ]
+            : [
+                ["Depth", tipNum(info.depthM, 2, " m")],
+                ["Activity", info.activity],
+                ["Species", info.species || null],
+                ["Zone radius", tipNum(info.radiusM, 0, " m")],
+                ["Near bridge", info.nearBridge == null ? null : info.nearBridge ? "Yes" : "No"],
+                ["Chainage", info.chainageLabel],
+                ["Status", info.waterValid === false ? "Invalid location" : null],
+              ];
+        el.innerHTML = `
+          <h3>${title}</h3>
+          ${tipRows(rows)}
+          ${tipRows([
+            ["Latitude", tipNum(info.lat, 6, "° N")],
+            ["Longitude", tipNum(info.lon, 6, "° E")],
+          ])}
+        `;
+        return;
+      }
+      if (info.chainageHover) {
+        el.innerHTML = `
+          <h3>CHAINAGE</h3>
+          <div class="kv"><span class="k">Station</span><span class="v">${info.label ?? "—"}</span></div>
+          <div class="kv"><span class="k">Meters</span><span class="v depth">${info.meters != null ? Math.round(info.meters) + " m" : "—"}</span></div>
+        `;
+        return;
+      }
+      if (info.rawSurveyPoint) {
+        el.innerHTML = `
+          <h3>SURVEY POINT${info.pointId != null ? ` · #${info.pointId}` : ""}</h3>
+          <div class="kv"><span class="k">Depth</span><span class="v depth">${info.depth != null ? Number(info.depth).toFixed(2) + " m" : "—"}</span></div>
+          <div class="kv"><span class="k">Lat</span><span class="v">${info.lat != null ? Number(info.lat).toFixed(5) + "°" : "—"}</span></div>
+          <div class="kv"><span class="k">Lon</span><span class="v">${info.lon != null ? Number(info.lon).toFixed(5) + "°" : "—"}</span></div>
+          <div class="kv"><span class="k">Bed</span><span class="v">${info.riverbedElevation != null ? Number(info.riverbedElevation).toFixed(2) + " m" : "—"}</span></div>
+          <div class="kv"><span class="k">Ch.</span><span class="v">${info.chainage ?? (info.chainageM != null ? Math.round(info.chainageM) + " m" : "—")}</span></div>
+        `;
+        return;
+      }
+      if (info.nullahHover) {
+        const row = (k, v) =>
+          v != null && String(v).trim() !== ""
+            ? `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`
+            : "";
+        el.innerHTML = `
+          <h3>${info.joiningHover ? "JOINING STREAM" : "💧 DRAINAGE CHANNEL"}</h3>
+          ${row("Name", info.name && !/^unnamed\b/i.test(String(info.name)) ? info.name : null)}
+          ${row("ID", info.displayId)}
+          ${row("Type", info.typeLabel || info.waterway)}
+          ${row("Chainage", info.chainageLabel)}
+          ${row("Length", info.lengthM != null ? `${Math.round(info.lengthM)} m` : "")}
+          ${row("Flow", info.flowDirection || (info.joiningHover ? "→ River" : null))}
+          ${row("Joins river", info.connectsToRiver == null ? "" : info.connectsToRiver ? "Connected" : "Disconnected")}
+          ${info.lat != null ? `<div class="kv"><span class="k">Latitude</span><span class="v">${Number(info.lat).toFixed(6)}° N</span></div>` : ""}
+          ${info.lon != null ? `<div class="kv"><span class="k">Longitude</span><span class="v">${Number(info.lon).toFixed(6)}° E</span></div>` : ""}
+          <em style="display:block;margin-top:6px;font-size:9px;color:var(--muted);">${info.joiningHover ? "Hover preview · click to select" : "Water moving toward Mula–Mutha"}</em>
+        `;
+        return;
+      }
+      if (info.hydrologyPollution) {
+        const esc = (s) =>
+          String(s ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        const siteId = esc(info.displayName || info.name || "—");
+        const status = esc(info.associationStatus || "—");
+        el.innerHTML = `
+          <header class="tip-garbage-head">
+            <span class="tip-garbage-dot" aria-hidden="true"></span>
+            <h3>Garbage Location</h3>
+          </header>
+          <div class="tip-garbage-grid">
+            <div class="kv"><span class="k">Site ID</span><span class="v">${siteId}</span></div>
+            ${info.chainageLabel ? `<div class="kv"><span class="k">Chainage</span><span class="v">${esc(info.chainageLabel)}</span></div>` : ""}
+            ${info.lat != null ? `<div class="kv"><span class="k">Latitude</span><span class="v">${Number(info.lat).toFixed(6)}°</span></div>` : ""}
+            ${info.lon != null ? `<div class="kv"><span class="k">Longitude</span><span class="v">${Number(info.lon).toFixed(6)}°</span></div>` : ""}
+            ${info.distanceToRiver != null ? `<div class="kv"><span class="k">Distance to River</span><span class="v">${Number(info.distanceToRiver).toFixed(1)} m</span></div>` : ""}
+            <div class="kv"><span class="k">Status</span><span class="v">${status}</span></div>
+            ${info.displayType ? `<div class="kv"><span class="k">Type</span><span class="v">${esc(info.displayType)}</span></div>` : ""}
+          </div>
+          <em class="tip-garbage-foot">${info.garbageSelected ? "Selected · click elsewhere to clear" : "Hover preview · click to select"}</em>
+        `;
+        return;
+      }
+      if (info.hydrologySalinity || info.hydrologyWaterQuality) {
+        const title = info.hydrologySalinity
+          ? "SALINITY"
+          : info.layerTitle ||
+            ({
+              water_quality_tss: "TSS",
+              water_quality_ndwi: "NDWI — Water Detection",
+              water_quality_ndci: "Chlorophyll-a",
+              water_quality_wst: "WST — Temperature",
+            }[info.layer] || "WATER QUALITY");
+        const swatch = info.color
+          ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${info.color};border:1px solid rgba(255,255,255,.35);margin-right:6px;vertical-align:middle"></span>`
+          : "";
+        const unit = info.unit || "";
+        const isNumericWq =
+          info.hydrologySalinity ||
+          info.layer === "water_quality_tss" ||
+          info.layer === "water_quality_ndci";
+        const classDisplay = isNumericWq && info.range
+          ? info.range
+          : info.class_label || info.class || "—";
+        el.innerHTML = `
+          <h3>${title}</h3>
+          <div class="kv"><span class="k">${isNumericWq ? "Scale" : "Class"}</span><span class="v">${swatch}${classDisplay}</span></div>
+          ${!isNumericWq && info.range ? `<div class="kv"><span class="k">Range</span><span class="v">${info.range}</span></div>` : ""}
+          ${info.valueText ? `<div class="kv"><span class="k">Value</span><span class="v depth">${info.valueText}</span></div>` : ""}
+          ${unit && !info.range ? `<div class="kv"><span class="k">Unit</span><span class="v">${unit}</span></div>` : ""}
+          ${info.lat != null ? `<div class="kv"><span class="k">Latitude</span><span class="v">${Number(info.lat).toFixed(6)}° N</span></div>` : ""}
+          ${info.lon != null ? `<div class="kv"><span class="k">Longitude</span><span class="v">${Number(info.lon).toFixed(6)}° E</span></div>` : ""}
+          <em style="display:block;margin-top:6px;font-size:9px;color:var(--muted);">${
+            info.hydrologySalinity
+              ? "Salinity scale · NDSI"
+              : info.layer === "water_quality_tss"
+                ? "TSS scale · mg/L"
+                : info.layer === "water_quality_ndci"
+                  ? "Chlorophyll-a scale · µg/L"
+                  : "Classified overlay · hover class"
+          }</em>
+        `;
+        return;
+      }
+      if (info.depthZoneHover) {
+        el.innerHTML = `
+          <h3>💎 BATHYMETRY</h3>
+          <div class="kv"><span class="k">Water depth</span><span class="v depth">${info.depthMid != null ? Number(info.depthMid).toFixed(2) + " m" : "—"}</span></div>
+          <div class="kv"><span class="k">Depth class</span><span class="v">${info.depthClass ?? "—"} m</span></div>
+          <div class="kv"><span class="k">Elevation</span><span class="v">${info.elevation != null ? Number(info.elevation).toFixed(1) + " m" : "—"}</span></div>
+          ${info.lat != null ? `<div class="kv"><span class="k">Latitude</span><span class="v">${Number(info.lat).toFixed(6)}° N</span></div>` : ""}
+          ${info.lon != null ? `<div class="kv"><span class="k">Longitude</span><span class="v">${Number(info.lon).toFixed(6)}° E</span></div>` : ""}
+          <em style="display:block;margin-top:6px;font-size:9px;color:var(--muted);">mula_mutha_depth_blueshade_smoothed.kmz · raster colour → depth</em>
+        `;
+        return;
+      }
+      if (info.compact) {
+        const measureRows =
+          info.riverMeasure && info.leftWidthM != null && info.rightWidthM != null
+            ? `
+          <div class="kv"><span class="k">LEFT WIDTH</span><span class="v depth">${Number(info.leftWidthM).toFixed(1)} m</span></div>
+          <div class="kv"><span class="k">RIGHT WIDTH</span><span class="v depth">${Number(info.rightWidthM).toFixed(1)} m</span></div>
+          <div class="kv"><span class="k">TOTAL WIDTH</span><span class="v">${info.widthM != null ? Number(info.widthM).toFixed(1) + " m" : "—"}</span></div>`
+            : "";
+        el.innerHTML = `
+          <h3>${info.riverMeasure ? "RIVER · MEASURE" : "RIVER · HOVER"}</h3>
+          <div class="kv"><span class="k">LAT / LON</span><span class="v">${info.lat.toFixed(6)}° N, ${info.lon.toFixed(6)}° E</span></div>
+          ${info.waterSurface != null ? `<div class="kv"><span class="k">WATER</span><span class="v">${info.waterSurface.toFixed(1)} m</span></div>` : ""}
+          <div class="kv"><span class="k">BED DEPTH</span><span class="v depth">${(-info.depth).toFixed(2)} m</span></div>
+          <div class="kv"><span class="k">MODE</span><span class="v">Relative</span></div>
+          <div class="kv"><span class="k">DEPTH</span><span class="v depth">${info.depth.toFixed(2)} m</span></div>
+          ${info.riverMeasure ? "" : tipRows([
+            ["CHAINAGE", info.chainageLabel],
+            ["WIDTH", tipNum(info.widthM, 1, " m")],
+          ])}
+          ${measureRows}
+          ${info.flowDirection ? `<div class="kv"><span class="k">FLOW</span><span class="v">${info.flowDirection}${info.flowSpeed != null ? ` · ${info.flowSpeed.toFixed(1)} m/s` : ""}</span></div>` : ""}
+          ${info.layerRows?.length ? `<div class="tip-sep"></div>${tipRows(info.layerRows.map(([k, v]) => [String(k).toUpperCase(), v]))}` : ""}
+        `;
+        return;
+      }
+      if (info.featureType) {
+        const isTree = info.featureType === "tree";
+        el.innerHTML = `
+          <h3>OSM · ${String(info.featureType).toUpperCase()}</h3>
+          ${tipRows([
+            ["Name", info.name],
+            [isTree ? "Species" : "Type", isTree ? info.species ?? info.genus : info.building],
+            ["Height", tipNum(info.height, 1, " m")],
+            ["Levels", info.levels],
+            ["Footprint", tipNum(info.footprintM2, 0, " m²")],
+            ["Amenity", info.amenity],
+            ["Address", info.address],
+            ["OSM ID", info.osmId],
+            ["Latitude", tipNum(info.lat, 6, "° N")],
+            ["Longitude", tipNum(info.lon, 6, "° E")],
+          ])}
+        `;
+        return;
+      }
+      if (info.stationSurvey) {
+        const st = info.station;
+        el.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <h3 style="margin:0;color:#00f2fe;">CSIR-NIO SURVEY STATION</h3>
+            <span class="badge" style="background:rgba(0,242,254,0.18);color:#00f2fe;border:1px solid rgba(0,242,254,0.4);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">
+              ${st.provenance || "OBSERVED SURVEY"}
+            </span>
+          </div>
+          <div class="kv"><span class="k">Station Code</span><span class="v depth">${st.station_code || `NIO-MAND-${st.station_no}`}</span></div>
+          <div class="kv"><span class="k">Reach / Location</span><span class="v">${st.name}</span></div>
+          <div class="kv"><span class="k">Coordinates</span><span class="v">${st.lat_dms || st.lat.toFixed(6) + '° N'}, ${st.lon_dms || st.lon.toFixed(6) + '° E'}</span></div>
+          <div class="kv"><span class="k">Measured Depth Range</span><span class="v depth">${st.measured_depth_min_m.toFixed(1)} – ${st.measured_depth_max_m.toFixed(1)} m</span></div>
+          <div class="kv"><span class="k">Bedrock Depth (Seismic)</span><span class="v">${st.bedrock_depth_min_m.toFixed(1)} – ${st.bedrock_depth_max_m.toFixed(1)} m</span></div>
+          <div class="kv"><span class="k">Vertical Datum</span><span class="v">${st.vertical_datum || "Chart Datum (CD) / MSL"}</span></div>
+          <div class="kv"><span class="k">Survey Dates</span><span class="v">${st.survey_date}</span></div>
+          <div class="kv"><span class="k">Sediment Sorting</span><span class="v">${st.sediment?.sorting || "Well sorted"}</span></div>
+          <div class="kv"><span class="k">Grain Composition</span><span class="v">Sand: ${st.sediment?.sand_wt_pct}%, Silt: ${st.sediment?.silt_wt_pct}%, Clay: ${st.sediment?.clay_wt_pct}%</span></div>
+          <div class="kv"><span class="k">Rock Color</span><span class="v">${st.sediment?.rock_color || "Moderate brown"}</span></div>
+          <div class="kv"><span class="k">Instrumentation</span><span class="v">Bathy-500HD Echo Sounder + Squid Sparker</span></div>
+        `;
+        return;
+      }
+      if (info.hydrologyInspect) {
+        const riverTitle = (info.riverName || window.__RIVER_DATASET__?.riverName || "MANDOVI RIVER").toUpperCase();
+        el.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <h3 style="margin:0;">${riverTitle.includes("HYDROLOGY") ? riverTitle : `${riverTitle} BATHYMETRY &amp; HYDROLOGY`}</h3>
+            <span class="badge" style="background:rgba(0,242,254,0.18);color:#00f2fe;border:1px solid rgba(0,242,254,0.4);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">
+              ${info.provenance || (info.surveyDepthM != null ? "OBSERVED SURVEY" : "INTERPOLATED")}
+            </span>
+          </div>
+          <div class="kv"><span class="k">Location</span><span class="v">${info.lat != null && info.lon != null ? `${Number(info.lat).toFixed(6)}° N, ${Number(info.lon).toFixed(6)}° E` : "—"}</span></div>
+          <div class="kv"><span class="k">Chainage</span><span class="v depth">${info.chainageLabel ?? "—"}</span></div>
+          <div class="kv"><span class="k">Water Depth</span><span class="v depth">${info.surveyDepthM != null ? Number(info.surveyDepthM).toFixed(2) + " m" : (info.depth != null ? Number(info.depth).toFixed(2) + " m" : "—")}</span></div>
+          <div class="kv"><span class="k">Water Surface Elevation</span><span class="v">${info.waterSurfaceElevation != null ? Number(info.waterSurfaceElevation).toFixed(2) + " m" : (info.waterSurface != null ? Number(info.waterSurface).toFixed(2) + " m" : "—")}${info.stageLabel ? ` · ${info.stageLabel}` : ""}</span></div>
+          <div class="kv"><span class="k">Riverbed Elevation</span><span class="v">${info.riverbedElevation != null ? Number(info.riverbedElevation).toFixed(2) + " m" : (info.bedElevationMsl != null ? Number(info.bedElevationMsl).toFixed(2) + " m CD/MSL" : (info.depth != null ? (-info.depth).toFixed(2) + " m" : "—"))}</span></div>
+          <div class="kv"><span class="k">Nearest Survey Station</span><span class="v">${info.nearestSurveyPoint || "—"}</span></div>
+          <div class="kv"><span class="k">Distance to Survey</span><span class="v">${info.distanceToSurveyPointM != null ? Number(info.distanceToSurveyPointM).toFixed(1) + " m" : "—"}</span></div>
+          <div class="kv"><span class="k">Survey Date</span><span class="v">${info.surveyDate || "March 2020 / Jan 2021"}</span></div>
+          <div class="kv"><span class="k">Vertical Datum</span><span class="v">${info.verticalDatum || "Chart Datum (CD) / MSL"}</span></div>
+          <div class="kv"><span class="k">Channel Top Width</span><span class="v">${info.widthM != null ? Number(info.widthM).toFixed(1) + " m" : "—"}</span></div>
+          <div class="kv"><span class="k">Cross-Section Area</span><span class="v">${info.crossSectionAreaM2 != null ? Number(info.crossSectionAreaM2).toFixed(1) + " m²" : "—"}</span></div>
+          <div class="kv"><span class="k">Water Volume (reach)</span><span class="v">${info.waterVolumeM3 != null ? Number(info.waterVolumeM3).toLocaleString() + " m³ · " + (info.waterVolumeProvenance || "") : "—"}</span></div>
+          <div class="kv"><span class="k">Hydraulic Radius</span><span class="v">${info.hydraulicRadiusM != null ? Number(info.hydraulicRadiusM).toFixed(2) + " m" : "—"}</span></div>
+          <button id="tip-cs-btn" style="margin-top:8px;width:100%;background:rgba(79,200,235,0.25);border:1px solid rgba(79,200,235,0.45);color:#00f2fe;padding:6px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">
+            📊 View Cross-Section Depth Profile
+          </button>
+          ${isDigitalTwinActive() ? `
+          <button id="tip-tg-btn" style="margin-top:6px;width:100%;background:rgba(0,229,180,0.15);border:1px solid rgba(0,229,180,0.35);color:#00e5b4;padding:5px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer">
+            📈 View Threshold Graph
+          </button>
+          <button id="tip-hi-btn" style="margin-top:6px;width:100%;background:rgba(255,195,0,0.12);border:1px solid rgba(255,195,0,0.3);color:#ffc300;padding:5px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer">
+            🌊 Hydrology Intelligence Panel
+          </button>` : ""}
+        `;
+        el.querySelector("#tip-cs-btn")?.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          window.__MM_CROSS_SECTION_MODAL__?.show?.(info.stationRecord);
+        });
+        el.querySelector("#tip-tg-btn")?.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          // Re-dispatch river-station-selected so the threshold graph opens
+          // at this exact station even if clicked from the tooltip.
+          document.dispatchEvent(
+            new CustomEvent("river-station-selected", {
+              detail: {
+                chainage_m:    info.stationRecord?.chainage_m,
+                stationLabel:  info.chainageLabel ?? info.stationRecord?.station_label,
+                stationRecord: info.stationRecord,
+                worldPosition: null,
+              },
+            })
+          );
+        });
+        el.querySelector("#tip-hi-btn")?.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          document.dispatchEvent(
+            new CustomEvent("river-station-selected", {
+              detail: {
+                chainage_m:    info.stationRecord?.chainage_m,
+                stationLabel:  info.chainageLabel ?? info.stationRecord?.station_label,
+                stationRecord: info.stationRecord,
+                worldPosition: null,
+              },
+            })
+          );
+          window.__MM_HYDRO_INTEL__?.show?.();
+        });
+        return;
+      }
+      const swatch = info.color
+        ? `<span class="swatch" style="background:${info.color}"></span>`
+        : "";
+      el.innerHTML = `
+        <h3>${swatch}RIVER INSPECT</h3>
+        <div class="kv"><span class="k">Chainage</span><span class="v">${info.chainage ?? "—"}</span></div>
+        <div class="kv"><span class="k">Lateral offset</span><span class="v">${info.lateralOffset != null ? info.lateralOffset.toFixed(1) + " m" : "—"}</span></div>
+        <div class="kv"><span class="k">Water depth</span><span class="v depth">${info.depth.toFixed(2)} m</span></div>
+        <div class="kv"><span class="k">Bed relative depth</span><span class="v depth">${(-info.depth).toFixed(2)} m</span></div>
+        <div class="kv"><span class="k">Mode</span><span class="v">Relative</span></div>
+        <div class="kv"><span class="k">Flow direction</span><span class="v">${info.flowDirection ?? "—"}</span></div>
+        <div class="kv"><span class="k">Nearest fishing</span><span class="v">${info.nearestFishing ?? "—"}</span></div>
+        <div class="kv"><span class="k">Nearest bridge</span><span class="v">${info.nearestBridge ?? "—"}</span></div>
+      `;
+    },
+    hide() {
+      el.classList.remove("visible");
+      el.classList.remove("tooltip--survey");
+      el.classList.remove("tooltip--bank-erosion");
+      el.classList.remove("tooltip--lithology");
+      el.classList.remove("tooltip--ship");
+      el.classList.remove("is-garbage-panel");
+    },
+  };
+}
+
+/** Bridge info (top-right) + cinematic coordinate overlay. */
+export function mountCinematicOverlays(root, dataset) {
+  const bridgeEl = document.createElement("aside");
+  bridgeEl.className = "hud bridge-info";
+  bridgeEl.id = "bridge-info";
+  bridgeEl.hidden = true;
+  bridgeEl.innerHTML = `
+    <strong>BRIDGE INFORMATION</strong>
+    <div class="kv"><span class="k">Name</span><span class="v" id="bi-name">—</span></div>
+    <div class="kv"><span class="k">Coordinates</span><span class="v" id="bi-coords">—</span></div>
+    <div class="kv"><span class="k">River crossing</span><span class="v" id="bi-cross">—</span></div>
+    <div class="kv"><span class="k">Length</span><span class="v" id="bi-len">—</span></div>
+  `;
+  root.appendChild(bridgeEl);
+
+  const cineEl = document.createElement("aside");
+  cineEl.className = "hud cine-info";
+  cineEl.id = "cine-info";
+  cineEl.hidden = true;
+  cineEl.innerHTML = `
+    <div class="cine-coords" id="cine-coords">—</div>
+    <div class="cine-meta" id="cine-meta">—</div>
+  `;
+  root.appendChild(cineEl);
+
+  function tick() {
+    const focus = state.cinematicBridgeFocus;
+    const showBridge = !!focus && state.cinematicActive && state.cinematicPhase === "bridge";
+    bridgeEl.hidden = !showBridge;
+    if (showBridge && focus) {
+      bridgeEl.querySelector("#bi-name").textContent = focus.name || "Unnamed bridge";
+      bridgeEl.querySelector("#bi-coords").textContent =
+        focus.lon != null ? `${focus.lat.toFixed(6)}° N · ${focus.lon.toFixed(6)}° E` : "—";
+      bridgeEl.querySelector("#bi-cross").textContent = focus.river || dataset?.riverName || "Mandovi River";
+      bridgeEl.querySelector("#bi-len").textContent =
+        focus.lengthM != null ? `${Math.round(focus.lengthM)} m` : "—";
+    }
+
+    const info = state.cinematicInfo;
+    const showCine = state.cinematicActive && info;
+    cineEl.hidden = !showCine;
+    if (showCine && info) {
+      cineEl.querySelector("#cine-coords").textContent =
+        `${info.lat.toFixed(6)}° N · ${info.lon.toFixed(6)}° E`;
+      cineEl.querySelector("#cine-meta").textContent =
+        `DEPTH: ${info.depth.toFixed(1)} m · FLOW: ${info.flowSpeed.toFixed(1)} m/s`;
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+/** VIEW → 3D landing: along-river oblique aerial angle showing the river corridor, settlements & bridges. */
+const VIEW_3D_POSE = {
+  cameraHeight: 65,
+  cameraDistance: 220,
+  lookAheadDistance: 80,
+  lookY: SURFACE_Y + 8,
+  minHeight: 25,
+  minBack: 80,
+  groundClearance: 12,
+};
+
+export function mountUI(root, {
+  dataset,
+  onCamera,
+  onCompass,
+  onResetOrientation,
+  onZoomIn,
+  onZoomOut,
+  onStartWaterFlow,
+  onTogglePauseWaterFlow,
+  isCinematicActive,
+  isCinematicPaused,
+  onQualityChange,
+}) {
+  root.classList.add("gis-ui");
+  if (state.showLayers) root.classList.add("layers-open");
+
+  const depthMin = Number.isFinite(dataset.minDepth) ? dataset.minDepth : 1.5;
+  const depthMax = Number.isFinite(dataset.maxDepth) ? dataset.maxDepth : 7.7;
+
+  const leftStack = document.createElement("div");
+  leftStack.id = "left-ui-stack";
+  leftStack.className = "left-ui-stack";
+  root.appendChild(leftStack);
+
+  const brandEl = mountProjectIdentity(root, dataset);
+
+  const syncLeftStackTop = () => {
+    const brand = brandEl || document.getElementById("hud-brand");
+    if (!brand) return;
+    const rect = brand.getBoundingClientRect();
+    if (rect.height > 0) {
+      const safeTop = Math.max(Math.ceil(rect.bottom + 12), 168);
+      leftStack.style.top = `${safeTop}px`;
+    }
+  };
+  if (typeof ResizeObserver !== "undefined" && brandEl) {
+    new ResizeObserver(syncLeftStackTop).observe(brandEl);
+  }
+  window.addEventListener("resize", syncLeftStackTop);
+  window.addEventListener("brand-resize", syncLeftStackTop);
+  setTimeout(syncLeftStackTop, 50);
+  setTimeout(syncLeftStackTop, 350);
+
+  mountAnalyticsControls(root, dataset);
+  const weather = mountWeatherWidget(root);
+  mountShipsFocusToggle(root);
+  const riverData = mountRiverDataPanel(leftStack, dataset, root);
+  // Keep River Data under the Ships toggle (when present) in the left stack.
+  const shipsBtn = document.getElementById("ships-focus-toggle");
+  if (shipsBtn && riverData?.el) {
+    if (shipsBtn.nextSibling !== riverData.el) {
+      leftStack.insertBefore(riverData.el, shipsBtn.nextSibling);
+    }
+  } else if (leftStack.firstElementChild !== riverData.el) {
+    leftStack.prepend(riverData.el);
+  }
+  const profileAnalysis = mountProfileAnalysisPanel(root, dataset);
+  riverData.bindProfileAnalysis?.(profileAnalysis);
+  const flowBtn = mountWaterFlowControl(root);
+  if (flowBtn) flowBtn.hidden = true; // no floating start CTA; pause only during cinematic
+  const { panel: layers } = mountLayersPanel(root);
+  layers.hidden = !state.showLayers;
+  const { panel: settings } = mountSettingsPanel(root);
+  settings.hidden = !state.showSettings;
+
+  mountCompassNavigation(root, {
+    onCompass: (dir) => onCompass?.(dir),
+    onResetOrientation: () => onResetOrientation?.(),
+  });
+  mountZoomControls(root, { onZoomIn, onZoomOut });
+
+  // Weather detail button lives in the right control stack, under the compass.
+  const weatherIconBtn = weather.el.querySelector("#weather-icon-btn");
+  const rightStack = root.querySelector(".gis-tools-stack");
+  if (weatherIconBtn && rightStack) {
+    weatherIconBtn.className = "map-ctrl-btn map-ctrl-btn--icon toolbar-button weather-tool-btn";
+    rightStack.insertBefore(weatherIconBtn, rightStack.querySelector(".gis-view-modes"));
+  }
+
+  // ─── Digital Twin HUD (same left stack as River Data / geology panels) ───
+  const dtDock = mountTwinAnalyticsDock(root);
+  const csModal = mountCrossSectionModal(root);
+  mountThresholdGraph(root);
+  mountHydroIntelPanel(root);
+  mountHydrologySimulationControls(leftStack);
+  // Start hidden — toggled from analytics nav [data-analytics=digital_twin]
+  dtDock.el.hidden = true;
+
+  const floodDock = document.createElement("div");
+  floodDock.id = "flood-left-dock";
+  floodDock.className = "flood-left-dock";
+  floodDock.hidden = true;
+  root.appendChild(floodDock);
+
+  const floodInfo = mountFloodResultPanel(floodDock, {
+    onReplay: () => window.__MM_SCENE__?.replayFloodSimulation?.(),
+    onFocus: () => window.__MM_SCENE__?.focusFloodSimulation?.(),
+    onClear: () => clearApiFloodUi(),
+    onClose: () => toggleFloodBar(false),
+  });
+
+  const floodPlayback = mountFloodPlaybackControls(floodDock, {
+    onSelectDate: (ymd) => selectFloodDate(ymd),
+    onGenerate: (ymd) => generateFloodDate(ymd),
+    onRefresh: () => refreshFloodCatalog({ force: true }),
+    onPlay: () => {
+      state.apiFlood.isPlaying = true;
+      floodPlayback.setPlaying?.(true);
+      window.__MM_SCENE__?.resumeFloodSimulation?.();
+    },
+    onPause: () => {
+      state.apiFlood.isPlaying = false;
+      floodPlayback.setPlaying?.(false);
+      window.__MM_SCENE__?.pauseFloodSimulation?.();
+    },
+    onReplay: () => {
+      state.apiFlood.isPlaying = true;
+      floodPlayback.setPlaying?.(true);
+      window.__MM_SCENE__?.replayFloodSimulation?.();
+    },
+    onReset: () => {
+      state.apiFlood.isPlaying = false;
+      floodPlayback.setPlaying?.(false);
+      window.__MM_SCENE__?.resetFloodSimulation?.();
+    },
+    onScrub: (p) => {
+      state.apiFlood.isPlaying = false;
+      floodPlayback.setPlaying?.(false);
+      window.__MM_SCENE__?.setFloodProgress?.(p);
+    },
+  });
+  const floodCompare = mountFloodComparePanel(floodDock, { dataset });
+  // FLOODS (1, 2, 3…): detected flood areas, directly below FLOOD COMPARE.
+  mountFloodListPanel(floodDock);
+  /**
+   * Raise river water to the flood product's water_rise (mm→m × progress).
+   * Does not move camera or chainage — only the water surface rises, then holds.
+   */
+  function syncRiverRiseFromFlood(progress, info) {
+    const p = Math.max(0, Math.min(1, Number(progress) || 0));
+    // Stable target only — water_rise_mm on the layer is the live animated value.
+    let riseTarget =
+      validNumber(info?._target_water_rise_m) ?? validNumber(info?.water_rise_m);
+    if (riseTarget == null) {
+      const y0 = validNumber(info?._scene_initial_water_y);
+      const y1 = validNumber(info?._scene_final_water_y);
+      if (y0 != null && y1 != null) riseTarget = Math.max(0, y1 - y0);
+    }
+    if (riseTarget == null || riseTarget < 0) return;
+    const liveM = riseTarget * p;
+    state.floodRiseM = liveM;
+    const floodEl = root.querySelector("#flood");
+    const floodLabel = root.querySelector("#flood-label");
+    if (floodEl) floodEl.value = String(Math.round(liveM * 100));
+    if (floodLabel) floodLabel.textContent = `+${liveM.toFixed(2)} m (${Math.round(liveM * 1000)} mm)`;
+  }
+
+  window.addEventListener("flood-sim-progress", (e) => {
+    const p = e.detail?.progress;
+    const info = e.detail?.info || state.floodSimInfo;
+    state.apiFlood.progress = p;
+    floodPlayback.setProgress(p);
+    syncRiverRiseFromFlood(p, info);
+  });
+  window.addEventListener("flood-sim-complete", () => {
+    state.apiFlood.isPlaying = false;
+    state.apiFlood.status = "complete";
+    floodPlayback.setPlaying?.(false);
+    floodPlayback.setProgress(1);
+    const info = state.floodSimInfo || state.apiFlood?.result?.info;
+    syncRiverRiseFromFlood(1, info);
+    setLpFloodStatus("Complete", "ok");
+  });
+
+  function syncFloodDockVisibility() {
+    floodDock.hidden = !state.showFloodBar;
+  }
+
+  function setLpFloodStatus(text, kind = "") {
+    const wrap = root.querySelector("#lp-flood-status");
+    const label = root.querySelector(".lp-flood-status-text");
+    const dot = root.querySelector(".lp-flood-status-dot");
+    if (label) label.textContent = text ? `Status · ${text}` : "Status · Idle";
+    if (wrap) wrap.dataset.kind = kind || "";
+    if (dot) dot.dataset.kind = kind || "";
+  }
+
+  function syncIllustrativeDisabled() {
+    const stage = root.querySelector("#lp-illustrative-stage");
+    const apiOn = state.floodMode === "api";
+    if (stage) stage.classList.toggle("is-disabled", apiOn);
+    const floodInput = root.querySelector("#flood");
+    if (floodInput) floodInput.disabled = apiOn;
+  }
+
+  function syncApiFloodFromLayer() {
+    const info = window.__MM_SCENE__?.apiFloodLayer?.userData?.getInfo?.() || state.apiFlood.result?.info;
+    if (info) {
+      state.apiFlood.result = { ...(state.apiFlood.result || {}), info };
+      state.floodSimInfo = info;
+      const idx = window.__MM_SCENE__?.apiFloodLayer?.userData?.getSceneIndex?.() ?? state.apiFlood.currentScene;
+      state.apiFlood.currentScene = idx;
+      const date = validYmd(info.scene_date);
+      state.apiFlood.currentDate = date;
+      // Never stomp the date picker while another date is loading.
+      const loading = state.apiFlood.status === "loading";
+      if (!loading) {
+        floodInfo.updateScene(info);
+        if (date) floodPlayback.setLoadedDate(date);
+      }
+    }
+    syncFloodSimStats();
+  }
+
+  /** Monotonic token: only the newest date request may touch the scene / UI. */
+  let floodRequestSeq = 0;
+
+  function resetApiFloodState(status = "idle") {
+    state.apiFlood = {
+      ...state.apiFlood,
+      status,
+      result: null,
+      scenes: [],
+      currentScene: 0,
+      currentDate: null,
+      isPlaying: false,
+      progress: 0,
+      error: null,
+      errorDetails: null,
+      message: "",
+    };
+    state.floodSimStatus = status;
+    state.floodSimMessage = "";
+    state.floodSimInfo = null;
+  }
+
+  /** Remove the previously loaded date's flood so it can never show under a new selection. */
+  function dropLoadedFlood() {
+    window.__MM_SCENE__?.pauseFloodSimulation?.();
+    if (window.__MM_SCENE__?.apiFloodLayer?.userData?.hasFlood) {
+      window.__MM_SCENE__?.clearFloodSimulation?.();
+    }
+    floodInfo.clear?.();
+    floodPlayback.setLoadedDate(null);
+    resetApiFloodState();
+  }
+
+  function clearApiFloodUi() {
+    floodRequestSeq += 1;
+    cancelJalnetraFloodRequest("scene");
+    hideLoader("flood", { immediate: true });
+    window.__MM_SCENE__?.clearFloodSimulation?.();
+    floodInfo.clear?.();
+    floodPlayback.setLoadedDate(null);
+    floodPlayback.setSelected(null, { focus: false });
+    floodPlayback.setStatus("");
+    if (!state.showFloodBar) floodPlayback.hide();
+    root.classList.remove("api-flood-mode");
+    if (!state.showFloodBar) root.classList.remove("flood-sim-open");
+    resetApiFloodState();
+    setLpFloodStatus("Idle", "");
+    updateDepthLegend(depthMin, depthMax);
+    syncFloodSimStats();
+    syncIllustrativeDisabled();
+  }
+
+  function isAbortError(err) {
+    return err?.name === "AbortError" || /cancel/i.test(err?.message || "");
+  }
+
+  /**
+   * Show the cached catalog immediately, then re-check JalNetra when it is stale
+   * (or when forced). Returns the freshest catalog, or null on failure.
+   */
+  async function refreshFloodCatalog({ force = false } = {}) {
+    if (!force) {
+      try {
+        const cached = await fetchFloodCatalog({ force: false });
+        if (cached) {
+          floodPlayback.setCatalog(cached);
+          floodCompare.setCatalog?.(cached);
+          if (cached.fetchedAt && Date.now() - cached.fetchedAt < FLOOD_CATALOG_MAX_AGE_MS) {
+            return cached;
+          }
+        }
+      } catch (err) {
+        console.warn("[Flood] cached catalog unavailable", err?.message || err);
+      }
+    }
+    floodPlayback.setRefreshing(true);
+    // Droplet loader only while JalNetra catalog is synchronizing (not app start).
+    showLoader("sync", { message: LOADER_STATUS.sync, progress: null });
+    try {
+      const cat = await fetchFloodCatalog({
+        force: true,
+        onProgress: (msg) => {
+          if (state.apiFlood.status !== "loading") floodPlayback.setStatus(msg, "loading");
+          updateLoader("sync", { message: LOADER_STATUS.sync });
+        },
+      });
+      floodPlayback.setCatalog(cat, { resetExpired: true });
+      floodCompare.setCatalog?.(cat);
+      if (state.apiFlood.status !== "loading") {
+        floodPlayback.setStatus(
+          cat.scenes.length ? "" : "JalNetra returned no Sentinel-1 flood scenes for this AOI.",
+          "",
+        );
+      }
+      return cat;
+    } catch (err) {
+      if (isAbortError(err)) return null;
+      const had = !!floodPlayback.getCatalog();
+      floodPlayback.setStatus(
+        `Catalog refresh failed: ${err?.message || err}${had ? " — showing last known catalog." : ""}`,
+        "error",
+      );
+      return null;
+    } finally {
+      floodPlayback.setRefreshing(false);
+      hideLoader("sync", { immediate: true });
+    }
+  }
+
+  /** Fetch and display exactly one date; supersedes any in-flight date request. */
+  async function selectFloodDate(ymd) {
+    const seq = ++floodRequestSeq;
+    cancelJalnetraFloodRequest("scene");
+    dropLoadedFlood();
+    floodPlayback.setSelected(ymd);
+    const catalog = floodPlayback.getCatalog();
+    const scene = getFloodSceneForDate(catalog, ymd);
+    if (!scene) {
+      floodPlayback.setStatus(`${ymd}: ${floodPlayback.dayStatus(ymd).reason}`, "");
+      setLpFloodStatus("Idle", "");
+      syncFloodSimStats();
+      return null;
+    }
+
+    floodPlayback.setProcessing(ymd, true);
+    floodPlayback.setBusy(true);
+    state.apiFlood.status = "loading";
+    state.floodSimStatus = "loading";
+    setLpFloodStatus("Running", "loading");
+    showLoader("flood", { message: LOADER_STATUS.flood, progress: null });
+    const onProgress = (msg) => {
+      if (seq !== floodRequestSeq) return;
+      state.apiFlood.message = msg;
+      floodPlayback.setStatus(msg, "loading");
+      updateLoader("flood", { message: LOADER_STATUS.flood });
+      syncFloodSimStats();
+    };
+    onProgress(`Loading ${ymd}…`);
+    try {
+      const result = await loadFloodSimulationForDate(ymd, { catalog, onProgress });
+      if (seq !== floodRequestSeq) {
+        hideLoader("flood", { immediate: true });
+        return null;
+      }
+      await applyFloodResult(result);
+      hideLoader("flood");
+      return result;
+    } catch (err) {
+      if (seq !== floodRequestSeq) {
+        hideLoader("flood", { immediate: true });
+        return null;
+      }
+      resetApiFloodState();
+      setLpFloodStatus("Idle", "");
+      if (isAbortError(err)) {
+        hideLoader("flood", { immediate: true });
+        floodPlayback.setStatus("");
+      } else if (err?.code === "EXPIRED") {
+        hideLoader("flood");
+        floodPlayback.markExpired(scene.kml_id);
+        floodPlayback.setStatus(`${err.message} Use Generate Simulation to re-run it.`, "error");
+      } else if (err?.code === "NO_FLOOD") {
+        hideLoader("flood");
+        floodPlayback.markNoFlood(ymd);
+        floodPlayback.setStatus(err.message, "");
+      } else if (err?.code === "NOT_IN_CATALOG") {
+        hideLoader("flood");
+        floodPlayback.setStatus(err.message, "");
+      } else {
+        failLoader("flood", err?.message || "Flood simulation could not be completed.");
+        state.apiFlood.status = "error";
+        state.apiFlood.error = err?.message || "Flood simulation could not be completed.";
+        state.floodSimStatus = "error";
+        setLpFloodStatus("Error", "error");
+        floodPlayback.setStatus(state.apiFlood.error, "error");
+        if (state.showFloodBar) {
+          floodInfo.show(null, {
+            error: true,
+            date: ymd,
+            message: state.apiFlood.error,
+            errorDetails: err?.stack ? String(err.message) : String(err),
+          });
+        }
+      }
+      syncFloodSimStats();
+      syncIllustrativeDisabled();
+      return null;
+    } finally {
+      if (seq === floodRequestSeq || floodPlayback.getSelected() !== ymd) {
+        floodPlayback.setProcessing(ymd, false);
+      }
+      if (seq === floodRequestSeq) floodPlayback.setBusy(false);
+    }
+  }
+
+  /** Expired product: re-run JalNetra processing (fresh kml_ids), then load the date. */
+  async function generateFloodDate(ymd) {
+    floodPlayback.setProcessing(ymd, true);
+    floodPlayback.setStatus(`Re-running JalNetra processing for ${ymd} (≈40 s)…`, "loading");
+    showLoader("flood", { message: LOADER_STATUS.flood, progress: null });
+    const cat = await refreshFloodCatalog({ force: true });
+    floodPlayback.setProcessing(ymd, false);
+    if (!cat || floodPlayback.getSelected() !== ymd) {
+      hideLoader("flood", { immediate: true });
+      return null;
+    }
+    if (!getFloodSceneForDate(cat, ymd)) {
+      hideLoader("flood");
+      floodPlayback.setStatus(`After regeneration JalNetra no longer lists a scene for ${ymd}.`, "error");
+      return null;
+    }
+    return selectFloodDate(ymd);
+  }
+
+  /** Panel opened: refresh the catalog and, if nothing is loaded, show the latest real scene. */
+  async function openFloodTimeline() {
+    await refreshFloodCatalog();
+    const cat = floodPlayback.getCatalog();
+    if (!state.showFloodBar || floodPlayback.getSelected() || state.apiFlood.currentDate) return;
+    if (cat?.latestDate) await selectFloodDate(cat.latestDate);
+  }
+
+  async function applyFloodResult(result) {
+    const apply = window.__MM_SCENE__?.applyFloodSimulation;
+    if (typeof apply !== "function") {
+      throw new Error("3D scene is not ready yet. Wait for the map to finish loading, then try again.");
+    }
+    apply(result);
+    const scenes = result.scenes || [];
+    state.floodMode = "api";
+    root.classList.add("api-flood-mode");
+    root.classList.toggle("flood-sim-open", !!state.showFloodBar);
+    root.querySelectorAll(".fishing-panel, .hud.fishing-panel").forEach((el) => {
+      el.hidden = true;
+    });
+    state.apiFlood = {
+      ...state.apiFlood,
+      status: "ready",
+      result,
+      scenes,
+      currentScene: result.currentScene ?? 0,
+      currentDate: result.scene?.date || result.info?.scene_date || null,
+      isPlaying: true,
+      progress: 0,
+      error: null,
+      errorDetails: null,
+      message: "",
+      showLayer: true,
+    };
+    state.floodSimStatus = "ready";
+    state.floodSimInfo = result.info;
+    state.floodSimMessage = "";
+    state.showFloodSimulation = true;
+    setChecked("flood-sim", true);
+    window.__MM_SCENE__?.apiFloodLayer?.setVisible?.(true);
+    const layerInfo = window.__MM_SCENE__?.apiFloodLayer?.userData?.getInfo?.() || result.info || {};
+    // Stored on the layer's info object so later scene/progress syncs keep the same rows.
+    const levelSrc = layerInfo.level_source;
+    const stored = result.catalog?.fromCache ? "Stored · cached" : "Stored";
+    layerInfo.status_label =
+      levelSrc === "api"
+        ? stored
+        : levelSrc === "estimated_from_extent"
+          ? `${stored} · levels est.`
+          : `${stored} · extent only`;
+    state.floodSimInfo = layerInfo;
+    syncFloodDockVisibility();
+    if (state.showFloodBar) {
+      floodInfo.show(layerInfo);
+      floodPlayback.show();
+    } else {
+      floodInfo.updateScene(layerInfo);
+      floodPlayback.hide();
+    }
+    // Prefer the catalog/API scene date so Flood Result + dropdown stay identical.
+    const date =
+      validYmd(layerInfo.scene_date) ||
+      validYmd(result.scene?.date) ||
+      validYmd(result.info?.scene_date) ||
+      validYmd(state.apiFlood.currentDate);
+    if (date && !validYmd(layerInfo.scene_date)) layerInfo.scene_date = date;
+    floodPlayback.setSelected(date, { focus: true });
+    floodPlayback.setLoadedDate(date);
+    floodPlayback.setPlaying?.(true);
+    floodPlayback.setProgress(0);
+    // The selected-date line already shows date + area; keep the status slot for loading / errors.
+    floodPlayback.setStatus("");
+    const maxDepth = validNumber(layerInfo?.max_depth_m);
+    if (maxDepth != null && maxDepth > 0) {
+      updateDepthLegend(0.5, Math.max(0.5, maxDepth));
+    } else {
+      // No measured/estimated depth — don't invent a scale from water rise.
+      if (typeof hideDepthLegend === "function") hideDepthLegend();
+      else {
+        const dl = document.getElementById("depth-legend");
+        if (dl) dl.hidden = true;
+      }
+    }
+    setLpFloodStatus("Running", "loading");
+    syncFloodSimStats();
+    syncIllustrativeDisabled();
+    // Stay on the user's current chainage / camera — only river water rises with the date's mm.
+    syncRiverRiseFromFlood(0, layerInfo);
+    window.__MM_SCENE__?.replayFloodSimulation?.();
+  }
+
+  window.__MM_FLOOD__ = {
+    clear: clearApiFloodUi,
+    play: () => window.__MM_SCENE__?.resumeFloodSimulation?.(),
+    replay: () => window.__MM_SCENE__?.replayFloodSimulation?.(),
+    selectDate: (ymd) => selectFloodDate(ymd),
+    refresh: () => refreshFloodCatalog({ force: true }),
+    run: (opts = {}) => (opts.date ? selectFloodDate(opts.date) : openFloodTimeline()),
+  };
+
+  function syncFloodSimStats() {
+    const el = root.querySelector("#flood-sim-stats");
+    if (!el) return;
+    const info = state.floodSimInfo || state.apiFlood?.result?.info;
+    const status = state.apiFlood?.status || state.floodSimStatus;
+    if (status === "loading" || status === "running") {
+      el.textContent = state.apiFlood?.message || "Running JalNetra flood simulation…";
+      return;
+    }
+    if (status === "error") {
+      el.textContent = state.apiFlood?.error || state.floodSimMessage || "Flood simulation error.";
+      return;
+    }
+    if (!info) {
+      el.textContent = "Open Flood Playback and pick an available date.";
+      return;
+    }
+    const flood = fmtHa(info.flood_area_ha);
+    const water = fmtHa(info.water_area_ha);
+    el.textContent =
+      joinValid([
+        fmtYmd(info.scene_date),
+        flood && `${flood} flood`,
+        water && `${water} water`,
+      ]) || "Flood extent loaded.";
+  }
+
+  let chainPanel = null;
+  const nav = mountNavigationControls(root, {
+    onOverview: () => {
+      map2dData?.leave();
+      onCamera("overview");
+      nav.syncActive();
+      // Keep overview clean — close chainage side panel (notes stay collapsed next open)
+      chainPanel?.close?.();
+    },
+    onRiverSide: () => {
+      map2dData?.resume();
+      onCamera("aerial");
+      nav.syncActive();
+    },
+    on3D: (opts = {}) => {
+      map2dData?.leave();
+      let mid = 8000;
+      const ch = dataset?.chainage;
+      if (ch && ch.length) {
+        mid = ch[0].meters + (ch[ch.length - 1].meters - ch[0].meters) / 2;
+      }
+      window.__MM_SCENE__?.goToChainageView?.(opts.meters ?? state.selectedChainageMeters ?? mid, {
+        pose: VIEW_3D_POSE,
+        ...opts,
+      });
+      nav.syncActive();
+    },
+    onSiltToggle: () => {
+      if (siltAnalysis?.isOpen?.()) {
+        siltAnalysis.close();
+      } else {
+        siltAnalysis?.open?.();
+      }
+    },
+    onLayersToggle: () => toggleLayers(),
+    onDrainageToggle: () => toggleDrainage(),
+    onSettingsToggle: () => toggleSettings(),
+    onFloodToggle: () => toggleFloodBar(),
+  });
+  window.__MM_NAV__ = { enter3D: (opts) => nav.enter3D(opts), view3DPose: VIEW_3D_POSE };
+  nav.setLayersPressed(state.showLayers);
+  nav.setDrainagePressed?.(state.showDrainage);
+  nav.setSettingsPressed?.(state.showSettings);
+  nav.setFloodPressed?.(state.showFloodBar);
+
+  const chainRuler = mountChainageRuler(root, dataset);
+  const map2dData = mountMap2dDataPanel(leftStack, riverData);
+  const siltAnalysis = mountSiltAnalysisOverlay(root, dataset);
+  const chainStepHud = mountChainageStepHud(root, dataset);
+  mountJoiningStreamsNav(root);
+  chainPanel = mountChainagePanel(root, dataset);
+
+  function syncSelectedChainage(meters) {
+    const raw = Number(meters);
+    const snapped = Number.isFinite(raw) ? Math.round(raw / 10) * 10 : meters;
+    const point = interpolateChainage(dataset.chainage, snapped);
+    if (!point) return;
+    point.meters = snapped;
+    point.label = formatStation(snapped);
+    riverData.update(point);
+    weather.updateForChainage(point);
+  }
+
+  document.addEventListener("chainage-select", (event) => {
+    const raw = Number(event.detail?.meters);
+    const m = Number.isFinite(raw) ? Math.round(raw / 10) * 10 : null;
+    if (m != null) state.selectedChainageMeters = m;
+    whenChainageSettled("river-data", m, () => syncSelectedChainage(m));
+    chainRuler.update?.(true);
+    chainStepHud.update?.();
+  });
+  const chainData = dataset.chainage || [];
+  let midMeters = 8000;
+  if (chainData.length > 0) {
+    const first = chainData[0].meters;
+    const last = chainData[chainData.length - 1].meters;
+    midMeters = first + (last - first) / 2;
+  }
+  const initialChainage = 0;
+  state.selectedChainageMeters = initialChainage;
+  syncSelectedChainage(initialChainage);
+
+  const depthStep = (depthMax - depthMin) / 5;
+
+  root.insertAdjacentHTML(
+    "beforeend",
+    `
+    <div class="hud gis-timeline" id="path-scrub" hidden>
+      <input id="scrub" type="range" min="0" max="1000" value="0" />
+      <span class="scene-label" id="scene-label">OVERVIEW · FULL AOI</span>
+    </div>
+  `,
+  );
+
+  const depthLegend = document.createElement("aside");
+  depthLegend.id = "depth-legend";
+  depthLegend.className = "depth-legend depth-legend--vertical depth-legend--corner";
+  depthLegend.setAttribute("aria-label", "Water depth legend");
+  depthLegend.innerHTML = `
+    <strong>WATER<br>DEPTH<br>(m)</strong>
+    <div class="depth-legend-body">
+      <div class="depth-bar" aria-hidden="true"></div>
+      <div class="depth-ticks">
+        <span>0–1 m</span>
+        <span>1–2 m</span>
+        <span>2–4 m</span>
+        <span>4–6 m</span>
+        <span>6–8 m</span>
+        <span>8–10 m</span>
+        <span>10–12 m</span>
+        <span>>12 m</span>
+      </div>
+    </div>
+  `;
+  root.appendChild(depthLegend);
+  
+  function updateDepthLegend(min, max) {
+    if (!depthLegend) return;
+    const ticks = depthLegend.querySelector(".depth-ticks");
+    if (!ticks) return;
+    ticks.innerHTML = `
+      <span>0–1 m</span>
+      <span>1–2 m</span>
+      <span>2–4 m</span>
+      <span>4–6 m</span>
+      <span>6–8 m</span>
+      <span>8–10 m</span>
+      <span>10–12 m</span>
+      <span>>12 m</span>
+    `;
+  }
+  const scrub = root.querySelector("#scrub");
+  const sceneLabel = root.querySelector("#scene-label");
+  const pathScrub = root.querySelector("#path-scrub");
+  const brand = root.querySelector("#hud-brand");
+  const navWrap = root.querySelector(".gis-nav-wrap");
+  const toolsStack = root.querySelector(".gis-tools-stack");
+
+  function toggleLayers(force) {
+    const open = force ?? !state.showLayers;
+    state.showLayers = open;
+    if (open) toggleSettings(false);
+    layers.hidden = !open;
+    root.classList.toggle("layers-open", open);
+    nav.setLayersPressed(open);
+  }
+
+  function toggleSettings(force) {
+    const open = force ?? !state.showSettings;
+    state.showSettings = open;
+    if (open) toggleLayers(false);
+    settings.hidden = !open;
+    nav.setSettingsPressed?.(open);
+  }
+
+  function toggleDrainage(force) {
+    const on = force ?? !state.showDrainage;
+    state.showDrainage = on;
+    state.showNallaFlow = on;
+    window.__MM_SCENE__?.setDrainageFlow?.(on);
+    nav.setDrainagePressed?.(on);
+  }
+
+  function toggleFloodBar(force) {
+    const open = force ?? !state.showFloodBar;
+    state.showFloodBar = open;
+    nav.setFloodPressed?.(open);
+    root.classList.toggle("flood-sim-open", !!open);
+    syncFloodDockVisibility();
+
+    if (open) {
+      // Hide fishing HUD so it doesn't stack over flood result / playback
+      root.querySelectorAll(".fishing-panel, .hud.fishing-panel").forEach((el) => {
+        el.hidden = true;
+      });
+      floodPlayback.show();
+      const activeInfo = state.floodSimInfo || state.apiFlood?.result?.info;
+      if (floodInfo.hasResult?.() || activeInfo) {
+        floodInfo.reopen?.(activeInfo);
+      }
+      openFloodTimeline();
+    } else {
+      floodPlayback.hide();
+      floodInfo.hide();
+    }
+
+    if (!open && state.floodMode !== "api") {
+      root.classList.remove("api-flood-mode");
+    }
+  }
+
+  root.querySelector("#layers-close")?.addEventListener("click", () => toggleLayers(false));
+  root.querySelector("#settings-close")?.addEventListener("click", () => toggleSettings(false));
+
+  root.querySelector("#layer-reset")?.addEventListener("click", () => {
+    if (state.cinematicActive) window.__MM_SCENE__?.stopCinematic?.();
+    onCamera("reset");
+    syncLayersPanelFromState();
+    onCamera("overview");
+    nav.syncActive();
+  });
+  root.querySelector("#layer-bath-cam")?.addEventListener("click", () => {
+    if (state.cinematicActive) window.__MM_SCENE__?.stopCinematic?.();
+    onCamera("bathymetry");
+    nav.syncActive();
+  });
+  root.querySelector("#layer-flow-path")?.addEventListener("click", () => {
+    if (state.cinematicActive) window.__MM_SCENE__?.stopCinematic?.();
+    onCamera("follow");
+    pathScrub.hidden = false;
+    nav.syncActive();
+  });
+  root.querySelector("#layer-river-cinematic")?.addEventListener("click", () => {
+    if (state.cinematicActive) return;
+    const ok = onStartWaterFlow?.();
+    if (ok === false) return;
+    setCinematicHud(true);
+    toggleLayers(false);
+  });
+
+  function syncCamButtons() {
+    nav.syncActive();
+    if (depthLegend) {
+      const cine = state.cinematicActive;
+      const showLegend =
+        !cine &&
+        (state.showWater || state.cameraMode === "bathymetry" || state.showBathymetry);
+      depthLegend.hidden = !showLegend;
+      const title = depthLegend.querySelector("strong");
+      if (title) {
+        title.innerHTML = state.showWater ? "WATER<br>DEPTH<br>(m)" : "CHANNEL<br>DEPTH<br>(m)";
+      }
+    }
+  }
+
+  function setCinematicHud(active) {
+    if (brand) brand.hidden = active;
+    if (navWrap) navWrap.hidden = false;
+    if (toolsStack) toolsStack.hidden = false;
+    if (flowBtn) flowBtn.hidden = !active;
+    if (pathScrub) pathScrub.hidden = active || state.cameraMode !== "follow";
+    if (!active) syncCamButtons();
+    if (active) {
+      toggleLayers(false);
+      toggleSettings(false);
+    }
+  }
+
+  flowBtn?.addEventListener("click", () => {
+    if (isCinematicActive?.()) {
+      onTogglePauseWaterFlow?.();
+      return;
+    }
+    const ok = onStartWaterFlow?.();
+    if (ok === false) return;
+    setCinematicHud(true);
+  });
+
+  scrub.addEventListener("input", () => {
+    state.pathT = Number(scrub.value) / 1000;
+    state.playing = false;
+    if (state.cameraMode !== "follow") onCamera("follow");
+  });
+
+  root.querySelector("#fish")?.addEventListener("change", (e) => {
+    state.showFish = e.target.checked;
+  });
+  root.querySelector("#fish-debug")?.addEventListener("change", (e) => {
+    state.showFishDebug = e.target.checked;
+  });
+  root.querySelector("#chain")?.addEventListener("change", (e) => {
+    state.showChainage = e.target.checked;
+  });
+  root.querySelector("#chain-labels")?.addEventListener("change", (e) => {
+    state.showChainageLabels = e.target.checked;
+  });
+  const syncChainMode = () => {
+    const meters = root.querySelector("#chain-mode-meters")?.checked;
+    state.chainageLabelMode = meters ? "meters" : "station";
+    root.querySelectorAll('input[name="chain-mode"]').forEach((inp) => {
+      inp.closest(".lp-row")?.classList.toggle("is-on", !!inp.checked);
+    });
+  };
+  root.querySelector("#chain-mode-station")?.addEventListener("change", syncChainMode);
+  root.querySelector("#chain-mode-meters")?.addEventListener("change", syncChainMode);
+  syncChainMode();
+
+  const syncUrban = () => {
+    state.showOsmBuildings = root.querySelector("#urb-b")?.checked ?? true;
+    state.showOsmRoads = root.querySelector("#urb-r")?.checked ?? true;
+    state.showUrban = state.showOsmBuildings || state.showOsmRoads;
+  };
+  root.querySelector("#urb-b")?.addEventListener("change", syncUrban);
+  root.querySelector("#urb-r")?.addEventListener("change", syncUrban);
+  root.querySelector("#br")?.addEventListener("change", (e) => {
+    state.showBridges = e.target.checked;
+  });
+  root.querySelector("#br-names")?.addEventListener("change", (e) => {
+    state.showBridgeNames = e.target.checked;
+  });
+  root.querySelector("#bath")?.addEventListener("change", (e) => {
+    state.showBathymetry = e.target.checked;
+  });
+  root.querySelector("#water")?.addEventListener("change", (e) => {
+    state.showWater = e.target.checked;
+    window.__MM_SCENE__?.setRiverVisible?.(e.target.checked);
+    syncCamButtons();
+  });
+  function setMapReferenceGrid(on) {
+    state.showMapReferenceGrid = !!on;
+    state.showKmlSkeleton = !!on;
+    state.showCoordinateGrid = !!on;
+  }
+  root.querySelector("#map-ref-grid")?.addEventListener("change", (e) => {
+    setMapReferenceGrid(e.target.checked);
+  });
+  // Legacy separate toggles (if present) stay in sync with combined control
+  root.querySelector("#kml-skel")?.addEventListener("change", (e) => {
+    state.showKmlSkeleton = e.target.checked;
+    state.showMapReferenceGrid = state.showKmlSkeleton && state.showCoordinateGrid;
+  });
+  root.querySelector("#coord-grid")?.addEventListener("change", (e) => {
+    state.showCoordinateGrid = e.target.checked;
+    state.showMapReferenceGrid = state.showKmlSkeleton && state.showCoordinateGrid;
+  });
+  root.querySelector("#depth-zones")?.addEventListener("change", (e) => {
+    const on = e.target.checked;
+    state.showDepthZones = on;
+    state.showBathymetry = on;
+    state.showRelativeWaterDepth = on;
+    window.__MM_SCENE__?.setBathymetryVisible?.(on);
+    window.__MM_SCENE__?.depthZonesLayer?.userData?.setVisible?.(on);
+    const toolkit = root.querySelector("#glassy-toolkit");
+    if (toolkit) toolkit.hidden = !on;
+    const statsEl = root.querySelector("#depth-zones-stats");
+    if (statsEl) {
+      if (!on) {
+        statsEl.textContent = "";
+        window.__MM_SCENE__?.depthZonesLayer?.userData?.setSelected?.(null);
+      } else {
+        state.glassyRevealActive = true;
+        window.__MM_SCENE__?.depthZonesLayer?.userData?.playReveal?.();
+        statsEl.textContent = "";
+      }
+    }
+    const ticks = document.querySelector("#depth-legend .depth-ticks");
+    if (ticks) {
+      ticks.innerHTML = on
+        ? `<span>0.5 m</span><span>1.5 m</span><span>3 m</span><span>4.5 m</span><span>6 m</span><span>7 m</span><span>8 m</span><span>deep</span>`
+        : `<span>0–1 m</span><span>1–2 m</span><span>2–4 m</span><span>4–6 m</span><span>6–8 m</span><span>8–10 m</span><span>10–12 m</span><span>>12 m</span>`;
+    }
+    const title = document.querySelector("#depth-legend strong");
+    if (title) title.innerHTML = on ? "BATHY<br>DEPTH<br>(m)" : "WATER<br>DEPTH<br>(m)";
+  });
+  root.querySelector("#water-surface-toggle")?.addEventListener("change", (e) => {
+    state.showWater = e.target.checked;
+    window.__MM_SCENE__?.setWaterSurfaceVisible?.(e.target.checked);
+  });
+  root.querySelector("#sat-drape")?.addEventListener("change", (e) => {
+    window.__MM_SCENE__?.setTerrainSatellite?.(e.target.checked);
+  });
+  root.querySelector("#riverbed-toggle")?.addEventListener("change", (e) => {
+    state.showRiverbed = e.target.checked;
+    window.__MM_SCENE__?.setRiverbedVisible?.(e.target.checked);
+  });
+  root.querySelector("#survey-stations-toggle")?.addEventListener("change", (e) => {
+    state.showSurveyStations = e.target.checked;
+    window.__MM_SCENE__?.setSurveyStationsVisible?.(e.target.checked);
+  });
+  root.querySelector("#project-landmarks")?.addEventListener("change", (e) => {
+    window.__MM_SCENE__?.setProjectLandmarksVisible?.(e.target.checked);
+  });
+  root.querySelector("#osm-roads")?.addEventListener("change", (e) => {
+    window.__MM_SCENE__?.setOsmRoadsVisible?.(e.target.checked);
+  });
+  root.querySelector("#bridges-layer")?.addEventListener("change", (e) => {
+    window.__MM_SCENE__?.setBridgesVisible?.(e.target.checked);
+  });
+  // Buildings + vegetation stay always on (no Layers toggles).
+  state.showOsmBuildings = true;
+  state.showVegetation = true;
+  state.showOsmTrees = true;
+  window.__MM_SCENE__?.setOsmBuildingsVisible?.(true);
+  window.__MM_SCENE__?.setVegetationVisible?.(true);
+  root.querySelector("#water-anim-toggle")?.addEventListener("change", (e) => {
+    window.__MM_SCENE__?.setWaterAnimationEnabled?.(e.target.checked);
+  });
+
+  function populateProjectLandmarksList(landmarks = []) {
+    const list = root.querySelector("#project-landmarks-list");
+    const stats = root.querySelector("#project-landmarks-stats");
+    if (stats) {
+      stats.textContent = landmarks.length
+        ? `${landmarks.length} landmarks · OBSERVED KMZ points · EPSG:4326`
+        : "No landmark data loaded";
+    }
+    if (!list) return;
+    list.innerHTML = landmarks
+      .map(
+        (lm) => `
+      <button type="button" class="lp-landmark-btn" data-landmark-id="${tipEsc(lm.id || lm.name)}" title="${tipEsc(lm.sourceFilename || "")}">
+        ${tipEsc(lm.name)}
+      </button>`,
+      )
+      .join("");
+    list.querySelectorAll("[data-landmark-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        window.__MM_SCENE__?.focusProjectLandmark?.(btn.dataset.landmarkId);
+      });
+    });
+  }
+
+  document.addEventListener("mm-updates-ready", (e) => {
+    populateProjectLandmarksList(e.detail?.landmarks || []);
+    const depth = e.detail?.report?.relativeDepth;
+    const depthToggle = root.querySelector("#depth-zones");
+    if (depthToggle && depth && !depth.available) {
+      depthToggle.disabled = true;
+      depthToggle.closest(".lp-row")?.classList.add("lp-row--unavailable");
+    }
+  });
+
+  root.querySelector("#flood-sim")?.addEventListener("change", (e) => {
+    state.showFloodSimulation = e.target.checked;
+    state.apiFlood.showLayer = e.target.checked;
+    window.__MM_SCENE__?.apiFloodLayer?.setVisible?.(e.target.checked);
+    window.__MM_SCENE__?.floodSimLayer?.setVisible?.(e.target.checked);
+    syncFloodSimStats();
+  });
+
+  document.addEventListener("mm-flood-scene", () => {
+    syncApiFloodFromLayer();
+  });
+  root.querySelector("#glassy-flow")?.addEventListener("change", (e) => {
+    state.glassyAnimatedFlow = e.target.checked;
+  });
+  root.querySelector("#glassy-opacity")?.addEventListener("input", (e) => {
+    state.glassyWaterOpacity = Number(e.target.value) / 100;
+  });
+  root.querySelector("#glassy-speed")?.addEventListener("input", (e) => {
+    state.glassyFlowSpeed = Number(e.target.value) / 100;
+  });
+  function syncGlassyMode() {
+    const data = root.querySelector("#glassy-mode-data");
+    state.glassyVizMode = data?.checked ? "data" : "cinematic";
+    root.querySelectorAll("[name=glassy-mode]").forEach((inp) => {
+      inp.closest(".lp-row")?.classList.toggle("is-on", !!inp.checked);
+    });
+  }
+  root.querySelector("#glassy-mode-cine")?.addEventListener("change", syncGlassyMode);
+  root.querySelector("#glassy-mode-data")?.addEventListener("change", syncGlassyMode);
+
+  root.querySelector("#opacity")?.addEventListener("input", (e) => {
+    state.waterOpacity = Number(e.target.value) / 100;
+  });
+  root.querySelector("#flowvis")?.addEventListener("input", (e) => {
+    state.flowVisibility = Number(e.target.value) / 100;
+  });
+  // Water animation is always on — no Layers toggle / style / flow controls.
+  state.waterAnimEnabled = true;
+  state.animateWater = true;
+  root.querySelector("#water-overall")?.addEventListener("input", (e) => {
+    state.waterOverallSpeed = Number(e.target.value) / 100;
+  });
+  root.querySelector("#water-primary-amp")?.addEventListener("input", (e) => {
+    state.primaryWaveAmplitude = Number(e.target.value) / 100;
+  });
+  root.querySelector("#water-ripple")?.addEventListener("input", (e) => {
+    state.rippleAmplitude = Number(e.target.value) / 100;
+  });
+  root.querySelectorAll("[data-wq]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      root.querySelectorAll("[data-wq]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.waterQuality = btn.dataset.wq;
+    });
+  });
+
+  // ── Sky & Atmosphere ──
+  const syncSky = () => window.__MM_SCENE__?.atmosphericSky?.syncFromState?.();
+  root.querySelector("#sky-enabled")?.addEventListener("change", (e) => {
+    state.skyEnabled = e.target.checked;
+    window.__MM_SCENE__?.atmosphericSky?.setEnabled?.(e.target.checked);
+  });
+  root.querySelector("#sky-preset")?.addEventListener("change", (e) => {
+    window.__MM_SCENE__?.atmosphericSky?.applyPreset?.(e.target.value);
+    syncLayersPanelFromState();
+  });
+  root.querySelector("#sky-cloud-density")?.addEventListener("input", (e) => {
+    state.skyCloudDensity = Number(e.target.value) / 100;
+    syncSky();
+  });
+  root.querySelector("#sky-cloud-speed")?.addEventListener("input", (e) => {
+    state.skyCloudSpeed = Number(e.target.value) / 100;
+    syncSky();
+  });
+  root.querySelector("#sky-sun")?.addEventListener("input", (e) => {
+    state.skySunIntensity = Number(e.target.value) / 100;
+    syncSky();
+  });
+  root.querySelector("#sky-atmosphere")?.addEventListener("input", (e) => {
+    state.skyAtmosphere = Number(e.target.value) / 100;
+    syncSky();
+  });
+  root.querySelector("#sky-haze")?.addEventListener("input", (e) => {
+    state.skyHorizonHaze = Number(e.target.value) / 100;
+    syncSky();
+  });
+  root.querySelector("#sky-shadows")?.addEventListener("change", (e) => {
+    state.skyCloudShadows = e.target.checked;
+    syncSky();
+  });
+  root.querySelectorAll("[data-sky-q]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      root.querySelectorAll("[data-sky-q]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.skyQuality = btn.dataset.skyQ;
+      syncSky();
+    });
+  });
+  root.querySelectorAll("[data-render-quality]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      root.querySelectorAll("[data-render-quality]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      onQualityChange?.(btn.dataset.renderQuality);
+    });
+  });
+
+  function syncFloodLabel(cm) {
+    const label = root.querySelector("#flood-label");
+    if (!label) return;
+    const m = (cm / 100).toFixed(1);
+    label.textContent = cm > 0 ? `+${m} m · SIMULATED` : `+${m} m`;
+  }
+  root.querySelector("#flood")?.addEventListener("input", (e) => {
+    if (state.floodMode === "api") return;
+    const cm = Number(e.target.value) || 0;
+    state.floodRiseM = cm / 100;
+    syncFloodLabel(cm);
+  });
+  root.querySelectorAll("[data-exag]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      root.querySelectorAll("[data-exag]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.depthExaggeration = Number(btn.dataset.exag);
+    });
+  });
+
+  function setChecked(id, on) {
+    const el = root.querySelector(`#${id}`);
+    if (el) el.checked = !!on;
+  }
+
+  function syncLayersPanelFromState() {
+    setChecked("water", state.showWater);
+    setChecked("drainage", state.showDrainage);
+    setChecked(
+      "map-ref-grid",
+      state.showMapReferenceGrid || (state.showKmlSkeleton && state.showCoordinateGrid),
+    );
+    setChecked("depth-zones", state.showDepthZones);
+    setChecked("project-landmarks", state.showProjectLandmarks !== false);
+    setChecked("osm-roads", state.showOsmRoads !== false);
+    setChecked("bridges-layer", state.showBridges !== false);
+    // Keep buildings + vegetation continuously on.
+    state.showOsmBuildings = true;
+    state.showVegetation = true;
+    state.showOsmTrees = true;
+    window.__MM_SCENE__?.setOsmBuildingsVisible?.(true);
+    window.__MM_SCENE__?.setVegetationVisible?.(true);
+    setChecked("water-anim-toggle", state.waterAnimEnabled !== false);
+    setChecked("water-surface-toggle", state.showWater !== false);
+    setChecked("riverbed-toggle", state.showRiverbed !== false);
+    setChecked("survey-stations-toggle", state.showSurveyStations !== false);
+    setChecked("glassy-flow", state.glassyAnimatedFlow);
+    state.waterAnimEnabled = true;
+    state.animateWater = true;
+    setChecked("sky-enabled", state.skyEnabled !== false);
+    setChecked("sky-shadows", state.skyCloudShadows !== false);
+    const skyPreset = root.querySelector("#sky-preset");
+    if (skyPreset) skyPreset.value = state.skyPreset || "calmRealistic";
+    const skyDens = root.querySelector("#sky-cloud-density");
+    const skySpd = root.querySelector("#sky-cloud-speed");
+    const skySun = root.querySelector("#sky-sun");
+    const skyAtm = root.querySelector("#sky-atmosphere");
+    const skyHz = root.querySelector("#sky-haze");
+    if (skyDens) skyDens.value = String(Math.round((state.skyCloudDensity ?? 0.42) * 100));
+    if (skySpd) skySpd.value = String(Math.round((state.skyCloudSpeed ?? 0.32) * 100));
+    if (skySun) skySun.value = String(Math.round((state.skySunIntensity ?? 1) * 100));
+    if (skyAtm) skyAtm.value = String(Math.round((state.skyAtmosphere ?? 0.55) * 100));
+    if (skyHz) skyHz.value = String(Math.round((state.skyHorizonHaze ?? 0.48) * 100));
+    root.querySelectorAll("[data-sky-q]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.skyQ === (state.skyQuality || "high"));
+    });
+    const waterPreset = root.querySelector("#water-preset");
+    if (waterPreset) waterPreset.value = state.waterPreset || "calmRealistic";
+    const wOverall = root.querySelector("#water-overall");
+    const wPrim = root.querySelector("#water-primary-amp");
+    const wRip = root.querySelector("#water-ripple");
+    if (wOverall) wOverall.value = String(Math.round((state.waterOverallSpeed ?? 0.55) * 100));
+    if (wPrim) wPrim.value = String(Math.round((state.primaryWaveAmplitude ?? 0.14) * 100));
+    if (wRip) wRip.value = String(Math.round((state.rippleAmplitude ?? 0.035) * 100));
+    root.querySelectorAll("[data-wq]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.wq === (state.waterQuality || "high"));
+    });
+    const toolkit = root.querySelector("#glassy-toolkit");
+    if (toolkit) toolkit.hidden = !state.showDepthZones;
+    const cine = root.querySelector("#glassy-mode-cine");
+    const dataMode = root.querySelector("#glassy-mode-data");
+    if (cine && dataMode) {
+      const isData = state.glassyVizMode === "data";
+      cine.checked = !isData;
+      dataMode.checked = isData;
+      syncGlassyMode();
+    }
+    const gOp = root.querySelector("#glassy-opacity");
+    const gSp = root.querySelector("#glassy-speed");
+    if (gOp) gOp.value = String(Math.round((state.glassyWaterOpacity ?? 0.72) * 100));
+    if (gSp) gSp.value = String(Math.round((state.glassyFlowSpeed ?? 0.45) * 100));
+    setChecked("br-names", state.showBridgeNames);
+    setChecked("chain", state.showChainage);
+    setChecked("chain-labels", state.showChainageLabels);
+    const station = root.querySelector("#chain-mode-station");
+    const meters = root.querySelector("#chain-mode-meters");
+    if (station && meters) {
+      const useMeters = state.chainageLabelMode === "meters";
+      station.checked = !useMeters;
+      meters.checked = useMeters;
+    }
+    syncChainMode();
+    const opacity = root.querySelector("#opacity");
+    const flow = root.querySelector("#flow");
+    const flowvis = root.querySelector("#flowvis");
+    if (opacity) opacity.value = String(Math.round((state.waterOpacity ?? 0.72) * 100));
+    if (flow) {
+      const flowPct = Math.round((state.flowSpeed ?? 0.45) * 100);
+      flow.value = String(Math.max(20, Math.min(100, flowPct)));
+    }
+    if (flowvis) flowvis.value = String(Math.round((state.flowVisibility ?? 0) * 100));
+    const flood = root.querySelector("#flood");
+    if (flood) {
+      const cm = Math.round((state.floodRiseM ?? 0) * 100);
+      flood.value = String(cm);
+      syncFloodLabel(cm);
+    }
+    root.querySelectorAll("[data-exag]").forEach((btn) => {
+      btn.classList.toggle("active", Number(btn.dataset.exag) === state.depthExaggeration);
+    });
+    [
+      "water",
+      "drainage",
+      "map-ref-grid",
+      "depth-zones",
+      "br-names",
+      "chain",
+      "chain-labels",
+      "glassy-flow",
+      "sky-enabled",
+      "sky-shadows",
+      "project-landmarks",
+      "osm-roads",
+      "bridges-layer",
+      "water-anim-toggle",
+      "sat-drape",
+      "water-surface-toggle",
+      "riverbed-toggle",
+      "survey-stations-toggle",
+    ].forEach((id) => bindLayerIndicator(root, id));
+  }
+
+  let wasCinematic = false;
+  let lastHud = 0;
+  function tickHud(now) {
+    // HUD doesn't need 60fps — saves main-thread work when port-sharing
+    if (now - lastHud < 80) {
+      requestAnimationFrame(tickHud);
+      return;
+    }
+    lastHud = now;
+    scrub.value = String(Math.round(state.pathT * 1000));
+    const cine = !!state.cinematicActive;
+
+    if (cine !== wasCinematic) {
+      setCinematicHud(cine);
+      wasCinematic = cine;
+    }
+
+    if (cine) {
+      if (brand) brand.hidden = true;
+      if (navWrap) navWrap.hidden = false;
+      if (toolsStack) toolsStack.hidden = false;
+      if (pathScrub) pathScrub.hidden = true;
+      if (chainPanel?.el) chainPanel.el.hidden = true;
+      if (chainStepHud?.el) chainStepHud.el.hidden = true;
+      if (flowBtn) {
+        flowBtn.hidden = false;
+        const paused = isCinematicPaused?.() || state.cinematicPaused;
+        flowBtn.textContent = paused ? "▶ RESUME WATER FLOW" : "⏸ PAUSE WATER FLOW";
+      }
+    } else {
+      if (brand) brand.hidden = false;
+      if (navWrap) navWrap.hidden = false;
+      if (toolsStack) toolsStack.hidden = false;
+      if (flowBtn) {
+        flowBtn.hidden = true;
+        flowBtn.disabled = false;
+        flowBtn.textContent = "💧 START WATER FLOW";
+      }
+      sceneLabel.textContent = sceneName(state.cameraMode);
+      pathScrub.hidden = state.cameraMode !== "follow";
+      scrub.hidden = false;
+    }
+
+    chainRuler?.update?.();
+    chainStepHud?.update?.();
+    siltAnalysis.update?.();
+    map2dData.update();
+    syncCamButtons();
+    requestAnimationFrame(tickHud);
+  }
+  requestAnimationFrame(tickHud);
+
+  syncLayersPanelFromState();
+  syncFloodSimStats();
+}

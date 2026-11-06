@@ -1,0 +1,210 @@
+{
+  "type": "FeatureCollection",
+  "name": "PROJECT LANDMARKS",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Betim Fishing Jetty",
+        "sourceFilename": "Betim Fishing Jetty.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.83427421853877,
+          15.50408776548442,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chimbel Creek Mouth",
+        "sourceFilename": "Chimbel Creek Mouth.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.86206282619113,
+          15.50445364616762,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chorao Island",
+        "sourceFilename": "Chorao Island.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.8721560442885,
+          15.51329707853288,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Indoor Stadium",
+        "sourceFilename": "Indoor Stadium.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.81238628918399,
+          15.49096546062906,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Miramar Beach",
+        "sourceFilename": "Miramar Beach.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.8050435051637,
+          15.48367283017295,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Offshore Casinos",
+        "sourceFilename": "Offshore Casinos.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.82493497645032,
+          15.50294501787134,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ourem Creek Mouth",
+        "sourceFilename": "Ourem Creek Mouth.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.83445671053612,
+          15.49900990657919,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Reis Magos Fort",
+        "sourceFilename": "Reis Magos Fort.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.81056978933869,
+          15.49574320538338,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Santa Monica Jetty",
+        "sourceFilename": "Santa Monica Jetty.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.82820933370128,
+          15.50186063645763,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "St Inez Creek Mouth",
+        "sourceFilename": "St Inez Creek Mouth.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.82082911643074,
+          15.50043610908947,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SV Road Main Drain",
+        "sourceFilename": "SV Road Main Drain.kmz",
+        "geometryType": "Point",
+        "provenance": "OBSERVED",
+        "description": null
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          73.82383066944772,
+          15.50104979176601,
+          0
+        ]
+      }
+    }
+  ]
+}

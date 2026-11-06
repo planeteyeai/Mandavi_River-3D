@@ -1,0 +1,65 @@
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(900px 480px at 50% 30%, rgba(42, 92, 120, 0.35), transparent 60%),
+    #071018;
+  color: #e7f2f6;
+  font-family: Inter, system-ui, sans-serif;
+}
+.gate[hidden] { display: none; }
+.gate-card {
+  width: min(520px, calc(100% - 32px));
+  padding: 28px 26px 22px;
+  border: 1px solid rgba(154, 212, 224, 0.22);
+  border-radius: 16px;
+  background: rgba(10, 18, 28, 0.88);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+.gate-kicker {
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  color: #8fd0c8;
+}
+.gate-card h1 {
+  margin: 8px 0 6px;
+  font-size: 28px;
+  letter-spacing: 0.04em;
+}
+.gate-card p { margin: 0 0 16px; color: #b7c9d1; font-size: 14px; line-height: 1.45; }
+.gate-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; font-size: 13px; }
+.gate-row input[type="date"], .gate-file {
+  background: #0e1822;
+  color: #e7f2f6;
+  border: 1px solid rgba(154, 212, 224, 0.3);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.gate-actions { display: flex; gap: 8px; margin-top: 8px; }
+.gate-actions button, .gate-continue {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.gate-go { background: #d7f36a; color: #14200a; }
+.gate-ghost { background: transparent; color: #d5e4ea; border: 1px solid rgba(154, 212, 224, 0.35) !important; }
+.gate-status {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  max-width: 280px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(8, 14, 22, 0.86);
+  color: #d5e7ee;
+  font: 12px/1.4 Inter, system-ui, sans-serif;
+  border: 1px solid rgba(154, 212, 224, 0.2);
+}
+.gate-status[hidden] { display: none; }
+.gate-status b { display: block; margin-bottom: 4px; letter-spacing: 0.08em; font-size: 10px; color: #8fd0c8; }

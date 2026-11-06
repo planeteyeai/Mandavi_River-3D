@@ -1,0 +1,20 @@
+﻿node_modules/
+dist/
+.vite/
+*.local
+.env
+.env.*
+!.env.example
+
+# Scratch / temp
+scratch/
+scratch_*.py
+test_chrome_*.png
+
+# Huge source archives / duplicates (use public/data copy + LFS for DAE)
+**/fishing-vessel-vii/source/**
+**/*.zip
+
+# Office lock files
+~$*
+

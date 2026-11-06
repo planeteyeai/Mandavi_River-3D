@@ -1,0 +1,149 @@
+/**********************************************************************
+ * SIMPLE SATELLITE-ONLY WATER-QUALITY MAP (Google Earth Engine, JS)
+ * Three layers only:
+ *   1. Eutrophication  (trophic class from chlorophyll-a)
+ *   2. High nitrogen   (risk class, NOT mg N/L)
+ *   3. E. coli         (bathing class, relative rank without field data)
+ * Methods: Johansen et al. 2024 (NDCI / 2BDA chlorophyll-a),
+ *          Chowdhury et al. 2025 (SWIR / blue indices for E. coli)
+ **********************************************************************/
+
+// ---------- 1. INPUTS ----------
+var aoi = ee.Geometry.Rectangle([74.95, 17.95, 75.25, 18.25]);   // PLACEHOLDER: replace with your OUR KML
+var START = '2025-10-29';
+var END   = '2026-10-28';
+
+// ---------- 2. SENTINEL-2 WATER PIXELS ----------
+var jrc = ee.Image('JRC/GSW1_4/GlobalSurfaceWater').select('occurrence').unmask(0);
+
+function prep(img) {
+  var water = img.select('SCL').eq(6).and(jrc.gte(20))
+                 .focalMin({radius: 20, units: 'meters', kernelType: 'square'});
+  var sr = img.select(['B1', 'B4', 'B5', 'B11', 'B12']).divide(10000).updateMask(water);
+
+  // Chlorophyll-a (ug/L): NDCI and 2BDA regressions from Johansen 2024, averaged
+  var ndci = sr.select('B5').subtract(sr.select('B4')).divide(sr.select('B5').add(sr.select('B4')));
+  var bda2 = sr.select('B5').divide(sr.select('B4'));
+  var chl = ndci.multiply(203.97).add(21.08)
+              .add(bda2.multiply(59.40).subtract(36.31)).divide(2)
+              .clamp(0, 200).rename('CHL');
+
+  // E. coli spectral features (Chowdhury 2025): SWIR 1614 / 2202 nm and blue 443 nm, smoothed ~90 m
+  var sm = sr.select(['B1', 'B11', 'B12'])
+             .focalMean({radius: 45, units: 'meters', kernelType: 'square'})
+             .updateMask(water);
+  var eps = 0.0005;
+  var b1 = sm.select('B1'), b11 = sm.select('B11'), b12 = sm.select('B12');
+  var f1 = b11.max(eps).divide(b12.max(eps)).rename('F1');
+  var f2 = b11.max(eps).divide(b1.max(eps)).rename('F2');
+  var f3 = b11.subtract(b1).divide(b11.add(b1)).rename('F3');
+
+  return ee.Image.cat([chl, f1, f2, f3]).copyProperties(img, ['system:time_start']);
+}
+
+var col = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+  .filterBounds(aoi).filterDate(START, END)
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 60))
+  .map(prep);
+print('Sentinel-2 scenes used', col.size());
+
+var med = col.median();
+var enough = col.select('CHL').count().gte(3);       // pixel needs 3+ clear observations
+
+// ---------- 3. LAYER 1: EUTROPHICATION ----------
+var chl = med.select('CHL').updateMask(enough);
+var tsi = chl.max(0.1).log().multiply(9.81).add(30.6);                 // Carlson TSI
+var trophic = tsi.gt(40).add(tsi.gt(50)).add(tsi.gt(70)).add(1);       // 1 oligo, 2 meso, 3 eutro, 4 hyper
+
+// ---------- 4. LAYER 2: HIGH NITROGEN (risk class) ----------
+// Chlorophyll level + nitrogen sources on land (WorldCover) + atmospheric NO2 (Sentinel-5P)
+var wc = ee.ImageCollection('ESA/WorldCover/v200').first().select('Map');
+function landFrac(cls, radius) {
+  return wc.eq(cls).reduceResolution({reducer: ee.Reducer.mean(), maxPixels: 1024})
+           .reproject({crs: 'EPSG:4326', scale: 100})
+           .focalMean({radius: radius, units: 'meters'});
+}
+var crop  = landFrac(40, 3000);     // cropland within 3 km (fertiliser)
+var built = landFrac(50, 2000);     // built-up within 2 km (sewage)
+var no2 = ee.ImageCollection('COPERNICUS/S5P/OFFL/L3_NO2')
+  .filterBounds(aoi).filterDate(START, END)
+  .select('tropospheric_NO2_column_number_density').mean();
+
+var chlPart  = tsi.subtract(40).divide(30).clamp(0, 1);
+var landPart = crop.add(built.multiply(0.5)).divide(0.5).clamp(0, 1);
+var no2Part  = no2.divide(1.5e-4).clamp(0, 1);
+var nRisk = chlPart.multiply(0.45).add(landPart.multiply(0.40)).add(no2Part.multiply(0.15));
+var nClass = nRisk.gt(0.33).add(nRisk.gt(0.66)).add(1);                // 1 low, 2 moderate, 3 high
+
+// ---------- 5. LAYER 3: E. COLI (bathing class) ----------
+// Each feature is rescaled 0-1 inside the AOI (5th-95th percentile), averaged, then blended with urban pressure.
+var feats = med.select(['F1', 'F2', 'F3']);
+var pct = feats.reduceRegion({
+  reducer: ee.Reducer.percentile([5, 95]), geometry: aoi, scale: 60,
+  maxPixels: 1e9, bestEffort: true, tileScale: 4
+});
+function scale01(b) {
+  var lo = ee.Number(pct.get(b + '_p5')), hi = ee.Number(pct.get(b + '_p95'));
+  return feats.select(b).subtract(lo).divide(hi.subtract(lo)).clamp(0, 1);
+}
+var fib = scale01('F1').add(scale01('F2')).add(scale01('F3')).divide(3).updateMask(enough);
+var urban = built.divide(0.25).clamp(0, 1);
+var ecoliScore = fib.multiply(0.75).add(urban.multiply(0.25));
+// Paper classes in order: Excellent, Good, Sufficient, Insufficient.
+// Without field data these are RELATIVE ranks of the 0-1 score, not CFU/100 ml.
+var ecoliClass = ecoliScore.gt(0.25).add(ecoliScore.gt(0.5)).add(ecoliScore.gt(0.75)).add(1);
+
+// ---------- 6. MAP ----------
+var PAL_TROPHIC = ['#2c7bb6', '#abd9e9', '#fdae61', '#d7191c'];
+var PAL_N       = ['#1a9641', '#ffffbf', '#d7191c'];
+var PAL_ECOLI   = ['#2c7bb6', '#91cf60', '#fdae61', '#d7191c'];
+
+Map.centerObject(aoi, 11);
+Map.addLayer(trophic,   {min: 1, max: 4, palette: PAL_TROPHIC}, '1. Eutrophication (trophic class)');
+Map.addLayer(nClass,    {min: 1, max: 3, palette: PAL_N},       '2. High-nitrogen risk class');
+Map.addLayer(ecoliClass, {min: 1, max: 4, palette: PAL_ECOLI},  '3. E. coli class');
+Map.addLayer(aoi, {color: 'white'}, 'AOI', true, 0.3);
+
+// ---------- 7. LEGENDS ----------
+function swatch(color, text) {
+  return ui.Panel([
+    ui.Label('', {backgroundColor: color, padding: '7px', margin: '0 6px 3px 0', border: '1px solid #888'}),
+    ui.Label(text, {margin: '0 0 3px 0', fontSize: '12px'})
+  ], ui.Panel.Layout.flow('horizontal'));
+}
+function head(title, sub) {
+  return ui.Panel([
+    ui.Label(title, {fontWeight: 'bold', fontSize: '12px', margin: '8px 0 0 0'}),
+    ui.Label(sub, {fontSize: '11px', color: '#555', margin: '0 0 3px 0'})
+  ]);
+}
+
+var legend = ui.Panel({style: {position: 'bottom-left', padding: '8px 12px', maxWidth: '300px'}});
+legend.add(ui.Label('LEGEND', {fontWeight: 'bold', fontSize: '14px', margin: '0'}));
+
+legend.add(head('1. Eutrophication', 'Chlorophyll-a in ug/L (Carlson TSI)'));
+legend.add(swatch(PAL_TROPHIC[0], 'Oligotrophic: < 2.6 ug/L (TSI < 40)'));
+legend.add(swatch(PAL_TROPHIC[1], 'Mesotrophic: 2.6 - 7.3 ug/L (TSI 40-50)'));
+legend.add(swatch(PAL_TROPHIC[2], 'Eutrophic: 7.3 - 56 ug/L (TSI 50-70)'));
+legend.add(swatch(PAL_TROPHIC[3], 'Hypereutrophic: > 56 ug/L (TSI > 70)'));
+
+legend.add(head('2. High nitrogen', ''));
+legend.add(swatch(PAL_N[0], 'Low'));
+legend.add(swatch(PAL_N[1], 'Moderate'));
+legend.add(swatch(PAL_N[2], 'High'));
+
+legend.add(head('3. E. coli', 'CFU/100 ml classes; map shows relative rank of the 0-1 score'));
+legend.add(swatch(PAL_ECOLI[0], 'Good: <= 250 CFU/100 ml '));
+legend.add(swatch(PAL_ECOLI[1], 'Moderate: 260 - 500 '));
+legend.add(swatch(PAL_ECOLI[2], ' High: 500 - 2000 '));
+legend.add(swatch(PAL_ECOLI[3], 'Highly risk: > 2000 '));
+Map.add(legend);
+
+// ---------- 8. EXPORT ----------
+Export.image.toDrive({
+  image: ee.Image.cat([chl.rename('CHL_ugL'), tsi.rename('TSI'), trophic.rename('TROPHIC_CLASS'),
+                       nRisk.rename('N_RISK'), nClass.rename('N_CLASS'),
+                       ecoliScore.rename('ECOLI_SCORE'), ecoliClass.rename('ECOLI_CLASS')]).toFloat(),
+  description: 'WQ_simple_eutrophication_nitrogen_ecoli',
+  region: aoi, scale: 20, maxPixels: 1e10
+});

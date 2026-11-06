@@ -1,0 +1,42 @@
+{
+  "type": "FeatureCollection",
+  "name": "Live Water Extent bounds",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Live Water - 2026-10-30",
+        "sourceFilename": "live_water_mandavi.kml",
+        "provenance": "DERIVED",
+        "description": "Sentinel-2 MNDWI live water (blue). Frequency threshold: 0.5. Window: 2026-10-04 to 2026-11-03. Water area: 2254.6145813347057 ha."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              73.76545998,
+              15.4593098
+            ],
+            [
+              73.88313675,
+              15.4593098
+            ],
+            [
+              73.88313675,
+              15.52859903
+            ],
+            [
+              73.76545998,
+              15.52859903
+            ],
+            [
+              73.76545998,
+              15.4593098
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

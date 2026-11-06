@@ -1,0 +1,484 @@
+import * as THREE from "three";
+import { terrainHeightAt } from "../scene/terrain.js";
+import { OSM_ROADS_RENDER_ORDER } from "../scene/drapeDepth.js";
+import { pointInRing } from "../features/fishing/FishingZoneSystem.js";
+
+/**
+ * Roads are flat on the DTM, below draped KML overlays. Drawing them in the
+ * transparent pass after the overlays keeps them visible on top of the
+ * overlay while terrain / buildings still occlude them via depth.
+ */
+const OSM_ROAD_DRAW = { transparent: true, opacity: 1, depthWrite: true };
+
+/** OSM highway → carriageway width (m). */
+const WIDTH_BY_CLASS = {
+  motorway: 14,
+  trunk: 12,
+  primary: 10,
+  secondary: 8.5,
+  tertiary: 7,
+  residential: 5.5,
+  unclassified: 5,
+  living_street: 5,
+  service: 3.5,
+  track: 3,
+  footway: 2,
+  path: 1.6,
+  cycleway: 2.2,
+  pedestrian: 3,
+};
+
+/** Asphalt / surface colors by class — dark grey, not pure black. */
+const ASPHALT = {
+  motorway: "#4a5058",
+  trunk: "#4c525a",
+  primary: "#505660",
+  secondary: "#545a62",
+  tertiary: "#585e66",
+  residential: "#5c6268",
+  unclassified: "#5e646a",
+  living_street: "#60666c",
+  service: "#646a70",
+  track: "#726858",
+  footway: "#8a8478",
+  path: "#7e786c",
+  cycleway: "#5a6870",
+  pedestrian: "#8e8880",
+};
+
+const MAJOR = /^(motorway|trunk|primary|secondary)$/;
+const MEDIUM = /^(tertiary|residential|unclassified|living_street)$/;
+const PATH = /^(footway|path|cycleway|pedestrian|track)$/;
+
+/**
+ * Terrain-following OSM roads as continuous mitered ribbons (no box gaps at bends).
+ * OSM ways share node coordinates at junctions, so ribbons meet without snapping.
+ */
+export function createRoadSystem(dataset) {
+  const group = new THREE.Group();
+  group.name = "roads";
+  const stations = dataset.corridor.stations;
+  const ring = dataset.ringLocal || [];
+  const rawRoads = dataset.osm?.roads || [];
+  const bridges = dataset.bridges || [];
+
+  let roads = rawRoads.map((r) => ({
+    ...r,
+    vertices: (r.vertices || []).map((v) => ({ ...v })),
+  }));
+
+  // Preserve authentic OSM roads only — no synthetic roads.
+
+  if (!roads.length) return group;
+
+  /** @type {Array<{pts: Array<{x:number,z:number,y:number}>, halfW:number, color:string, major:boolean, medium:boolean, pathLike:boolean, hw:string}>} */
+  const ribbons = [];
+  const edgeSegs = [];
+  const dashSegs = [];
+  let skippedWater = 0;
+
+  for (const road of roads) {
+    const hw = road.highway || "residential";
+    if (hw === "steps" || hw === "bridleway") continue;
+    const w = Math.max(1.6, road.widthM || WIDTH_BY_CLASS[hw] || 5.5);
+    const verts = road.vertices || [];
+    if (verts.length < 2) continue;
+
+    const pathLike = PATH.test(hw);
+    const major = MAJOR.test(hw);
+    const medium = MEDIUM.test(hw);
+    const widthScale = pathLike ? 0.85 : major ? 1.0 : medium ? 0.88 : 0.78;
+    const deckW = w * widthScale;
+    const color = ASPHALT[hw] || "#5a6068";
+    const segW = pathLike ? Math.min(deckW, 2.8) : deckW;
+    const halfW = segW * 0.5;
+
+    // Build contiguous land runs (break over water / under bridge decks)
+    let run = [];
+    const flushRun = () => {
+      if (run.length >= 2) {
+        const densified = densifyRun(run, 14);
+        ribbons.push({
+          pts: densified,
+          halfW,
+          color,
+          major,
+          medium,
+          pathLike,
+          hw,
+        });
+        addMarkingsAlong(densified, halfW, major, medium, edgeSegs, dashSegs);
+      }
+      run = [];
+    };
+
+    for (let i = 0; i < verts.length; i++) {
+      const v = verts[i];
+      const bank = nearestHalf(v.x, v.z, stations);
+      const overWater = ring.length >= 3 ? pointInRing(v.x, v.z, ring) : bank.lat < bank.half * 0.72;
+      const underBridge = isUnderBridgeDeck(v.x, v.z, bridges, stations);
+      if (overWater || underBridge) {
+        if (overWater || underBridge) skippedWater++;
+        flushRun();
+        continue;
+      }
+      const y = terrainHeightAt(v.x, v.z, stations) + 0.14;
+      run.push({ x: v.x, z: v.z, y });
+    }
+    flushRun();
+  }
+
+  if (!ribbons.length) return group;
+
+  // —— Continuous asphalt ribbons (merged, vertex-colored) ——
+  const asphaltGeo = buildMergedRibbons(ribbons, (r) => r.halfW, 0);
+  if (asphaltGeo) {
+    const asphaltMat = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.96,
+      metalness: 0.02,
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+      ...OSM_ROAD_DRAW,
+    });
+    const asphalt = new THREE.Mesh(asphaltGeo, asphaltMat);
+    asphalt.name = "roadAsphalt";
+    asphalt.receiveShadow = true;
+    asphalt.castShadow = false;
+    asphalt.frustumCulled = false;
+    asphalt.renderOrder = OSM_ROADS_RENDER_ORDER + 1;
+    group.add(asphalt);
+  }
+
+  // —— Soft shoulders (slightly wider, lower) ——
+  const shoulderRibbons = ribbons
+    .filter((r) => r.major || r.medium)
+    .map((r) => ({
+      ...r,
+      halfW: r.halfW + (r.major ? 0.55 : 0.35),
+      color: "#a8a098",
+    }));
+  const shoulderGeo = buildMergedRibbons(shoulderRibbons, (r) => r.halfW, -0.04);
+  if (shoulderGeo) {
+    const shoulderMat = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.92,
+      metalness: 0.02,
+      vertexColors: true,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+      ...OSM_ROAD_DRAW,
+    });
+    const shoulders = new THREE.Mesh(shoulderGeo, shoulderMat);
+    shoulders.name = "roadShoulders";
+    shoulders.receiveShadow = true;
+    shoulders.frustumCulled = false;
+    shoulders.renderOrder = OSM_ROADS_RENDER_ORDER;
+    group.add(shoulders);
+  }
+
+  const unit = new THREE.BoxGeometry(1, 1, 1);
+  unit.translate(0, 0.5, 0);
+  const dummy = new THREE.Object3D();
+
+  // —— White edge lines ——
+  if (edgeSegs.length) {
+    const edgeMat = new THREE.MeshStandardMaterial({
+      color: "#e8ecef",
+      roughness: 0.72,
+      metalness: 0.05,
+      emissive: "#2a2e32",
+      emissiveIntensity: 0.12,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      polygonOffsetUnits: -3,
+      ...OSM_ROAD_DRAW,
+    });
+    const edges = new THREE.InstancedMesh(unit, edgeMat, edgeSegs.length);
+    edges.name = "roadEdges";
+    edges.frustumCulled = false;
+    edges.renderOrder = OSM_ROADS_RENDER_ORDER + 2;
+    for (let i = 0; i < edgeSegs.length; i++) {
+      const s = edgeSegs[i];
+      dummy.position.set(s.x, s.y, s.z);
+      dummy.rotation.set(0, s.rot, 0);
+      dummy.scale.set(s.w, 0.05, s.len);
+      dummy.updateMatrix();
+      edges.setMatrixAt(i, dummy.matrix);
+    }
+    edges.instanceMatrix.needsUpdate = true;
+    group.add(edges);
+  }
+
+  // —— Dashed center markings ——
+  if (dashSegs.length) {
+    const dashMat = new THREE.MeshStandardMaterial({
+      color: "#f0e6b0",
+      roughness: 0.65,
+      metalness: 0.04,
+      emissive: "#3a3418",
+      emissiveIntensity: 0.15,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      polygonOffsetUnits: -3,
+      ...OSM_ROAD_DRAW,
+    });
+    const dashes = new THREE.InstancedMesh(unit, dashMat, dashSegs.length);
+    dashes.name = "roadDashes";
+    dashes.frustumCulled = false;
+    dashes.renderOrder = OSM_ROADS_RENDER_ORDER + 2;
+    for (let i = 0; i < dashSegs.length; i++) {
+      const s = dashSegs[i];
+      dummy.position.set(s.x, s.y, s.z);
+      dummy.rotation.set(0, s.rot, 0);
+      dummy.scale.set(s.w, 0.05, s.len);
+      dummy.updateMatrix();
+      dashes.setMatrixAt(i, dummy.matrix);
+    }
+    dashes.instanceMatrix.needsUpdate = true;
+    group.add(dashes);
+  }
+
+  console.info("Roads", {
+    ribbons: ribbons.length,
+    edges: edgeSegs.length,
+    dashes: dashSegs.length,
+    skippedWater,
+  });
+  return group;
+}
+
+/** Insert points along long spans so terrain height follows smoothly. */
+function densifyRun(pts, maxStepM) {
+  if (pts.length < 2) return pts;
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const n = Math.max(1, Math.ceil(len / maxStepM));
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      out.push({
+        x: a.x + (b.x - a.x) * t,
+        z: a.z + (b.z - a.z) * t,
+        y: a.y + (b.y - a.y) * t,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Build one BufferGeometry from many ribbons with mitered left/right edges.
+ * @param {typeof ribbons} ribbons
+ * @param {(r: object) => number} halfFn
+ * @param {number} yBias
+ */
+function buildMergedRibbons(ribbons, halfFn, yBias = 0) {
+  const positions = [];
+  const colors = [];
+  const indices = [];
+  const c = new THREE.Color();
+
+  for (const r of ribbons) {
+    const pts = r.pts;
+    if (!pts || pts.length < 2) continue;
+    const halfW = halfFn(r);
+    c.set(r.color || "#5c6268");
+    const base = positions.length / 3;
+
+    const left = [];
+    const right = [];
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      let tx;
+      let tz;
+      if (i === 0) {
+        tx = pts[1].x - p.x;
+        tz = pts[1].z - p.z;
+      } else if (i === pts.length - 1) {
+        tx = p.x - pts[i - 1].x;
+        tz = p.z - pts[i - 1].z;
+      } else {
+        const ax = p.x - pts[i - 1].x;
+        const az = p.z - pts[i - 1].z;
+        const bx = pts[i + 1].x - p.x;
+        const bz = pts[i + 1].z - p.z;
+        const al = Math.hypot(ax, az) || 1;
+        const bl = Math.hypot(bx, bz) || 1;
+        tx = ax / al + bx / bl;
+        tz = az / al + bz / bl;
+      }
+      const tl = Math.hypot(tx, tz) || 1;
+      tx /= tl;
+      tz /= tl;
+      // Left normal in XZ (perpendicular to tangent)
+      let nx = -tz;
+      let nz = tx;
+
+      // Miter at interior vertices so bends stay sealed
+      if (i > 0 && i < pts.length - 1) {
+        const ax = p.x - pts[i - 1].x;
+        const az = p.z - pts[i - 1].z;
+        const bx = pts[i + 1].x - p.x;
+        const bz = pts[i + 1].z - p.z;
+        const al = Math.hypot(ax, az) || 1;
+        const bl = Math.hypot(bx, bz) || 1;
+        const n1x = -az / al;
+        const n1z = ax / al;
+        const n2x = -bz / bl;
+        const n2z = bx / bl;
+        let mx = n1x + n2x;
+        let mz = n1z + n2z;
+        const ml = Math.hypot(mx, mz);
+        if (ml > 1e-5) {
+          mx /= ml;
+          mz /= ml;
+          const dot = mx * n1x + mz * n1z;
+          const miter = Math.abs(dot) > 0.2 ? 1 / dot : 1;
+          const miterClamp = Math.min(Math.abs(miter), 2.4) * Math.sign(miter || 1);
+          nx = mx;
+          nz = mz;
+          left.push({
+            x: p.x + nx * halfW * miterClamp,
+            z: p.z + nz * halfW * miterClamp,
+            y: p.y + yBias,
+          });
+          right.push({
+            x: p.x - nx * halfW * miterClamp,
+            z: p.z - nz * halfW * miterClamp,
+            y: p.y + yBias,
+          });
+          continue;
+        }
+      }
+
+      left.push({ x: p.x + nx * halfW, z: p.z + nz * halfW, y: p.y + yBias });
+      right.push({ x: p.x - nx * halfW, z: p.z - nz * halfW, y: p.y + yBias });
+    }
+
+    for (let i = 0; i < pts.length; i++) {
+      const L = left[i];
+      const R = right[i];
+      positions.push(L.x, L.y, L.z, R.x, R.y, R.z);
+      colors.push(c.r, c.g, c.b, c.r, c.g, c.b);
+    }
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = base + i * 2;
+      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+  }
+
+  if (!indices.length) return null;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function addMarkingsAlong(pts, halfW, major, medium, edgeSegs, dashSegs) {
+  if (!major && !medium) return;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const len = Math.hypot(dx, dz);
+    if (len < 1.2) continue;
+    const mx = (a.x + b.x) * 0.5;
+    const mz = (a.z + b.z) * 0.5;
+    const y = Math.max(a.y, b.y) + 0.06;
+    const rot = Math.atan2(dx, dz);
+    const ux = dx / len;
+    const uz = dz / len;
+
+    if (major) {
+      for (const side of [-1, 1]) {
+        const ox = Math.cos(rot) * side * (halfW * 0.84);
+        const oz = -Math.sin(rot) * side * (halfW * 0.84);
+        edgeSegs.push({
+          x: mx + ox,
+          z: mz + oz,
+          y: y + 0.02,
+          len: len * 0.98,
+          w: 0.16,
+          rot,
+        });
+      }
+    }
+
+    if ((major && len > 4) || (medium && len > 8)) {
+      const dashLen = major ? 2.8 : 2.2;
+      const gap = major ? 2.0 : 3.2;
+      const n = Math.max(1, Math.floor(len / (dashLen + gap)));
+      for (let d = 0; d < n; d++) {
+        const t = d * (dashLen + gap) + dashLen * 0.5;
+        if (t > len - 0.8) break;
+        dashSegs.push({
+          x: a.x + ux * t,
+          z: a.z + uz * t,
+          y: y + 0.03,
+          len: Math.min(dashLen, len - t),
+          w: major ? 0.2 : 0.14,
+          rot,
+        });
+      }
+    }
+  }
+}
+
+function isUnderBridgeDeck(x, z, bridges, stations) {
+  if (!bridges?.length) return false;
+  const bank = nearestHalf(x, z, stations);
+  if (bank.lat > bank.half * 0.95) return false;
+  for (const br of bridges) {
+    const sx = br.start?.x;
+    const sz = br.start?.z;
+    const ex = br.end?.x;
+    const ez = br.end?.z;
+    if (![sx, sz, ex, ez].every(Number.isFinite)) {
+      if (Math.hypot((br.midX ?? 0) - x, (br.midZ ?? 0) - z) < 28) return true;
+      continue;
+    }
+    const hit = closestOnSeg(x, z, sx, sz, ex, ez);
+    if (hit.d < Math.max(18, (br.widthM || 12) * 0.7) && hit.t > 0.12 && hit.t < 0.88) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function closestOnSeg(px, pz, ax, az, bx, bz) {
+  const abx = bx - ax;
+  const abz = bz - az;
+  const len2 = abx * abx + abz * abz || 1;
+  let t = ((px - ax) * abx + (pz - az) * abz) / len2;
+  t = Math.max(0, Math.min(1, t));
+  const x = ax + abx * t;
+  const z = az + abz * t;
+  return { x, z, t, d: Math.hypot(px - x, pz - z) };
+}
+
+function nearestHalf(x, z, stations) {
+  let best = stations[0];
+  let bestD = Infinity;
+  const step = Math.max(1, Math.floor(stations.length / 180));
+  for (let i = 0; i < stations.length; i += step) {
+    const st = stations[i];
+    const d2 = (st.x - x) ** 2 + (st.z - z) ** 2;
+    if (d2 < bestD) {
+      bestD = d2;
+      best = st;
+    }
+  }
+  const lat = Math.abs((x - best.x) * -best.flowZ + (z - best.z) * best.flowX);
+  return { lat, half: best.halfWidth };
+}

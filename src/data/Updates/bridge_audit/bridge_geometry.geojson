@@ -1,0 +1,394 @@
+{
+  "type": "FeatureCollection",
+  "name": "mandovi_river_phase2_verified_bridges",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "900000001",
+      "properties": {
+        "bridge_id": "900000001",
+        "name": "Atal Setu",
+        "bridge_type": "cable-stayed",
+        "highway": "trunk",
+        "structure_type": "Cable-Stayed Box Girder Bridge",
+        "chainage_label": "8+079",
+        "thalweg_chainage_m": 8092.6,
+        "verified_length_m": 620.26,
+        "deck_width_m": 21,
+        "river_width_m": 581.44,
+        "deck_elevation_msl_m": 32.5,
+        "soffit_elevation_msl_m": 28.0,
+        "navigation_clearance_m": 21.0,
+        "spans_count": 4,
+        "piers_count": 2,
+        "crossing_angle_deg": 8.21,
+        "source_authority": "GSIDC / L&T Project Records & PIB Official Announcement",
+        "source_url": "https://www.gsidcltd.com/gdev/project/design-and-construction-of-bridge-across-river-mandovi-at-panaji-including-approaches-on-nh-17-between-pundalik-nagar-junction-porvorim-and-merces-junction/",
+        "verification_status": "VERIFIED (Survey & Engineering Records)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            73.83718,
+            15.5
+          ],
+          [
+            73.836931,
+            15.502609
+          ],
+          [
+            73.836756,
+            15.504429
+          ],
+          [
+            73.83662,
+            15.50558
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "900000002",
+      "properties": {
+        "bridge_id": "900000002",
+        "name": "Mandovi Bridge (New)",
+        "bridge_type": "girder",
+        "highway": "primary",
+        "structure_type": "Prestressed Concrete Girder Bridge (Northbound)",
+        "chainage_label": "8+105",
+        "thalweg_chainage_m": 8114.6,
+        "verified_length_m": 689.15,
+        "deck_width_m": 14,
+        "river_width_m": 587.23,
+        "deck_elevation_msl_m": 16.5,
+        "soffit_elevation_msl_m": 14.5,
+        "navigation_clearance_m": 10.7,
+        "spans_count": 12,
+        "piers_count": 11,
+        "crossing_angle_deg": 8.48,
+        "source_authority": "Public Works Department (PWD) Goa Bridge Division Records",
+        "source_url": "https://www.goa.gov.in/government-departments/public-works-department/",
+        "verification_status": "VERIFIED (PWD Goa Engineering Records & Survey Alignment)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            73.837419,
+            15.499929
+          ],
+          [
+            73.83725,
+            15.501486
+          ],
+          [
+            73.837095,
+            15.503001
+          ],
+          [
+            73.836947,
+            15.504449
+          ],
+          [
+            73.836788,
+            15.505887
+          ],
+          [
+            73.836766,
+            15.506126
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "900000003",
+      "properties": {
+        "bridge_id": "900000003",
+        "name": "Mandovi Bridge (Old)",
+        "bridge_type": "girder",
+        "highway": "primary",
+        "structure_type": "Prestressed Concrete Girder Bridge (Southbound)",
+        "chainage_label": "8+052",
+        "thalweg_chainage_m": 8053.3,
+        "verified_length_m": 642.2,
+        "deck_width_m": 12,
+        "river_width_m": 564.4,
+        "deck_elevation_msl_m": 15.5,
+        "soffit_elevation_msl_m": 13.5,
+        "navigation_clearance_m": 9.7,
+        "spans_count": 12,
+        "piers_count": 11,
+        "crossing_angle_deg": 8.47,
+        "source_authority": "Public Works Department (PWD) Goa Reconstruction Records (1998)",
+        "source_url": "https://www.goa.gov.in/government-departments/public-works-department/",
+        "verification_status": "VERIFIED (PWD Reconstruction Records & Independent Parallel Alignment)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            73.836845,
+            15.499959
+          ],
+          [
+            73.836656,
+            15.50183
+          ],
+          [
+            73.836488,
+            15.503326
+          ],
+          [
+            73.83634,
+            15.504773
+          ],
+          [
+            73.836239,
+            15.505734
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "900000004",
+      "properties": {
+        "bridge_id": "900000004",
+        "name": "Ribandar Causeway (Ponte Conde de Linhares)",
+        "bridge_type": "causeway",
+        "highway": "secondary",
+        "structure_type": "Historic Stone Masonry Causeway with Arched Tidal Culverts (1633)",
+        "chainage_label": "9+825",
+        "thalweg_chainage_m": null,
+        "verified_length_m": 3141.31,
+        "deck_width_m": 10,
+        "river_width_m": null,
+        "deck_elevation_msl_m": 5.5,
+        "soffit_elevation_msl_m": 4.2,
+        "navigation_clearance_m": 2.5,
+        "spans_count": 30,
+        "piers_count": 30,
+        "crossing_angle_deg": null,
+        "source_authority": "Archaeological Survey of India & Goa Tourism Heritage Records",
+        "source_url": "https://goa-tourism.com/siteseeing/patto-bridge/",
+        "verification_status": "VERIFIED (39-Vertex Curvilinear Surveyed Polyline)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            73.8385237,
+            15.499071
+          ],
+          [
+            73.839177,
+            15.4992152
+          ],
+          [
+            73.8415045,
+            15.4997564
+          ],
+          [
+            73.8456311,
+            15.5007852
+          ],
+          [
+            73.8458762,
+            15.5008373
+          ],
+          [
+            73.8460631,
+            15.5008745
+          ],
+          [
+            73.8472793,
+            15.5011356
+          ],
+          [
+            73.8482313,
+            15.5013685
+          ],
+          [
+            73.8513151,
+            15.5021033
+          ],
+          [
+            73.853477,
+            15.5024457
+          ],
+          [
+            73.8562131,
+            15.5028456
+          ],
+          [
+            73.8593983,
+            15.5032584
+          ],
+          [
+            73.8609309,
+            15.5034942
+          ],
+          [
+            73.8613784,
+            15.503544
+          ],
+          [
+            73.8614937,
+            15.5035617
+          ],
+          [
+            73.861803,
+            15.5036093
+          ],
+          [
+            73.8622464,
+            15.5036759
+          ],
+          [
+            73.8624989,
+            15.5037134
+          ],
+          [
+            73.8626316,
+            15.5037418
+          ],
+          [
+            73.8631652,
+            15.503751
+          ],
+          [
+            73.8633491,
+            15.5037941
+          ],
+          [
+            73.86351,
+            15.503852
+          ],
+          [
+            73.8636173,
+            15.5039311
+          ],
+          [
+            73.863695,
+            15.5040391
+          ],
+          [
+            73.8637434,
+            15.5042555
+          ],
+          [
+            73.8637734,
+            15.5044571
+          ],
+          [
+            73.8637876,
+            15.5047556
+          ],
+          [
+            73.8638114,
+            15.5049416
+          ],
+          [
+            73.8638802,
+            15.5051058
+          ],
+          [
+            73.8640451,
+            15.5053565
+          ],
+          [
+            73.8641413,
+            15.505445
+          ],
+          [
+            73.8642895,
+            15.5054792
+          ],
+          [
+            73.8649734,
+            15.5054391
+          ],
+          [
+            73.8650632,
+            15.5054143
+          ],
+          [
+            73.8652106,
+            15.5053436
+          ],
+          [
+            73.8652465,
+            15.5053371
+          ],
+          [
+            73.86564,
+            15.5053616
+          ],
+          [
+            73.8657331,
+            15.5053667
+          ],
+          [
+            73.8660572,
+            15.5053477
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "900000005",
+      "properties": {
+        "bridge_id": "900000005",
+        "name": "Konkan Railway Mandovi Viaduct",
+        "bridge_type": "railway",
+        "highway": "railway",
+        "structure_type": "PSC Viaduct with 124.2m Navigational Steel Through-Girder Span",
+        "chainage_label": "11+935",
+        "thalweg_chainage_m": 11939.5,
+        "verified_length_m": 947.08,
+        "deck_width_m": 9,
+        "river_width_m": 916.7,
+        "deck_elevation_msl_m": 20.0,
+        "soffit_elevation_msl_m": 17.5,
+        "navigation_clearance_m": 14.0,
+        "spans_count": 16,
+        "piers_count": 15,
+        "crossing_angle_deg": 9.83,
+        "source_authority": "Konkan Railway Corporation Limited (KRCL) Salient Features & Bridge Registry",
+        "source_url": "https://konkanrailway.com/index.php/en/salient_features",
+        "verification_status": "VERIFIED (KRCL Engineering Records & Surveyed Rail Alignment)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            73.87085,
+            15.50245
+          ],
+          [
+            73.87115,
+            15.5048
+          ],
+          [
+            73.8715,
+            15.5076
+          ],
+          [
+            73.8719,
+            15.51095
+          ]
+        ]
+      }
+    }
+  ]
+}

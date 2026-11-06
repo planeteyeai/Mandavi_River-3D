@@ -1,0 +1,228 @@
+export const state = {
+  playing: false,
+  pathT: 0,
+  pathDuration: 140,
+  journeyT: 0,
+  journeyDuration: 140,
+  flowSpeed: 1.05,
+  flowVisibility: 1,
+  waterOpacity: 0.92,
+
+
+/** River state */
+  riverEnabled: true,
+
+  riverMode: "flowing",
+
+  animateWater: true,
+
+
+  /** Calm cinematic river waves (from Alembic motion intent → GPU on KML mesh). */
+  waterAnimEnabled: true,
+  waterPreset: "calmRealistic",
+  waterQuality: "high",
+  waterOverallSpeed: 0.55,
+  primaryWaveAmplitude: 0.06,
+  primaryWaveSpeed: 0.035,
+  secondaryWaveAmplitude: 0.035,
+  secondaryWaveSpeed: 0.05,
+  rippleAmplitude: 0.015,
+  rippleSpeed: 0.07,
+  flowStrength: 1,
+  reflectionStrength: 0.58,
+  waveHighlight: 0.78,
+  shallowWaterColor: "#3282BE",
+  mediumWaterColor: "#2A79AB",
+  deepWaterColor: "#1E5D8F",
+  veryShallowWaterColor: "#4EB8E0",
+  showWaterDebug: false,
+  /** Metres above normal river surface (SURFACE_Y) — illustrative bathtub only. */
+  floodRiseM: 0,
+  /** Saved bathtub stage while MODE A (API flood) is active. */
+  savedFloodRiseM: null,
+  /**
+   * Dual flood modes (mutually exclusive surfaces):
+   * - "illustrative" → floodLayer.js (bathtub)
+   * - "api" → apiFloodLayer.js (JalNetra)
+   */
+  floodMode: "illustrative",
+  /** Top Flood Simulation toolbar visibility (toggled from Flood map control). */
+  showFloodBar: false,
+  /** JalNetra API flood simulation state (MODE A). */
+  apiFlood: {
+    status: "idle", // idle|loading|running|ready|complete|empty|error
+    result: null,
+    scenes: [],
+    currentScene: 0,
+    currentDate: null,
+    isPlaying: false,
+    progress: 0,
+    error: null,
+    errorDetails: null,
+    message: "",
+    showLayer: true,
+  },
+  /** @deprecated prefer state.apiFlood.status */
+  showFloodSimulation: false,
+  showFloodDepthViz: false,
+  /** @deprecated prefer state.apiFlood.status */
+  floodSimStatus: "idle",
+  floodSimMessage: "",
+  floodSimInfo: null,
+  showRiverBanks: false,
+  depthExaggeration: 2,
+  showWater: true,
+  /** When true, update-loop keeps river water hidden (Bank Erosion overlay). */
+  hydrologyHidesWater: false,
+  /** When true, hide API/illustrative flood so bank erosion ribbon stays readable. */
+  hydrologyHidesFlood: false,
+  showBathymetry: true,
+  showRiverbed: true,
+  showSurveyStations: true,
+  /** PROJECT LANDMARKS from src/data/Updates/original/*.kmz */
+  showProjectLandmarks: true,
+  /** Sentinel-2 MNDWI water extent GroundOverlay (reference, not live sensor). */
+  // Clip uses live_water_mandavi.kml mask always; visual blue overlay off so
+  // hydrographic depth colours stay as before.
+  showLiveWaterExtent: false,
+  /** Sentinel-2 relative band-ratio depth — RELATIVE ESTIMATE, not survey bathymetry. */
+  showRelativeWaterDepth: false,
+  /** Selected PROJECT LANDMARK id/name for inspect panel. */
+  selectedProjectLandmark: null,
+  showVegetation: true,
+  /** JalNetra Vegetation Type API layer status: idle|loading|ready|empty|error */
+  vegetationStatus: "idle",
+  vegetationMessage: "",
+  showUrban: true,
+  showBridges: true,
+  showBridgeNames: true,
+  /** Terrain / DTM is always on — not a Layers toggle. */
+  showTerrain: true,
+  /** Layers → Satellite Imagery: drape imagery on the 3D terrain (off = natural materials). */
+  terrainSatellite: false,
+  /** Google Earth KML polygon + centerline (driven by Map Reference Grid). */
+  showKmlSkeleton: false,
+  /** Combined Layers control: KML Skeleton + Coordinate Grid. */
+  showMapReferenceGrid: false,
+  /** OSM waterways KML — Layers → Small channels. Also drives nalla water animation. */
+  showDrainage: false,
+  /** Mirrored from showDrainage for internal sync; not a separate UI toggle. */
+  showNallaFlow: false,
+  /** Internal speed — default looks correct; optional slider only. */
+  nallaFlowSpeed: 0.65,
+  /** Jul 2026 depth-class polygons (1.5–2.0 m) — Layers → Depth zones (glassy). */
+  showDepthZones: false,
+  /** Raw Excel/CSV survey points — removed from Layers UI; kept off. */
+  showRawSurveyPoints: false,
+  /** Glassy depth-zone animation on when layer is visible. */
+  glassyAnimatedFlow: true,
+  glassyFlowSpeed: 0.45,
+  glassyWaterOpacity: 0.72,
+  /** "cinematic" | "data" */
+  glassyVizMode: "cinematic",
+  /** One-shot reveal when enabling depth zones. */
+  glassyRevealActive: false,
+  selectedDepthZoneId: null,
+  showOsmTrees: true,
+  showOsmRoads: true,
+  showOsmBuildings: true,
+  showOsmAlignment: false,
+  showLayers: false,
+  showSettings: false,
+  inspectMode: false,
+  showValidation: false,
+  showFish: true,
+  /** Developer-only; production default off — enable via debugFlags / localStorage. */
+  showFishDebug: false,
+  showChainage: true,
+  /** Show chainage text on every marker (Layers → Chainage toolkit). */
+  showChainageLabels: false,
+  /** "station" = 0+000 style · "meters" = 12400 m */
+  chainageLabelMode: "station",
+  /** Selected chainage meters (click highlight). */
+  selectedChainageMeters: null,
+  /** Last Open-Meteo reading published by the weather widget for the selected chainage. */
+  liveWeather: null,
+  /** True while hovering the selected chainage (suppresses water-depth tip). */
+  chainageTipActive: false,
+  /** True while bank-erosion class card owns the map tooltip (sticky or hover). */
+  bankErosionTipActive: false,
+  /** True while LULC / silt hover card owns the map tooltip. */
+  landUseTipActive: false,
+  /** True while Geology → Bank Erosion overlay is the active focus mode. */
+  bankErosionMode: false,
+  /** True while Geology → Spectral Lithology overlay is active. */
+  lithologyMode: false,
+  /** True while a lithology click tip/marker is pinned. */
+  lithologyTipActive: false,
+  /** True while a casino / AIS ship info card is click-pinned. */
+  shipTipActive: false,
+  /** True while Geology → Joining Streams drainage mode is active. */
+  joiningStreamsMode: false,
+  /** True while Joining Streams updates chainage without river camera fly */
+  joiningStreamsNavigation: false,
+  /** True while a joining-stream click selection owns the info card. */
+  joiningStreamsTipActive: false,
+  /** True while Pollution garbage selection owns camera (block chainage fly). */
+  garbageSelectionActive: false,
+  /** True while Geology → Main Stem centerline is visible. */
+  mainStemMode: false,
+  /** True while Geology → Bathymetry depth-zone overlay is active. */
+  bathymetryMode: false,
+  /** True while Land Use focus chrome is active (LULC / silt / veg). */
+  landUseFocusMode: false,
+  /** Active map-focus kind: null | 'landuse' | 'geology' | 'pollution'. */
+  mapFocusKind: null,
+  /** While a submenu (map-focus) is open: ships default ON; user can toggle via left Ships button. */
+  shipsVisibleInFocus: true,
+  /** Selected LULC/silt/geo/pollution class label for focused inspection (null = all). */
+  landUseSelectedClass: null,
+  /** True while width/depth measure overlay is visible on the river. */
+  riverMeasureActive: false,
+  /** River Data → Depth toggles 3D depth label at selected chainage. */
+  riverMeasureDepthOn: false,
+  /** River Data → Width toggles 3D bank-to-bank width at selected chainage. */
+  riverMeasureWidthOn: false,
+  /** River Data → Measure: two-point distance mode (independent of depth/width). */
+  distanceMeasureActive: false,
+  /** The one active 2D analysis: null | "salinity" | "erosion" | "silt". Drives 2D panel visibility. */
+  active2DAnalysis: null,
+  /** Hydrology UI: "current" (left Current Hydrology panel) | "detailed" (MULA–MUTHA HYDROLOGY modal; left panel hidden). */
+  hydrologyViewState: "current",
+  /** Active river journey (riverJourney.js CameraMode + chainages), null when the camera is idle/inspecting. */
+  cameraJourney: null,
+  cinematicActive: false,
+  cinematicPaused: false,
+  cinematicProgress: 0,
+  cinematicPhase: "idle",
+  cinematicFishBoost: false,
+  cinematicJumpCue: false,
+  cinematicUnderwater: false,
+  cinematicFishScene: false,
+  cinematicJumpSequence: false,
+  cinematicJumpBudget: 0,
+  cinematicFishingPointFocus: null,
+  cinematicBridgeFocus: null,
+  cinematicInfo: null,
+  showCoordinateGrid: false,
+  cameraMode: "overview",
+  visualMode: "landscape",
+  elapsed: 0,
+  hover: null,
+
+  // ── Sky & Atmosphere (Overview cinematic sky) ──
+  skyEnabled: true,
+  skyPreset: "calmRealistic",
+  skyCloudDensity: 0.22,
+  /** 0.2–0.55 ≈ very slow cinematic (full cycle ~90–180s at mid values). */
+  skyCloudSpeed: 0.32,
+  skyAnimStrength: 0.28,
+  skySunIntensity: 1.0,
+  skyAtmosphere: 0.55,
+  skyHorizonHaze: 0.48,
+  skyCloudShadows: true,
+  /** Minimal daylight sun drift (not day/night). */
+  skySunDrift: 0.22,
+  /** "low" | "medium" | "high" — sky shader / cloud / shadow detail. */
+  skyQuality: "high",
+};

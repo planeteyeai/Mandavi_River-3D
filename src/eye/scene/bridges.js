@@ -1,0 +1,901 @@
+import * as THREE from "three";
+import { SURFACE_Y, bedElevation } from "./river.js";
+import { terrainHeightAt } from "./terrain.js";
+import { state } from "../state.js";
+import { addYerwadaArchSpan, isYerwadaArchBridge } from "./yerwadaArchBridge.js";
+import { addAmbedkarArchSpan, isAmbedkarArchBridge } from "./ambedkarArchBridge.js";
+import { addSangamGirderSpan, addOpenGirderSpan, girderTheme, isSangamGirderBridge } from "./sangamGirderBridge.js";
+import { createBridgeGauges, surveyDepthAt, updateBridgeGauges } from "./bridgeGauges.js";
+import { bridgeDimensionSource, bridgeElevationSource } from "./bridgeDimensions.js";
+import { localToLonLat } from "../geo/geoReference.js";
+
+/**
+ * Typical roadway height above normal water (scene SURFACE_Y) for live
+ * Mula–Mutha crossings. Values follow each structure’s character:
+ * historic masonry sits lower; newer RCC/steel decks sit higher.
+ * Final deck is max(this, bank DTM + 1.15 m) so it meets the approach road.
+ */
+const DECK_ABOVE_WATER_M = [
+  { test: /mundhwa/i, m: 7.4 },
+  { test: /fitzgerald|yerwada|yarwada|bund garden/i, m: 7.6 },
+  { test: /ambedkar|babasaheb/i, m: 9.4 },
+  { test: /aga khan/i, m: 8.8 },
+  { test: /sangamwadi.*new/i, m: 8.6 },
+  { test: /sangamwadi.*old/i, m: 7.0 },
+  { test: /sangam/i, m: 8.2 },
+  { test: /dengle/i, m: 7.8 },
+  { test: /shivaji/i, m: 7.8 },
+  { test: /kharadi|keshavnagar/i, m: 8.2 },
+  { test: /atal\s*setu|atal/i, m: 24.0 },
+  { test: /mandovi/i, m: 14.0 },
+  { test: /causeway|linhares/i, m: 4.8 },
+  { test: /railway|viaduct/i, m: 16.0 },
+];
+const BRIDGE_APPROACH_M = 36;
+
+export function getBridgeDeckSurfaceY(name, deckY) {
+  const n = String(name || "").toLowerCase();
+  if (/ambedkar|babasaheb/.test(n)) return deckY + 0.98;
+  if (/yerwada|fitzgerald|bund garden/.test(n)) return deckY + 0.78;
+  return deckY + 0.08;
+}
+
+function deckYForBridge(name, y0, y1) {
+  const n = String(name || "");
+  const bank = Math.max(y0, y1);
+  const roadY = bank + 0.28;
+  let above = 7.6;
+  for (const row of DECK_ABOVE_WATER_M) {
+    if (row.test.test(n)) {
+      above = row.m;
+      break;
+    }
+  }
+  return Math.max(SURFACE_Y + above, roadY);
+}
+
+/**
+ * Full-span road bridges across the river channel.
+ * Uses OSM bridge footprints when present; also promotes OSM road
+ * segments that cross the water into elevated decks (fixes flat black lines).
+ */
+export function createBridges(dataset) {
+  const group = new THREE.Group();
+  group.name = "bridges";
+  group.userData.piers = [];
+  group.userData.labels = [];
+  group.renderOrder = 12;
+  const stations = dataset.corridor.stations;
+  const ring = dataset.ringLocal || [];
+
+  const deckMat = mat({ color: "#9a9084", roughness: 0.78, metalness: 0.06, emissive: "#2a2418", emissiveIntensity: 0.1 });
+  const asphaltMat = mat({ color: "#3a3e44", roughness: 0.92, metalness: 0.02 });
+  const railMat = mat({ color: "#d8d0c0", roughness: 0.55, metalness: 0.1 });
+  const pierMat = mat({ color: "#8a8074", roughness: 0.88 });
+  const capMat = mat({ color: "#c4bcb0", roughness: 0.78 });
+  const abutMat = mat({ color: "#a89e8e", roughness: 0.86 });
+  const stripeMat = mat({ color: "#f0e8c8", roughness: 0.6, metalness: 0.04 });
+  const xAxis = new THREE.Vector3(1, 0, 0);
+  const dir = new THREE.Vector3();
+  const minD = dataset.minDepth;
+  const maxD = dataset.maxDepth;
+  const dMid = (minD + maxD) * 0.5;
+
+  const spans = collectBridgeSpans(dataset, ring, stations);
+  for (const span of spans) applySourcedPlanDimensions(span);
+  dataset.bridgeSpans = spans;
+  for (const g of spans) {
+    const orig = (dataset.bridges || []).find((b) => String(b.id) === String(g.id));
+    if (!orig) continue;
+    orig.start = g.start;
+    orig.end = g.end;
+    orig.midX = g.midX;
+    orig.midZ = g.midZ;
+    orig.axisX = g.axisX;
+    orig.axisZ = g.axisZ;
+    orig.lengthM = g.lengthM;
+    orig.toe0 = g.toe0;
+    orig.toe1 = g.toe1;
+  }
+  console.info("Bridge spans", { count: spans.length, names: spans.map((s) => s.name) });
+
+  for (const g of spans) {
+    const pierCountBefore = group.userData.piers.length;
+    const bridge = new THREE.Group();
+    bridge.name = g.name;
+    bridge.renderOrder = 12;
+
+    const st = nearestStation((g.start.x + g.end.x) * 0.5, (g.start.z + g.end.z) * 0.5, stations);
+    const leftW = st.wetHalfLeft ?? st.halfWidth ?? 40;
+    const rightW = st.wetHalfRight ?? st.halfWidth ?? 40;
+    const ax = g.axisX;
+    const az = g.axisZ;
+    const y0 = terrainHeightAt(g.start.x, g.start.z, stations);
+    const y1 = terrainHeightAt(g.end.x, g.end.z, stations);
+    const yerwada = isYerwadaArchBridge(g.name);
+    const ambedkar = isAmbedkarArchBridge(g.name);
+    const ambedkarStyleArch = ambedkar || /mundhwa|fitzgerald|bund garden/i.test(g.name);
+    const sangam = isSangamGirderBridge(g.name);
+    const sourcedDims = bridgeDimensionSource(g.id);
+    const deckY = deckYForBridge(g.name, y0, y1);
+    g.deckY = deckY;
+    const orig = (dataset.bridges || []).find((b) => String(b.id) === String(g.id));
+    if (orig) orig.deckY = deckY;
+    const span = Math.max(36, g.lengthM);
+    const thick = sourcedDims?.widthM || Math.max(10, Math.min(16, g.widthM || 12));
+
+    dir.set(g.axisX, 0, g.axisZ).normalize();
+    const quat = new THREE.Quaternion().setFromUnitVectors(xAxis, dir);
+    const perpX = -g.axisZ;
+    const perpZ = g.axisX;
+    const mx = (g.start.x + g.end.x) * 0.5;
+    const mz = (g.start.z + g.end.z) * 0.5;
+    const isAtalSetu = /atal\s*setu|atal/i.test(g.name);
+    const customDeck = isAtalSetu || ambedkarStyleArch || yerwada || sangam;
+
+    if (isAtalSetu) {
+      addCableStayedSpan(bridge, group, {
+        span,
+        thick: Math.max(thick, 20),
+        deckY,
+        mx,
+        mz,
+        quat,
+        ax,
+        az,
+        start: g.start,
+        end: g.end,
+        minD,
+        maxD,
+        dMid,
+      });
+    } else if (ambedkarStyleArch) {
+      addAmbedkarArchSpan(bridge, group, {
+        span,
+        archCount: sourcedDims?.spans?.count,
+        thick: sourcedDims?.widthM || Math.max(thick, 16),
+        deckY,
+        mx,
+        mz,
+        quat,
+        start: g.start,
+        end: g.end,
+        minD,
+        maxD,
+        dMid,
+      });
+    } else if (yerwada) {
+      addYerwadaArchSpan(bridge, group, {
+        span,
+        thick: sourcedDims?.widthM || Math.max(thick, 13),
+        deckY,
+        mx,
+        mz,
+        quat,
+        start: g.start,
+        end: g.end,
+        minD,
+        maxD,
+        dMid,
+      });
+    } else if (sangam) {
+      addSangamGirderSpan(bridge, group, {
+        name: g.name,
+        span,
+        thick: sourcedDims?.widthM || Math.max(thick, 12),
+        deckY,
+        mx,
+        mz,
+        quat,
+        start: g.start,
+        end: g.end,
+        minD,
+        maxD,
+        dMid,
+        stations,
+        leftW,
+        rightW,
+      });
+    } else {
+      addOpenGirderSpan(
+        bridge,
+        group,
+        {
+          name: g.name,
+          span,
+          thick: Math.max(thick, 12),
+          deckY,
+          mx,
+          mz,
+          quat,
+          start: g.start,
+          end: g.end,
+          minD,
+          maxD,
+          dMid,
+          stations,
+          leftW,
+          rightW,
+          spanCount: sourcedDims?.spans?.count,
+        },
+        girderTheme(g.name),
+      );
+    }
+
+    // Robust approach transition aprons and abutments on both banks for all bridges
+    const bridgeWidth = sourcedDims?.widthM || thick * 0.94;
+    const apronLength = BRIDGE_APPROACH_M;
+    const bridgeRoadY = getBridgeDeckSurfaceY(g.name, deckY);
+
+    for (const end of [
+      { p: g.start, outward: -1 },
+      { p: g.end, outward: 1 },
+    ]) {
+      const ground = terrainHeightAt(end.p.x, end.p.z, stations);
+      const outerX = end.p.x + dir.x * end.outward * apronLength;
+      const outerZ = end.p.z + dir.z * end.outward * apronLength;
+      const groundOuter = terrainHeightAt(outerX, outerZ, stations);
+      const targetOuterY = Math.min(bridgeRoadY, groundOuter + 0.28);
+      const drop = Math.max(0, bridgeRoadY - targetOuterY);
+      const avgY = (bridgeRoadY + targetOuterY) * 0.5;
+      const slopeAngle = end.outward * -Math.atan2(drop, apronLength);
+
+      const midX = end.p.x + dir.x * end.outward * (apronLength * 0.5);
+      const midZ = end.p.z + dir.z * end.outward * (apronLength * 0.5);
+
+      // 1. Asphalt Road Apron
+      const apron = new THREE.Mesh(
+        new THREE.BoxGeometry(apronLength, 0.28, bridgeWidth),
+        asphaltMat
+      );
+      apron.position.set(midX, avgY, midZ);
+      apron.quaternion.copy(quat);
+      apron.rotateZ(slopeAngle);
+      apron.receiveShadow = true;
+      bridge.add(apron);
+
+      // Centerline stripe continuing onto approach
+      const apronStripe = new THREE.Mesh(
+        new THREE.BoxGeometry(apronLength * 0.94, 0.04, 0.16),
+        stripeMat
+      );
+      apronStripe.position.set(midX, avgY + 0.16, midZ);
+      apronStripe.quaternion.copy(quat);
+      apronStripe.rotateZ(slopeAngle);
+      bridge.add(apronStripe);
+
+      // 2. Solid embankment fill underneath the apron (never hollow or floating)
+      const fillH = Math.max(2.0, drop + 3.0);
+      const fill = new THREE.Mesh(
+        new THREE.BoxGeometry(apronLength, fillH, bridgeWidth * 0.98),
+        abutMat
+      );
+      fill.position.set(midX, avgY - fillH * 0.5, midZ);
+      fill.quaternion.copy(quat);
+      fill.rotateZ(slopeAngle);
+      fill.receiveShadow = true;
+      fill.castShadow = true;
+      bridge.add(fill);
+
+      // 3. Heavy concrete/stone abutment supporting the deck joint
+      const abutH = Math.max(6.0, drop + 5.0);
+      const abut = new THREE.Mesh(
+        new THREE.BoxGeometry(8.0, abutH, bridgeWidth * 1.08),
+        abutMat
+      );
+      abut.position.set(end.p.x, bridgeRoadY - abutH * 0.5, end.p.z);
+      abut.quaternion.copy(quat);
+      abut.castShadow = true;
+      abut.receiveShadow = true;
+      bridge.add(abut);
+
+      // 4. Side wingwalls / parapet guiding approach roads into the bridge
+      for (const side of [-1, 1]) {
+        const wingW = 0.44;
+        const wingH = Math.max(1.2, drop * 0.5 + 1.1);
+        const wing = new THREE.Mesh(
+          new THREE.BoxGeometry(apronLength * 0.92, wingH, wingW),
+          railMat
+        );
+        const wx = midX + perpX * side * (bridgeWidth * 0.5 + wingW * 0.5);
+        const wz = midZ + perpZ * side * (bridgeWidth * 0.5 + wingW * 0.5);
+        wing.position.set(wx, avgY + wingH * 0.35, wz);
+        wing.quaternion.copy(quat);
+        wing.rotateZ(slopeAngle);
+        wing.castShadow = true;
+        bridge.add(wing);
+      }
+    }
+
+    // Piers in the channel (skip abutments on dry banks; arched span has its own piers)
+    const pierTs = customDeck
+      ? []
+      : span > 140
+        ? [0.2, 0.35, 0.5, 0.65, 0.8]
+        : span > 90
+          ? [0.25, 0.5, 0.75]
+          : [0.35, 0.65];
+    for (const t of pierTs) {
+      const px = g.start.x + (g.end.x - g.start.x) * t;
+      const pz = g.start.z + (g.end.z - g.start.z) * t;
+      const lat = Math.abs((px - st.x) * ax + (pz - st.z) * az);
+      const wet = ((px - st.x) * ax + (pz - st.z) * az) < 0 ? leftW : rightW;
+      if (lat > wet * 0.88) continue;
+      const pier = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1, 5.4), pierMat);
+      pier.castShadow = true;
+      pier.quaternion.copy(quat);
+      pier.renderOrder = 12;
+      bridge.add(pier);
+
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.9, 7), capMat);
+      cap.quaternion.copy(quat);
+      bridge.add(cap);
+
+      group.userData.piers.push({
+        mesh: pier,
+        cap,
+        x: px,
+        z: pz,
+        deckY,
+        d: dMid,
+        minD,
+        maxD,
+      });
+    }
+
+    // Name label + beacon
+    const poleMat = new THREE.MeshBasicMaterial({
+      color: "#f0e6c8",
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+      depthTest: false,
+    });
+    const beaconMat = new THREE.MeshBasicMaterial({
+      color: "#ffb040",
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+      depthTest: false,
+    });
+    const pole = new THREE.Object3D();
+    const beacon = new THREE.Object3D();
+    const label = new THREE.Object3D();
+    const fullName = g.name || "Bridge";
+    label.position.set(mx, deckY + 20, mz);
+    group.userData.labels.push({
+      label,
+      pole,
+      beacon,
+      x: mx,
+      y: deckY + 20,
+      z: mz,
+      deckY,
+      fullName,
+      showingNames: false,
+    });
+
+    group.add(bridge);
+    bridge.userData.bridgeId = String(g.id);
+    bridge.userData.dimensionSource = sourcedDims;
+    bridge.userData.elevationSource = bridgeElevationSource(g.id);
+    bridge.userData.modelStructureType = ambedkarStyleArch ? "concrete arch" : yerwada ? "stone arch" : "open girder";
+    bridge.userData.modelLengthM = span;
+    bridge.userData.modelWidthM = thick;
+    bridge.userData.modelDeckY = bridgeRoadY;
+    bridge.userData.modelSoffitY = null;
+    const geoMid = localToLonLat(mx, mz);
+    bridge.userData.modelPosition = { longitude: geoMid.lon, latitude: geoMid.lat, bearingDeg: (Math.atan2(g.axisX, g.axisZ) * 180 / Math.PI + 360) % 360 };
+
+    // Seat every pier of this bridge on the surveyed bed at its own position (not the reach mean).
+    for (const p of group.userData.piers.slice(pierCountBefore)) {
+      p.bridgeName = g.name;
+      const sd = surveyDepthAt(dataset, p.x, p.z);
+      p.surveyDepth = sd;
+      p.inWater = terrainHeightAt(p.x, p.z, stations) < SURFACE_Y;
+      if (Number.isFinite(sd) && p.inWater) p.d = sd;
+    }
+  }
+
+  updateBridgePiers(group, state.depthExaggeration);
+  group.userData.gauges = createBridgeGauges(group, dataset, state.depthExaggeration);
+  group.userData.dimensionReport = (waterSurfaceY = SURFACE_Y) => createBridgeDimensionReport(group, waterSurfaceY);
+  group.userData.dimensionReportRows = group.userData.dimensionReport(SURFACE_Y);
+  console.table?.(group.userData.dimensionReportRows);
+  return group;
+}
+
+function applySourcedPlanDimensions(bridge) {
+  const dims = bridgeDimensionSource(bridge.id);
+  if (!dims) return;
+  const cx = (bridge.start.x + bridge.end.x) * 0.5;
+  const cz = (bridge.start.z + bridge.end.z) * 0.5;
+  const half = dims.lengthM * 0.5;
+  bridge.lengthM = dims.lengthM;
+  bridge.widthM = dims.widthM;
+  bridge.midX = cx;
+  bridge.midZ = cz;
+  bridge.start = { ...bridge.start, x: cx - bridge.axisX * half, z: cz - bridge.axisZ * half };
+  bridge.end = { ...bridge.end, x: cx + bridge.axisX * half, z: cz + bridge.axisZ * half };
+}
+
+function createBridgeDimensionReport(group, waterSurfaceY) {
+  return group.children.filter((child) => child.isGroup && child.userData.modelLengthM != null).map((bridge) => {
+    const source = bridge.userData.dimensionSource;
+    const elevation = bridge.userData.elevationSource;
+    const lengthM = bridge.userData.modelLengthM;
+    const widthM = bridge.userData.modelWidthM;
+    const deckY = bridge.userData.modelDeckY;
+    return {
+      bridgeId: bridge.userData.bridgeId,
+      name: bridge.name,
+      position: bridge.userData.modelPosition,
+      sourceStructureType: source?.structureType || "Unverified",
+      modelStructureType: bridge.userData.modelStructureType,
+      sourceDimensions: source ? `${source.approximate ? "~" : ""}${source.lengthM} × ${source.widthM} m` : "Unverified",
+      modelDimensions: `${lengthM.toFixed(1)} × ${widthM.toFixed(1)} m`,
+      lengthScaleErrorPct: source ? Number((((lengthM - source.lengthM) / source.lengthM) * 100).toFixed(2)) : "Unverified",
+      widthScaleErrorPct: source ? Number((((widthM - source.widthM) / source.widthM) * 100).toFixed(2)) : "Unverified",
+      sourceDeckElevation: elevation ? `${elevation.deckM} m; ${elevation.datum}` : "Unverified",
+      modelDeckElevationSceneY: Number(deckY.toFixed(2)),
+      sourceDeckElevationDatum: elevation?.datum || "Unverified",
+      sourceSoffitElevation: elevation ? `${elevation.soffitM} m; ${elevation.datum}` : "Unverified",
+      modelSoffitElevationSceneY: "Not surveyed",
+      currentWaterSurfaceSceneY: Number(waterSurfaceY.toFixed(2)),
+      currentWaterElevationMSL: "Unavailable: project vertical datum is unverified",
+      deckClearanceSceneM: Number((deckY - waterSurfaceY).toFixed(2)),
+      spans: source?.spans || "Unverified",
+      modelPierCount: (group.userData.piers || []).filter((pier) => pier.bridgeName === bridge.name).length,
+      sourcePierCount: source?.spans?.pierCount ?? "Unverified",
+      sourceHfl25M: elevation?.hfl25M ?? "Unverified",
+      sourceHfl100M: elevation?.hfl100M ?? "Unverified",
+      sourceSoffitClearanceHfl25M: elevation ? Number((elevation.soffitM - elevation.hfl25M).toFixed(2)) : "Unverified",
+      sourceSoffitClearanceHfl100M: elevation ? Number((elevation.soffitM - elevation.hfl100M).toFixed(2)) : "Unverified",
+      datumStatus: elevation?.datum || "No bridge elevation datum verified",
+      source: source?.source || elevation?.source || "No verified dimension source found",
+      confidence: source?.confidence || "unverified",
+    };
+  });
+}
+
+function buildBridgeFromGIS(bridge, roads, stations) {
+  // If bridge has verified source, survey alignment, or explicit polyline vertices, preserve exactly without shifting
+  const isAuthoritative = bridge.verified || bridge.source === "BRIDGE_AUDIT" || bridge.source === "SURVEY" || (bridge.vertices && bridge.vertices.length >= 2);
+  
+  let finalStart = bridge.start;
+  let finalEnd = bridge.end;
+  
+  if (!isAuthoritative && roads?.length) {
+    const startSnap = snapToRoadNetwork(bridge.start.x, bridge.start.z, roads);
+    const endSnap = snapToRoadNetwork(bridge.end.x, bridge.end.z, roads);
+    if (startSnap && startSnap.distance <= 40) {
+      finalStart = startSnap.point;
+      bridge.userData.startConnected = true;
+    }
+    if (endSnap && endSnap.distance <= 40) {
+      finalEnd = endSnap.point;
+      bridge.userData.endConnected = true;
+    }
+  } else {
+    bridge.userData.startConnected = true;
+    bridge.userData.endConnected = true;
+  }
+  
+  const ax = finalEnd.x - finalStart.x;
+  const az = finalEnd.z - finalStart.z;
+  const al = Math.hypot(ax, az) || 1;
+  
+  return {
+    ...bridge,
+    start: finalStart,
+    end: finalEnd,
+    axisX: ax / al,
+    axisZ: az / al,
+    lengthM: bridge.lengthM || al,
+    midX: bridge.midX ?? (finalStart.x + finalEnd.x) * 0.5,
+    midZ: bridge.midZ ?? (finalStart.z + finalEnd.z) * 0.5,
+  };
+}
+
+function snapToRoadNetwork(px, pz, roads) {
+  let best = null;
+  const maxSearch = 120;
+  for (const r of roads) {
+    if (!r.vertices || r.vertices.length < 2) continue;
+    if (r.midX != null && Math.hypot(r.midX - px, r.midZ - pz) > (r.lengthM || 200) + maxSearch) {
+      continue;
+    }
+    const snap = nearestPointOnPolyline(px, pz, r.vertices);
+    if (!snap) continue;
+    if (!best || snap.distance < best.distance) {
+      best = snap;
+    }
+  }
+  return best;
+}
+
+function nearestPointOnPolyline(px, pz, verts) {
+  let bestD = Infinity;
+  let bestP = null;
+  let bestSeg = -1;
+  for (let i = 0; i < verts.length - 1; i++) {
+    const ax = verts[i].x;
+    const az = verts[i].z;
+    const bx = verts[i+1].x;
+    const bz = verts[i+1].z;
+    
+    const abx = bx - ax;
+    const abz = bz - az;
+    const len2 = abx * abx + abz * abz;
+    if (len2 === 0) continue;
+    
+    let t = ((px - ax) * abx + (pz - az) * abz) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + abx * t;
+    const cz = az + abz * t;
+    const d = Math.hypot(px - cx, pz - cz);
+    if (d < bestD) {
+      bestD = d;
+      bestP = { x: cx, z: cz };
+      bestSeg = i;
+    }
+  }
+  
+  if (!bestP) return null;
+  
+  const ax = verts[bestSeg].x;
+  const az = verts[bestSeg].z;
+  const bx = verts[bestSeg+1].x;
+  const bz = verts[bestSeg+1].z;
+  let tx = bx - ax;
+  let tz = bz - az;
+  const l = Math.hypot(tx, tz) || 1;
+  
+  return {
+    point: bestP,
+    distance: bestD,
+    segmentIndex: bestSeg,
+    tangent: { x: tx/l, z: tz/l }
+  };
+}
+
+/**
+ * Prefer curated OSM bridges; also promote road polylines that actually cross water.
+ */
+function addCableStayedSpan(bridge, group, opts) {
+  const { span, thick, deckY, mx, mz, quat, ax, az, start, end, minD, dMid } = opts;
+  const deckMat = mat({ color: "#dde1e6", roughness: 0.62, metalness: 0.12 });
+  const asphaltMat = mat({ color: "#2d3139", roughness: 0.92, metalness: 0.04 });
+  const pylonMat = mat({ color: "#f8f9fa", roughness: 0.45, metalness: 0.22 });
+  const cableMat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
+  const pierMat = mat({ color: "#80868b", roughness: 0.88 });
+
+  // 1. Sleek aerodynamic box girder deck
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(span, 2.4, thick), deckMat);
+  deck.position.set(mx, deckY - 1.2, mz);
+  deck.quaternion.copy(quat);
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  bridge.add(deck);
+
+  const road = new THREE.Mesh(new THREE.BoxGeometry(span * 0.99, 0.14, thick * 0.93), asphaltMat);
+  road.position.set(mx, deckY + 0.08, mz);
+  road.quaternion.copy(quat);
+  bridge.add(road);
+
+  // 2. Central Pylon Towers (Cable-stayed A-frame towers)
+  const pylonHeight = 38;
+  const pylonTs = [0.35, 0.65];
+  for (const pt of pylonTs) {
+    const px = start.x + (end.x - start.x) * pt;
+    const pz = start.z + (end.z - start.z) * pt;
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(3.6, pylonHeight, 4.0), pylonMat);
+    tower.position.set(px, deckY + pylonHeight * 0.45, pz);
+    tower.quaternion.copy(quat);
+    tower.castShadow = true;
+    bridge.add(tower);
+
+    // Red safety beacon on top of tower
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.85, 8, 8), new THREE.MeshBasicMaterial({ color: "#ff2222" }));
+    beacon.position.set(px, deckY + pylonHeight * 0.95 + 0.9, pz);
+    bridge.add(beacon);
+
+    // Radiating white stay cables down to deck edges
+    const pylonTopY = deckY + pylonHeight * 0.9;
+    for (let c = 1; c <= 6; c++) {
+      for (const dirSign of [-1, 1]) {
+        for (const sideSign of [-1, 1]) {
+          const cableFrac = pt + dirSign * (c * 0.045);
+          if (cableFrac < 0.06 || cableFrac > 0.94) continue;
+          const cx = start.x + (end.x - start.x) * cableFrac;
+          const cz = start.z + (end.z - start.z) * cableFrac;
+          const perpX = -(az || 0) * sideSign * (thick * 0.46);
+          const perpZ = (ax || 1) * sideSign * (thick * 0.46);
+          const attachX = cx + perpX;
+          const attachZ = cz + perpZ;
+          const geom = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(px, pylonTopY - c * 1.8, pz),
+            new THREE.Vector3(attachX, deckY + 0.4, attachZ),
+          ]);
+          const cable = new THREE.Line(geom, cableMat);
+          bridge.add(cable);
+        }
+      }
+    }
+
+    // Heavy water pier foundation under each pylon tower
+    const pierH = Math.max(14, deckY - minD + 4);
+    const pier = new THREE.Mesh(new THREE.CylinderGeometry(5.5, 6.5, pierH, 16), pierMat);
+    pier.position.set(px, deckY - pierH * 0.5, pz);
+    pier.castShadow = true;
+    bridge.add(pier);
+  }
+}
+
+/**
+ * Curated and dynamic bridge spans across the river channel for any KML.
+ */
+function collectBridgeSpans(dataset, ring, stations) {
+  const spans = [];
+  const used = [];
+  const roads = dataset.osm?.roads || [];
+  const candidates = [...(dataset.bridges || [])];
+
+  // Mandovi: only survey-curated crossings (Atal Setu, Mandovi New/Old).
+  // Never promote OSM bridge=yes road stubs (false girders near Ribandar / Fonduvem).
+  const mandoviCuratedOnly =
+    !!dataset.isMandovi &&
+    candidates.some((b) => b.source === "MANDOVI_SURVEY" || String(b.id || "").startsWith("900000"));
+
+  if (!mandoviCuratedOnly) {
+    if (dataset.osm?.bridges?.length) {
+      for (const b of dataset.osm.bridges) {
+        if (
+          !candidates.some(
+            (c) =>
+              String(c.id) === String(b.id) ||
+              (b.name && c.name && b.name.toLowerCase() === c.name.toLowerCase()),
+          )
+        ) {
+          candidates.push(b);
+        }
+      }
+    }
+
+    // Promote crossing roads tagged with bridge or spanning the water (non-Mandovi only)
+    for (const r of roads) {
+      if ((r.bridge === "yes" || r.bridge === "viaduct") && r.vertices && r.vertices.length >= 2) {
+        const v0 = r.vertices[0];
+        const v1 = r.vertices[r.vertices.length - 1];
+        const d = Math.hypot(v1.x - v0.x, v1.z - v0.z);
+        if (
+          d > 25 &&
+          !candidates.some(
+            (c) =>
+              Math.hypot((c.midX || c.start?.x) - r.midX, (c.midZ || c.start?.z) - r.midZ) < 60,
+          )
+        ) {
+          candidates.push({
+            id: `road_br_${r.id || candidates.length}`,
+            name: r.name || prettyRoadName(r.highway),
+            start: v0,
+            end: v1,
+            widthM: r.widthM || 14,
+            lengthM: d,
+            source: "OSM_ROAD_CROSSING",
+          });
+        }
+      }
+    }
+  } else {
+    // Drop any non-curated leftovers that may have been merged into dataset.bridges
+    const curated = candidates.filter(
+      (b) => b.source === "MANDOVI_SURVEY" || String(b.id || "").startsWith("900000"),
+    );
+    candidates.length = 0;
+    candidates.push(...curated);
+    console.info(
+      "[bridges] Mandovi curated-only spans:",
+      candidates.map((b) => b.name || b.fullName),
+    );
+  }
+
+  // Strictly audit candidates: if 0 bridges exist in datasets, return empty (never synthesize)
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  for (const g of candidates) {
+    let bridge = {
+      id: g.id || g.osmId,
+      name: g.name,
+      start: g.start,
+      end: g.end,
+      vertices: g.vertices,
+      lengthM: g.lengthM,
+      widthM: g.widthM || 14,
+      axisX: g.axisX,
+      axisZ: g.axisZ,
+      midX: g.midX,
+      midZ: g.midZ,
+      bridgeType: g.bridgeType,
+      structureType: g.structureType,
+      source: g.source || "OpenStreetMap",
+      provenance: g.provenance || (g.source === "BRIDGE_AUDIT" ? "VERIFIED (Survey & Engineering Records)" : "SOURCE_MAPPED (OpenStreetMap)"),
+      verified: g.verified || g.source === "BRIDGE_AUDIT",
+      userData: { startConnected: false, endConnected: false }
+    };
+    
+    const built = buildBridgeFromGIS(bridge, roads, stations);
+    spans.push(built);
+    used.push({ x: built.midX, z: built.midZ });
+  }
+
+  return spans;
+}
+
+export function rebuildBridges(bridgesGroup, dataset) {
+  if (!bridgesGroup) return;
+  while (bridgesGroup.children.length > 0) {
+    const child = bridgesGroup.children[0];
+    bridgesGroup.remove(child);
+  }
+  bridgesGroup.userData.piers = [];
+  bridgesGroup.userData.labels = [];
+
+  const fresh = createBridges(dataset);
+  while (fresh.children.length > 0) {
+    bridgesGroup.add(fresh.children[0]);
+  }
+  bridgesGroup.userData.piers = fresh.userData.piers;
+  bridgesGroup.userData.labels = fresh.userData.labels;
+  console.info("[bridges] rebuilt live bridge group:", bridgesGroup.children.length, "bridges:", (bridgesGroup.userData.labels || []).map((l) => l.fullName));
+}
+
+function prettyRoadName(hw) {
+  if (/trunk|primary/.test(hw)) return "Road Bridge";
+  if (/secondary|tertiary/.test(hw)) return "Road Bridge";
+  return "Bridge";
+}
+
+function nearestStation(x, z, stations) {
+  let best = stations[0];
+  let bestD = Infinity;
+  const step = Math.max(1, Math.floor(stations.length / 300));
+  for (let i = 0; i < stations.length; i += step) {
+    const s = stations[i];
+    const d2 = (s.x - x) ** 2 + (s.z - z) ** 2;
+    if (d2 < bestD) {
+      bestD = d2;
+      best = s;
+    }
+  }
+  return best;
+}
+
+function nearestHalf(x, z, stations) {
+  const best = nearestStation(x, z, stations);
+  const lat = Math.abs((x - best.x) * -best.flowZ + (z - best.z) * best.flowX);
+  return { lat, half: best.halfWidth };
+}
+
+function mat(opts) {
+  const m = new THREE.MeshStandardMaterial(opts);
+  m.polygonOffset = true;
+  m.polygonOffsetFactor = -2;
+  m.polygonOffsetUnits = -2;
+  return m;
+}
+
+/** In-scene sprite pins are superseded by the screen-space layer in bridgeLabels.js. */
+export function updateBridgeLabels(group) {
+  for (const item of group?.userData?.labels || []) {
+    item.label.visible = false;
+    if (item.pole) item.pole.visible = false;
+    if (item.beacon) item.beacon.visible = false;
+  }
+}
+
+function makeBridgeLabel(text) {
+  const canvas = document.createElement("canvas");
+  // Half resolution — sprite scale keeps on-screen size identical
+  canvas.width = 512;
+  canvas.height = 80;
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 2;
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  const sprMat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const spr = new THREE.Sprite(sprMat);
+  spr.userData.canvas = canvas;
+  spr.renderOrder = 30;
+  spr.frustumCulled = true;
+  spr.scale.set(48, 48, 1);
+  paintBridgeLabel(spr, text || "B", false);
+  return spr;
+}
+
+function paintBridgeLabel(spr, text, fullName) {
+  const canvas = spr.userData.canvas || spr.material.map?.image;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  if (fullName) {
+    ctx.fillStyle = "rgba(8, 14, 10, 0.92)";
+    roundRect(ctx, 16, 16, w - 32, h - 32, 14);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(72, 200, 110, 1)";
+    ctx.lineWidth = 8;
+    roundRect(ctx, 16, 16, w - 32, h - 32, 14);
+    ctx.stroke();
+    const shown = String(text || "Bridge");
+    const clipped = shown.length > 42 ? `${shown.slice(0, 40)}…` : shown;
+    ctx.fillStyle = "#e8ffe8";
+    ctx.font = "700 64px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.65)";
+    ctx.shadowBlur = 8;
+    ctx.fillText(clipped, w / 2, h / 2 + 4);
+    ctx.shadowBlur = 0;
+  } else {
+    // Compact green "B" badge on every bridge
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = 52;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(12, 48, 28, 0.92)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(72, 210, 110, 1)";
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.fillStyle = "#7dff9a";
+    ctx.font = "700 72px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("B", cx, cy + 4);
+  }
+
+  if (spr.material.map) {
+    spr.material.map.needsUpdate = true;
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w * 0.5, h * 0.5);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+export function updateBridgePiers(group, exag, waterSurfaceY = SURFACE_Y) {
+  if (group.userData.gauges) updateBridgeGauges(group.userData.gauges, exag);
+  for (const p of group.userData.piers || []) {
+    const bedY = bedElevation(p.d, p.minD, p.maxD, 0.5, exag);
+    const h = Math.max(6, p.deckY - 0.9 - bedY);
+    p.mesh.scale.set(1, h, 1);
+    p.mesh.position.set(p.x, bedY + h * 0.5, p.z);
+    if (p.cap) {
+      p.cap.position.set(p.x, p.deckY - 0.9, p.z);
+    }
+  }
+  if (group.userData.dimensionReport) {
+    group.userData.dimensionReportRows = group.userData.dimensionReport(waterSurfaceY);
+  }
+}

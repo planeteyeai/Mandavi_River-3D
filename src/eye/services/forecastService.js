@@ -1,0 +1,391 @@
+/**
+ * Reach geometry forecast. Discharge numbers come from the live river
+ * cell (GloFAS) for the uploaded KML, not a fixed city hydrograph.
+ */
+
+import { getCachedLiveHydrology, fetchLiveHydrology, estimatedBaseflowM3s } from "./hydrology/liveHydrologyService.js";
+
+const PAST_HOURS = 72;
+const FORECAST_HOURS = 72;
+const N_MEMBERS = 50;
+const TRUTH_HOURS = PAST_HOURS + 480;
+const WSE_DATUM_M = 0.0;
+const TOY_SLOPE = 0.0009;
+const DEPTH_COEF = 0.1;
+const DEPTH_EXP = 0.6;
+
+/** Supported Forecast horizon buttons (hours). */
+export const FORECAST_HORIZONS = [6, 12, 24, 48, 72];
+
+let enginePromise = null;
+
+/**
+ * Load (once) and return the forecast engine for Mula–Mutha.
+ */
+export function getForecastEngine() {
+  if (!enginePromise) {
+    enginePromise = createForecastEngine().catch((err) => {
+      enginePromise = null;
+      throw err;
+    });
+  }
+  return enginePromise;
+}
+
+/**
+ * @param {number} leadH
+ * @returns {Promise<{ lead_h: number, median: number[], p10: number[], p90: number[], chainage_m: number[] }>}
+ */
+export async function forecastProfile(leadH = 24) {
+  const eng = await getForecastEngine();
+  return eng.forecastProfile(leadH);
+}
+
+function uploadedRiverStations() {
+  const chainage = typeof window !== "undefined" ? window.__RIVER_DATASET__?.chainage : null;
+  if (!Array.isArray(chainage) || chainage.length < 2) return null;
+  if (chainage[0]?.width_m == null && chainage[0]?.chainage_m == null && chainage[0]?.meters == null) return null;
+  return chainage.map((c) => ({
+    chainage_m: Number(c.chainage_m ?? c.meters) || 0,
+    lon: c.lon,
+    lat: c.lat,
+    width_m: Math.max(8, Number(c.width_m) || 40),
+  }));
+}
+
+async function createForecastEngine() {
+  let chainage = uploadedRiverStations();
+  let depth = null;
+  if (!chainage) {
+    [chainage, depth] = await Promise.all([
+      fetchJson("/data/naditwin/chainage_profile.json"),
+      fetchJson("/data/naditwin/depth_profile.json").catch(() => null),
+    ]);
+  } else {
+    depth = chainage.map(() => ({ depth_m: 2.2, flagged: false }));
+  }
+  if (!Array.isArray(chainage) || !chainage.length) {
+    throw new Error("Forecast geometry unavailable (chainage profile missing)");
+  }
+  return new ForecastEngine(chainage, depth, 42);
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error(`Failed to load ${url} (${res.status})`);
+  const text = await res.text();
+  if (text.trimStart().startsWith("<")) throw new Error(`Failed to load ${url} (not JSON)`);
+  return JSON.parse(text);
+}
+
+/** Mulberry32 — deterministic PRNG matching seedable Random(seed) behaviour closely enough for tours. */
+function createRng(seed) {
+  let t = (seed >>> 0) || 1;
+  return {
+    next() {
+      t += 0x6d2b79f5;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    },
+    gauss(mu = 0, sigma = 1) {
+      // Box–Muller
+      let u = 0;
+      let v = 0;
+      while (u === 0) u = this.next();
+      while (v === 0) v = this.next();
+      const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      return mu + z * sigma;
+    },
+    uniform(a, b) {
+      return a + (b - a) * this.next();
+    },
+  };
+}
+
+class ForecastEngine {
+  /**
+   * @param {Array<{chainage_m:number, width_m:number}>} stations
+   * @param {Array<{depth_m:number, flagged?:boolean}>|null} depthStations
+   * @param {number} seed
+   */
+  constructor(stations, depthStations, seed = 42) {
+    this.seed = seed;
+    this.nCells = stations.length;
+    this.chainageM = stations.map((s) => Number(s.chainage_m) || 0);
+    this.realWidthM = stations.map((s) => Number(s.width_m) || 1);
+    this.reachLenM = this.chainageM[this.nCells - 1] || 1;
+    this.meanWidth = this.realWidthM.reduce((a, b) => a + b, 0) / this.nCells;
+
+    if (depthStations?.length === this.nCells) {
+      this.hasRealDepth = true;
+      this.realDepthM = depthStations.map((d) => Number(d.depth_m) || 0);
+      this.depthFlagged = depthStations.map((d) => !!d.flagged);
+      this.meanDepth = this.realDepthM.reduce((a, b) => a + b, 0) / this.nCells;
+    } else {
+      this.hasRealDepth = false;
+      this.realDepthM = new Array(this.nCells).fill(0);
+      this.depthFlagged = new Array(this.nCells).fill(false);
+      this.meanDepth = 0;
+    }
+
+    this.nowIdx = PAST_HOURS + 24;
+    this._buildGeometry();
+    this._buildTruthDischarge();
+    this.refreshForecast();
+  }
+
+  _buildGeometry() {
+    const rng = createRng(this.seed + 1);
+    this.bed = [];
+    this.widthFactor = [];
+    for (let i = 0; i < this.nCells; i += 1) {
+      const x = this.chainageM[i];
+      const slopeComponent = WSE_DATUM_M - TOY_SLOPE * x;
+      let bed;
+      if (this.hasRealDepth) {
+        bed = slopeComponent - (this.realDepthM[i] - this.meanDepth);
+      } else {
+        const pools =
+          0.6 * Math.sin((2 * Math.PI * x) / 500.0) +
+          0.3 * Math.sin((2 * Math.PI * x) / 140.0 + 1.3);
+        bed = slopeComponent + pools + rng.gauss(0, 0.12);
+      }
+      this.bed.push(bed);
+      const wf = this.realWidthM[i] / this.meanWidth;
+      this.widthFactor.push(Math.max(0.15, Math.min(2.2, wf)));
+    }
+  }
+
+  _buildTruthDischarge() {
+    const rng = createRng(this.seed + 2);
+    const base = Math.max(0, areaDischargeM3s());
+    const q = [];
+    for (let h = 0; h < TRUTH_HOURS; h += 1) {
+      let v = base * (1 + 0.04 * Math.sin((2 * Math.PI * h) / 24));
+      v *= 1 + rng.gauss(0, 0.015);
+      q.push(Math.max(0, v));
+    }
+    this.qTruth = q;
+  }
+
+  reseedFromLive() {
+    this._buildTruthDischarge();
+    this.refreshForecast();
+  }
+
+  refreshForecast() {
+    this.members = [];
+    for (let m = 0; m < N_MEMBERS; m += 1) {
+      const rng = createRng(this.seed * 1000 + this.nowIdx * 7 + m);
+      const phase = rng.gauss(0, 2.5);
+      const bias = rng.gauss(0, 0.04);
+      const series = [];
+      let noise = 0.0;
+      for (let k = 1; k <= FORECAST_HOURS; k += 1) {
+        noise += rng.gauss(0, 0.012);
+        const idx = this.nowIdx + k + phase;
+        const i0 = Math.max(0, Math.min(TRUTH_HOURS - 2, Math.floor(idx)));
+        const frac = Math.min(1.0, Math.max(0.0, idx - i0));
+        const q = this.qTruth[i0] * (1 - frac) + this.qTruth[i0 + 1] * frac;
+        series.push(Math.max(0, q * (1 + bias + noise)));
+      }
+      this.members.push(series);
+    }
+  }
+
+  qQuantiles(k, qs = [0.1, 0.5, 0.9]) {
+    const vals = this.members.map((m) => m[k]).sort((a, b) => a - b);
+    return qs.map((q) => {
+      const pos = q * (vals.length - 1);
+      const lo = Math.floor(pos);
+      const hi = Math.min(lo + 1, vals.length - 1);
+      return vals[lo] + (vals[hi] - vals[lo]) * (pos - lo);
+    });
+  }
+
+  _depthFromQ(q, cell) {
+    return (DEPTH_COEF * q ** DEPTH_EXP) / Math.max(0.4, this.widthFactor[cell]);
+  }
+
+  wseProfile(q) {
+    const prof = [];
+    for (let i = 0; i < this.nCells; i += 1) {
+      const att = 1.0 - 0.08 * (i / this.nCells);
+      const d = this._depthFromQ(q * att, i);
+      prof.push(this.bed[i] + d);
+    }
+    return prof;
+  }
+
+  /**
+   * @param {number} leadH 1..72
+   */
+  forecastProfile(leadH) {
+    const lead = Math.round(Number(leadH) || 24);
+    const k = Math.max(0, Math.min(FORECAST_HOURS - 1, lead - 1));
+    const [q10, q50, q90] = this.qQuantiles(k);
+    const round3 = (v) => Math.round(v * 1000) / 1000;
+    return {
+      lead_h: lead,
+      median: this.wseProfile(q50).map(round3),
+      p10: this.wseProfile(q10).map(round3),
+      p90: this.wseProfile(q90).map(round3),
+      chainage_m: this.chainageM.slice(),
+      modelled: false,
+      source: "Live river discharge for this reach",
+    };
+  }
+
+  cellForChainage(meters) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < this.nCells; i += 1) {
+      const d = Math.abs(this.chainageM[i] - meters);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  /** Same along-reach attenuation used by wseProfile — keeps Q consistent with WSE. */
+  localDischargeFactor(cellIndex) {
+    const i = Math.max(0, Math.min(this.nCells - 1, Number(cellIndex) || 0));
+    return 1.0 - 0.08 * (i / Math.max(1, this.nCells));
+  }
+
+  /** Reach-wide truth Q at simulation "now". */
+  currentDischarge() {
+    return this.qTruth[Math.max(0, Math.min(this.qTruth.length - 1, this.nowIdx))];
+  }
+
+  /**
+   * Chainage-local discharge (m³/s) — same Q×attenuation as the WSE profile cell.
+   * @param {number} meters
+   */
+  dischargeAtChainage(meters) {
+    const q0 = areaDischargeM3s() || this.currentDischarge();
+    const i = this.cellForChainage(Number(meters) || 0);
+    return Math.max(0, q0 * this.localDischargeFactor(i));
+  }
+
+  /**
+   * Current hydraulic snapshot. When `meters` is set, discharge is chainage-local.
+   * UI treats this as LIVE (swap engine later for gauge/API).
+   * @param {number} [meters]
+   */
+  currentHydraulic(meters) {
+    const q0 = areaDischargeM3s() || this.currentDischarge();
+    const hasLocal = Number.isFinite(meters);
+    const cell = hasLocal ? this.cellForChainage(meters) : 0;
+    const qLocal = hasLocal ? Math.max(0, q0 * this.localDischargeFactor(cell)) : q0;
+    const wse = this.wseProfile(q0);
+    return {
+      discharge_m3s: qLocal,
+      discharge_reach_m3s: q0,
+      discharge_chainage_m: hasLocal ? this.chainageM[cell] : null,
+      discharge_cell: hasLocal ? cell : null,
+      dischargeSource: "live",
+      dischargeLabel: "Live",
+      chainage_m: this.chainageM.slice(),
+      bed: this.bed.slice(),
+      wse: wse.slice(),
+      realDepthM: this.realDepthM.slice(),
+      depthFlagged: this.depthFlagged.slice(),
+      hasRealDepth: this.hasRealDepth,
+      meanDepth: this.meanDepth,
+      wseDatum: WSE_DATUM_M,
+    };
+  }
+}
+
+/**
+ * Current hydraulic snapshot. Pass chainage meters for local live Q.
+ * @param {number} [meters]
+ * @returns {Promise<object>}
+ */
+export async function getCurrentHydraulicSnapshot(meters) {
+  const eng = await getForecastEngine();
+  return eng.currentHydraulic(meters);
+}
+
+/**
+ * Live discharge at a chainage (m³/s). Updates with selected station.
+ * @param {number} meters
+ * @returns {Promise<number>}
+ */
+export async function getLiveDischargeAtChainage(meters) {
+  let live = getCachedLiveHydrology();
+  if (!live?.available) {
+    try {
+      live = await fetchLiveHydrology();
+    } catch {
+      live = null;
+    }
+  }
+  const q0 = Number(live?.Q_total);
+  if (!Number.isFinite(q0)) return null;
+  const chainage = typeof window !== "undefined" ? window.__RIVER_DATASET__?.chainage : null;
+  if (!Array.isArray(chainage) || chainage.length < 2 || !Number.isFinite(Number(meters))) return q0;
+  let best = 0;
+  let bestD = Infinity;
+  for (let i = 0; i < chainage.length; i += 1) {
+    const m = Number(chainage[i].meters ?? chainage[i].chainage_m) || 0;
+    const d = Math.abs(m - Number(meters));
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
+  }
+  const factor = 1 - 0.08 * (best / Math.max(1, chainage.length - 1));
+  return Math.max(0, q0 * factor);
+}
+
+export async function reseedForecastDischarge() {
+  if (!enginePromise) return;
+  const eng = await enginePromise;
+  eng.reseedFromLive?.();
+}
+
+function areaDischargeM3s() {
+  const live = getCachedLiveHydrology();
+  if (live?.available && Number.isFinite(live.Q_total)) return live.Q_total;
+  const estimate = estimatedBaseflowM3s();
+  return Number.isFinite(estimate) ? estimate : 0;
+}
+
+/**
+ * Downsample parallel arrays for chart rendering (keeps endpoints + selected cell).
+ */
+export function downsampleProfile(payload, maxPoints = 160, selectedMeters = null) {
+  const n = payload.median?.length || 0;
+  if (!n) return payload;
+  if (n <= maxPoints) return payload;
+
+  const step = Math.ceil(n / maxPoints);
+  const keep = new Set([0, n - 1]);
+  for (let i = 0; i < n; i += step) keep.add(i);
+  if (selectedMeters != null && payload.chainage_m?.length) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < n; i += 1) {
+      const d = Math.abs(payload.chainage_m[i] - selectedMeters);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    keep.add(best);
+  }
+  const idx = [...keep].sort((a, b) => a - b);
+  const pick = (arr) => idx.map((i) => arr[i]);
+  return {
+    ...payload,
+    median: pick(payload.median),
+    p10: pick(payload.p10),
+    p90: pick(payload.p90),
+    chainage_m: pick(payload.chainage_m),
+  };
+}
