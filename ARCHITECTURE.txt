@@ -1,0 +1,61 @@
+╔════════════════════════════════════════════════════════════════╗
+║          MANDAVI RIVER 3D - DEPLOYMENT ARCHITECTURE            ║
+╚════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────┐
+│                     SHIP MODELS (114 MB)                       │
+├────────────────────────────────────────────────────────────────┤
+│  📦 Small Ships (GLTF)         3.0 MB   → Detections          │
+│  🚢 Silja Serenade (GLB)       3.8 MB   → Lucky Seven         │
+│  🚢 MS Gabriella (GLB)         2.9 MB   → Pride of Goa II     │
+│  🚢 Fishing Vessel VII (DAE)  104.6 MB  → Pride of Goa        │
+└────────────────────────────────────────────────────────────────┘
+                              ↓
+┌────────────────────────────────────────────────────────────────┐
+│                    VITE BUILD PROCESS                          │
+├────────────────────────────────────────────────────────────────┤
+│  • Bundles src/ GLB files with hashed names                   │
+│  • Copies public/ files as-is                                 │
+│  • Optimizes chunks & code-splitting                          │
+│  • Output: dist/ folder (~500KB + models)                     │
+└────────────────────────────────────────────────────────────────┘
+                              ↓
+                    ┌─────────┴─────────┐
+                    ↓                   ↓
+┌─────────────────────────────┐  ┌─────────────────────────────┐
+│      DOCKER DEPLOYMENT      │  │     VERCEL DEPLOYMENT       │
+├─────────────────────────────┤  ├─────────────────────────────┤
+│ 1. Multi-stage build        │  │ 1. Auto-detect Vite        │
+│ 2. Alpine + Nginx (30MB)    │  │ 2. Build on push           │
+│ 3. Gzip compression         │  │ 3. CDN distribution        │
+│ 4. Proper MIME types        │  │ 4. Edge functions          │
+│ 5. CORS headers             │  │ 5. API proxies             │
+│ 6. Health checks            │  │ 6. Instant rollbacks       │
+├─────────────────────────────┤  ├─────────────────────────────┤
+│ Port: 8080 → 80            │  │ URL: *.vercel.app          │
+│ Access: localhost:8080      │  │ SSL: Auto-provisioned      │
+└─────────────────────────────┘  └─────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│                    BROWSER LOADING FLOW                        │
+├────────────────────────────────────────────────────────────────┤
+│  1. Initial Load           → HTML, CSS, JS (500KB)            │
+│  2. User Activates Ships   → Request model files              │
+│  3. GLTFLoader Fetches     → Download with CORS               │
+│  4. Three.js Renders       → 3D ships in scene                │
+│  5. Browser Caches         → Instant on next visit            │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│                     VERIFICATION TOOLS                         │
+├────────────────────────────────────────────────────────────────┤
+│  npm run verify:ships      → Check model files exist          │
+│  npm run pre-deploy        → Full deployment checklist        │
+│  /test-models.html         → Browser loading test             │
+└────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════╗
+║  ✅ STATUS: PRODUCTION READY                                   ║
+║  🐳 Docker: docker-compose up -d                              ║
+║  ▲ Vercel: vercel --prod                                      ║
+╚════════════════════════════════════════════════════════════════╝

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Models Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #2c3e50; }
+        .model-test {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .loading { background: #ffc107; color: #000; }
+        .success { background: #4caf50; color: white; }
+        .error { background: #f44336; color: white; }
+        .details {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #2196f3;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚢 Ship Models Loading Test</h1>
+    <p>Testing if all 3D ship models can be loaded properly...</p>
+    
+    <div id="results"></div>
+    
+    <script type="module">
+        const models = [
+            {
+                name: 'Small Ship Detection Model',
+                url: '/data/mandovi/Ships/Small_Ships/source/model.gltf',
+                type: 'GLTF',
+                expectedSize: 3000000
+            },
+            {
+                name: 'Fishing Vessel VII (DAE)',
+                url: '/data/fishing-vessel-vii/Fishing%20Vessel%20VII.dae',
+                type: 'DAE',
+                expectedSize: 100000000
+            }
+        ];
+
+        const resultsDiv = document.getElementById('results');
+
+        async function testModel(model) {
+            const div = document.createElement('div');
+            div.className = 'model-test';
+            div.innerHTML = `
+                <h3>${model.name} <span class="status loading">LOADING...</span></h3>
+                <div class="details">
+                    URL: ${model.url}<br>
+                    Type: ${model.type}<br>
+                    Expected Size: ~${(model.expectedSize / 1024 / 1024).toFixed(2)} MB
+                </div>
+            `;
+            resultsDiv.appendChild(div);
+
+            const statusSpan = div.querySelector('.status');
+            const detailsDiv = div.querySelector('.details');
+
+            try {
+                const startTime = performance.now();
+                const response = await fetch(model.url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const blob = await response.blob();
+                const loadTime = (performance.now() - startTime).toFixed(0);
+                const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+
+                statusSpan.textContent = '✓ SUCCESS';
+                statusSpan.className = 'status success';
+                
+                detailsDiv.innerHTML += `<br><br><strong>✓ Loaded Successfully</strong><br>`;
+                detailsDiv.innerHTML += `Actual Size: ${sizeMB} MB<br>`;
+                detailsDiv.innerHTML += `Load Time: ${loadTime} ms<br>`;
+                detailsDiv.innerHTML += `Content-Type: ${response.headers.get('content-type') || 'not set'}`;
+
+            } catch (error) {
+                statusSpan.textContent = '✗ FAILED';
+                statusSpan.className = 'status error';
+                detailsDiv.innerHTML += `<br><br><strong>✗ Error:</strong><br>${error.message}`;
+            }
+        }
+
+        // Test all models
+        (async () => {
+            for (const model of models) {
+                await testModel(model);
+            }
+            
+            // Summary
+            const summary = document.createElement('div');
+            summary.className = 'model-test';
+            summary.style.background = '#e3f2fd';
+            const successCount = document.querySelectorAll('.status.success').length;
+            const totalCount = models.length;
+            summary.innerHTML = `
+                <h3>📊 Test Summary</h3>
+                <p><strong>${successCount}/${totalCount}</strong> models loaded successfully</p>
+                <p style="font-size: 12px; color: #666;">
+                    Note: Casino ship GLB files (Silja Serenade & MS Gabriella) are loaded from src/ 
+                    and will be bundled by Vite during build. They won't appear in this test but will 
+                    work in the actual application.
+                </p>
+            `;
+            resultsDiv.appendChild(summary);
+        })();
+    </script>
+</body>
+</html>

@@ -14,7 +14,7 @@ function createProxyErrorHandler(name) {
 }
 
 export default defineConfig({
-  assetsInclude: ["**/*.kml", "**/*.kmz"],
+  assetsInclude: ["**/*.kml", "**/*.kmz", "**/*.glb", "**/*.gltf", "**/*.dae"],
 
   server: {
     host: true,
@@ -96,6 +96,18 @@ export default defineConfig({
     target: "es2020",
     sourcemap: false,
     chunkSizeWarningLimit: 1600,
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          const ext = assetInfo.name.split('.').pop();
+          if (['glb', 'gltf', 'dae', 'bin'].includes(ext)) {
+            return 'assets/models/[name]-[hash][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
+      }
+    }
   },
 
   preview: {

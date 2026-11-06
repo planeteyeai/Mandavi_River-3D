@@ -23,10 +23,17 @@ coverage
 .DS_Store
 Thumbs.db
 
-# Documentation and scripts not needed in container
+# Documentation (keep build scripts)
 docs/
-scripts/
 
 # Test files
 *.test.js
 *.spec.js
+
+# Keep all model files and data
+!**/*.glb
+!**/*.gltf
+!**/*.dae
+!**/*.kml
+!**/*.kmz
+!**/*.geojson

@@ -22,9 +22,8 @@ nginx.conf
 .prettierrc
 .eslintrc
 
-# Documentation and build scripts
+# Documentation
 docs/
-scripts/
 
 # Test files
 *.test.js
@@ -33,3 +32,11 @@ scripts/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Keep all model files and data
+!**/*.glb
+!**/*.gltf
+!**/*.dae
+!**/*.kml
+!**/*.kmz
+!**/*.geojson

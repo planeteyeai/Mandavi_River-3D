@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview --port 5174",
     "process:updates": "node scripts/process_updates_assets.mjs",
-    "validate:updates": "node scripts/validate_updates_coords.mjs"
+    "validate:updates": "node scripts/validate_updates_coords.mjs",
+    "verify:ships": "node scripts/verify_ship_models.mjs",
+    "pre-deploy": "node scripts/pre-deploy-check.mjs"
   },
   "dependencies": {
     "chart.js": "^4.4.4",
