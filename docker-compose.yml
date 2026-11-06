@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mandavi-river:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mandavi-river-3d
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

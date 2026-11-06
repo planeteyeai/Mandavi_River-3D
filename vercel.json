@@ -1,0 +1,71 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/rivereye-api/:path*",
+      "destination": "https://rivereye-production.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/jalnetra-api/:path*",
+      "destination": "https://jalnetra-software-production.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/osm-overpass/:path*",
+      "destination": "https://overpass-api.de/api/interpreter/:path*"
+    },
+    {
+      "source": "/osm-overpass-2/:path*",
+      "destination": "https://overpass.kumi.systems/api/interpreter/:path*"
+    },
+    {
+      "source": "/osm-overpass-3/:path*",
+      "destination": "https://overpass.openstreetmap.fr/api/interpreter/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/:path*\\.(kml|kmz|geojson|tif|glb|gltf)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    }
+  ],
+  "github": {
+    "silent": true
+  }
+}

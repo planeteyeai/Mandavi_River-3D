@@ -1,0 +1,35 @@
+node_modules
+.git
+.gitignore
+.gitattributes
+*.md
+README.md
+.vscode
+.idea
+coverage
+.env.local
+.env.*.local
+*.log
+
+# Docker files (not needed on Vercel)
+Dockerfile
+docker-compose.yml
+.dockerignore
+nginx.conf
+
+# Development files
+.editorconfig
+.prettierrc
+.eslintrc
+
+# Documentation and build scripts
+docs/
+scripts/
+
+# Test files
+*.test.js
+*.spec.js
+
+# OS files
+.DS_Store
+Thumbs.db

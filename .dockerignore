@@ -1,0 +1,32 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.gitattributes
+*.md
+README.md
+.vscode
+.idea
+dist
+coverage
+.env
+.env.local
+.env.*.local
+*.log
+
+# Development files
+.editorconfig
+.prettierrc
+.eslintrc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation and scripts not needed in container
+docs/
+scripts/
+
+# Test files
+*.test.js
+*.spec.js
