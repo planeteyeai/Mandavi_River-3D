@@ -5,10 +5,7 @@
  */
 import { riverFingerprint } from "./areaLive.js";
 import { buildMandoviBodCodFromCsv, ensureBodCodPixels } from "./bodCodPixelService.js";
-
-const API_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_JALNETRA_API_BASE) ||
-  "https://jalnetra-software-production.up.railway.app";
+import { API_BASE } from "../session/jalnetraBase.js";
 
 /** Kept for callers. Not used once a river KML is loaded. */
 export const DEFAULT_BOD_COD_VIEWER_ID =

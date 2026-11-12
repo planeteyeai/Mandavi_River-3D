@@ -33,9 +33,7 @@ import { formatApiDate } from "../utils/dateRange.js";
 import { loadAoiKml, pointInAnyAoi, hashAoiGeometry } from "../geo/aoiKml.js";
 import { prepareAoiFromKml } from "../utils/kmlToGeoJSON.js";
 
-const API_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_JALNETRA_API_BASE) ||
-  "https://jalnetra-software-production.up.railway.app";
+import { API_BASE } from "../session/jalnetraBase.js";
 
 const FLOOD_WATER_URL = `${API_BASE.replace(/\/$/, "")}/api/flood-water`;
 const CACHE_PREFIX = "jalnetra-flood-v4";

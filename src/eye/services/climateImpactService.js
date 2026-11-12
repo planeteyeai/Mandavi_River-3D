@@ -4,7 +4,12 @@
  * Heat points are sampled from that scene's flood overlay, not a fixed city file.
  */
 
-import { downloadText, kmlDownloadUrl, waitForEndpoint } from "../session/jalnetraClient.js";
+import {
+  downloadText,
+  fetchEndpointNow,
+  kmlDownloadUrl,
+  waitForEndpoint,
+} from "../session/jalnetraClient.js";
 import { getRiverSession } from "../session/riverSession.js";
 import { riverFingerprint, riverIsMulaMutha } from "./areaLive.js";
 
@@ -43,8 +48,21 @@ export async function fetchClimateImpactIndex() {
   if (indexCache?._key === key && indexCache.periods?.length) return indexCache;
 
   let body = session.results?.["flood-water"] || null;
-  if (!body && session.pending?.["flood-water"] !== false) {
+  // Wait if JalNetra is still running this endpoint.
+  if (!body && session.pending?.["flood-water"]) {
     body = await waitForEndpoint("flood-water", 120000);
+  }
+  // Not started yet, or previous failure — request flood-water now for Climate.
+  if (!body) {
+    try {
+      if (session.errors?.["flood-water"]) delete session.errors["flood-water"];
+      body = await fetchEndpointNow("flood-water");
+    } catch (err) {
+      const errText = session.errors?.["flood-water"] || err?.message;
+      throw new Error(
+        errText || "No flood scenes for this river in the selected dates",
+      );
+    }
   }
   const errText = session.errors?.["flood-water"];
   const rows = Array.isArray(body?.datewise) ? body.datewise : [];

@@ -5,14 +5,18 @@
  */
 
 const REMOTE_API = "https://rivereye-production.up.railway.app/api";
+/** Same-origin proxy (Vite + Vercel rewrites). RiverEye has no browser CORS. */
+const PROXY_API = "/rivereye-api";
 
 /** Override with VITE_RIVEREYE_API (e.g. https://…/api or /rivereye-api). */
 export function aqiApiBase() {
   const env =
     typeof import.meta !== "undefined" && import.meta.env?.VITE_RIVEREYE_API;
   if (env) return String(env).replace(/\/$/, "");
+  // Always prefer same-origin proxy in the browser (dev + Vercel).
+  if (typeof window !== "undefined") return PROXY_API;
   if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-    return "/rivereye-api";
+    return PROXY_API;
   }
   return REMOTE_API;
 }

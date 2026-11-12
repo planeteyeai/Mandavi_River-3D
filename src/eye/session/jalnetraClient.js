@@ -9,10 +9,8 @@
  */
 
 import { getRiverSession } from "./riverSession.js";
-
-export const API_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_JALNETRA_API_BASE) ||
-  "https://jalnetra-software-production.up.railway.app";
+import { API_BASE } from "./jalnetraBase.js";
+export { API_BASE, resolveJalnetraBase } from "./jalnetraBase.js";
 
 /** Fire these first on project start — no queue delay behind other layers. */
 const SILT_PRIORITY_IDS = ["silt-classification", "silt-volume"];

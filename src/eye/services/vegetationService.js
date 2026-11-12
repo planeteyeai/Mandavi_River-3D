@@ -18,9 +18,7 @@ import {
 } from "../utils/dateRange.js";
 import { loadAoiKml, pointInAnyAoi } from "../geo/aoiKml.js";
 
-const API_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_JALNETRA_API_BASE) ||
-  "https://jalnetra-software-production.up.railway.app";
+import { API_BASE } from "../session/jalnetraBase.js";
 
 const VEGETATION_TYPE_URL = `${API_BASE.replace(/\/$/, "")}/api/vegetation-type`;
 const CACHE_PREFIX = "vegetation-v3";

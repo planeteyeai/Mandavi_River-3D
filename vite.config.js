@@ -55,8 +55,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
         timeout: 30000,
-        rewrite: (path) =>
-          path.replace(/^\/jalnetra-api/, "/api"),
+        // Client paths already include /api/... (API_BASE=/jalnetra-api).
+        rewrite: (path) => path.replace(/^\/jalnetra-api/, ""),
         configure: createProxyErrorHandler("jalnetra-api"),
       },
 
@@ -116,6 +116,22 @@ export default defineConfig({
     strictPort: false,
 
     proxy: {
+      "/rivereye-api": {
+        target: "https://rivereye-production.up.railway.app",
+        changeOrigin: true,
+        secure: true,
+        timeout: 25000,
+        rewrite: (path) => path.replace(/^\/rivereye-api/, "/api"),
+        configure: createProxyErrorHandler("rivereye-api"),
+      },
+      "/jalnetra-api": {
+        target: "https://jalnetra-software-production.up.railway.app",
+        changeOrigin: true,
+        secure: true,
+        timeout: 30000,
+        rewrite: (path) => path.replace(/^\/jalnetra-api/, ""),
+        configure: createProxyErrorHandler("jalnetra-api"),
+      },
       "/osm-overpass": {
         target: "https://overpass-api.de",
         changeOrigin: true,

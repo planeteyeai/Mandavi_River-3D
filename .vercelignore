@@ -33,10 +33,18 @@ docs/
 .DS_Store
 Thumbs.db
 
-# Keep all model files and data
+# Keep model / GIS data in the deploy
 !**/*.glb
 !**/*.gltf
 !**/*.dae
 !**/*.kml
 !**/*.kmz
 !**/*.geojson
+
+# Still exclude oversized / unused assets (Vercel ~100MB file limit)
+public/data/fishing-vessel-vii/Fishing Vessel VII.dae
+dist/data/fishing-vessel-vii/Fishing Vessel VII.dae
+/Mandovi_AOI_FABDEM.tif
+/Mandovi_FABDEM.tif
+src/data/fishing-vessel-vii/source
+scratch
