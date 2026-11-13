@@ -5,15 +5,15 @@
 
 /** @typedef {{ id:string, kmlClass?:string, label:string, color:string, range:string, unit:string, min:number, max:number|null, inclusiveMax?:boolean }} WqClass */
 
-/** TSS — Mandovi spectral proxy (tss (1).kml), not lab mg/L */
+/** TSS — Mandovi spectral proxy (tss (1).kml), displayed as mg/L */
 export const TSS_CLASSES = /** @type {WqClass[]} */ ([
   {
     id: "low",
     kmlClass: "Low",
     label: "Low",
     color: "#2196F3",
-    range: "TSS ≤ 0.62",
-    unit: "Index",
+    range: "≤ 0.62 mg/L",
+    unit: "mg/L",
     min: 0,
     max: 0.62,
     inclusiveMax: true,
@@ -23,8 +23,8 @@ export const TSS_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "Medium",
     label: "Medium",
     color: "#FFC107",
-    range: "0.62–1.17",
-    unit: "Index",
+    range: "0.62–1.17 mg/L",
+    unit: "mg/L",
     min: 0.62,
     max: 1.17,
     inclusiveMax: true,
@@ -34,8 +34,8 @@ export const TSS_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "High",
     label: "High",
     color: "#F44336",
-    range: "TSS > 1.17",
-    unit: "Index",
+    range: "> 1.17 mg/L",
+    unit: "mg/L",
     min: 1.17,
     max: null,
     inclusiveMax: false,
@@ -220,10 +220,10 @@ export const WQ_LAYER_SCHEMES = {
   water_quality_tss: {
     id: "water_quality_tss",
     title: "TSS / Turbidity",
-    metric: "Turbidity / TSS Proxy",
-    unit: "Index",
+    metric: "Turbidity / TSS",
+    unit: "mg/L",
     classes: TSS_CLASSES,
-    subtitle: "3 classes · Mandovi Sentinel-2 proxy",
+    subtitle: "3 classes · Mandovi Sentinel-2 · mg/L",
   },
   water_quality_ndwi: {
     id: "water_quality_ndwi",
@@ -295,8 +295,9 @@ export function classifyWaterQualityValue(value, classes) {
 export function classRepresentativeValue(c) {
   if (!c) return null;
   const min = Number(c.min);
+  if (!Number.isFinite(min)) return null;
   if (c.max == null) {
-    if (c.unit === "µg/L") return min + 1;
+    if (c.unit === "µg/L" || c.unit === "mg/L") return min + (min < 2 ? 0.2 : 1);
     return min + 10;
   }
   return (min + Number(c.max)) / 2;
@@ -305,6 +306,10 @@ export function classRepresentativeValue(c) {
 export function formatWqValue(value, unit) {
   const v = Number(value);
   if (!Number.isFinite(v)) return "—";
-  const digits = unit === "NDSI" ? 2 : 1;
-  return `${v.toFixed(digits)} ${unit}`;
+  const u = String(unit || "").trim();
+  const digits =
+    u === "NDSI" || u === "NDCI" || u === "mg/L" || u === "µg/L" || u === "ug/L"
+      ? 2
+      : 1;
+  return u ? `${v.toFixed(digits)} ${u}` : v.toFixed(digits);
 }

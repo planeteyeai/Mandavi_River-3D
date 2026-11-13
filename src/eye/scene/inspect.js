@@ -852,6 +852,9 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
         hydroId === "water_quality_ndwi" ||
         hydroId === "water_quality_ndci" ||
         hydroId === "water_quality_wst" ||
+        hydroId === "pollution_eutrophication" ||
+        hydroId === "pollution_nitrogen" ||
+        hydroId === "pollution_coliform" ||
         hydroId === "pollution"
           ? pickWorldXZ()
           : { wx: null, wz: null };
@@ -863,6 +866,9 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
             water_quality_ndwi: "NDWI — Water Detection",
             water_quality_ndci: "Chlorophyll-a",
             water_quality_wst: "WST — Temperature",
+            pollution_eutrophication: "EUTROPHICATION",
+            pollution_nitrogen: "NITROGEN",
+            pollution_coliform: "COLIFORM",
             salinity: "SALINITY",
             pollution: "POLLUTION",
           };
@@ -924,7 +930,7 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
             lon: feat.lon ?? feat.vertices?.[0]?.lon,
             lat: feat.lat ?? feat.vertices?.[0]?.lat,
             layer: hydroId,
-            layerTitle: layerTitles[hydroId] || hydroId,
+            layerTitle: feat.layerTitle || layerTitles[hydroId] || hydroId,
           });
           state.hover = { x: feat.x, z: feat.z, salinity: feat.class_label, layer: hydroId };
           return;

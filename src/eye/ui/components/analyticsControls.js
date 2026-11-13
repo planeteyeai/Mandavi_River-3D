@@ -543,7 +543,8 @@ export function mountAnalyticsControls(root, dataset) {
       id === "salinity" ||
       id.startsWith("water_quality") ||
       id === "pollution_coliform" ||
-      /salinity|turbidity|tss|ndci|wst|chlorophyll|temperature|coliform/i.test(
+      id === "pollution_eutrophication" ||
+      /salinity|turbidity|tss|ndci|wst|chlorophyll|temperature|coliform|eutroph/i.test(
         String(leg.title || ""),
       )
     );
@@ -558,9 +559,11 @@ export function mountAnalyticsControls(root, dataset) {
     const unit = leg.unit ? ` (${leg.unit})` : "";
     const compactLegendTitles = new Set([
       "TSS / Turbidity",
+      "TSS",
       "Salinity",
       "Chlorophyll-a (NDCI)",
       "Coliform",
+      "Eutrophication",
     ]);
     const title = leg.title && !compactLegendTitles.has(leg.title)
       ? `${leg.title}${unit}`

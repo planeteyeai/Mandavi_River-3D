@@ -119,9 +119,36 @@ export function createTooltip(root) {
           what = "POLLUTION";
           val = info.displayName || info.name || "—";
         } else if (info.hydrologySalinity || info.hydrologyWaterQuality) {
-          what = info.hydrologySalinity ? "SALINITY" : info.layerTitle || "WATER QUALITY";
-          const isNumericWq = info.hydrologySalinity || info.layer === "water_quality_tss" || info.layer === "water_quality_ndci";
-          val = info.valueText ? info.valueText : (isNumericWq && info.range ? info.range : info.class_label || info.class || "—");
+          what = info.hydrologySalinity
+            ? "SALINITY"
+            : info.layerTitle || "WATER QUALITY";
+          const forceUnit =
+            info.layer === "water_quality_tss"
+              ? "mg/L"
+              : info.layer === "pollution_eutrophication"
+                ? "µg/L"
+                : null;
+          const isNumericWq =
+            info.hydrologySalinity ||
+            !!forceUnit ||
+            info.layer === "water_quality_ndci";
+          if (info.valueText) {
+            val = info.valueText;
+          } else if (info.value != null && Number.isFinite(Number(info.value))) {
+            const n = Number(info.value);
+            const unit = forceUnit || info.unit || "";
+            val = unit
+              ? `${n.toFixed(unit === "mg/L" || unit === "µg/L" ? 2 : 1)} ${unit}`
+              : String(n);
+          } else if (isNumericWq && info.range) {
+            val = info.range;
+          } else {
+            const cls = info.class_label || info.class || "—";
+            val =
+              forceUnit && info.unit && !String(cls).includes(forceUnit)
+                ? `${cls} (${forceUnit})`
+                : cls;
+          }
         } else if (info.depthZoneHover) {
           what = "DEPTH ZONE";
           val = info.depthClass ? info.depthClass + " m" : "—";
@@ -427,34 +454,58 @@ export function createTooltip(root) {
               water_quality_ndwi: "NDWI — Water Detection",
               water_quality_ndci: "Chlorophyll-a",
               water_quality_wst: "WST — Temperature",
+              pollution_eutrophication: "EUTROPHICATION",
+              pollution_nitrogen: "NITROGEN",
+              pollution_coliform: "COLIFORM",
             }[info.layer] || "WATER QUALITY");
         const swatch = info.color
           ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${info.color};border:1px solid rgba(255,255,255,.35);margin-right:6px;vertical-align:middle"></span>`
           : "";
-        const unit = info.unit || "";
+        const forceUnit =
+          info.layer === "water_quality_tss"
+            ? "mg/L"
+            : info.layer === "pollution_eutrophication"
+              ? "µg/L"
+              : null;
+        const unit = forceUnit || info.unit || "";
         const isNumericWq =
           info.hydrologySalinity ||
-          info.layer === "water_quality_tss" ||
+          !!forceUnit ||
           info.layer === "water_quality_ndci";
-        const classDisplay = isNumericWq && info.range
-          ? info.range
-          : info.class_label || info.class || "—";
+        const classDisplay =
+          isNumericWq && info.range
+            ? info.range
+            : info.class_label || info.class || "—";
+        let valueDisplay = info.valueText || null;
+        if (
+          !valueDisplay &&
+          info.value != null &&
+          Number.isFinite(Number(info.value))
+        ) {
+          const n = Number(info.value);
+          valueDisplay = unit
+            ? `${n.toFixed(unit === "mg/L" || unit === "µg/L" ? 2 : 1)} ${unit}`
+            : String(n);
+        }
+        if (!valueDisplay && forceUnit && info.range) valueDisplay = info.range;
         el.innerHTML = `
           <h3>${title}</h3>
           <div class="kv"><span class="k">${isNumericWq ? "Scale" : "Class"}</span><span class="v">${swatch}${classDisplay}</span></div>
           ${!isNumericWq && info.range ? `<div class="kv"><span class="k">Range</span><span class="v">${info.range}</span></div>` : ""}
-          ${info.valueText ? `<div class="kv"><span class="k">Value</span><span class="v depth">${info.valueText}</span></div>` : ""}
-          ${unit && !info.range ? `<div class="kv"><span class="k">Unit</span><span class="v">${unit}</span></div>` : ""}
+          ${valueDisplay ? `<div class="kv"><span class="k">Value</span><span class="v depth">${valueDisplay}</span></div>` : ""}
+          ${unit ? `<div class="kv"><span class="k">Unit</span><span class="v">${unit}</span></div>` : ""}
           ${info.lat != null ? `<div class="kv"><span class="k">Latitude</span><span class="v">${Number(info.lat).toFixed(6)}° N</span></div>` : ""}
           ${info.lon != null ? `<div class="kv"><span class="k">Longitude</span><span class="v">${Number(info.lon).toFixed(6)}° E</span></div>` : ""}
           <em style="display:block;margin-top:6px;font-size:9px;color:var(--muted);">${
             info.hydrologySalinity
               ? "Salinity scale · NDSI"
               : info.layer === "water_quality_tss"
-                ? "TSS scale · mg/L"
-                : info.layer === "water_quality_ndci"
-                  ? "Chlorophyll-a scale · µg/L"
-                  : "Classified overlay · hover class"
+                ? "TSS · value + unit (mg/L)"
+                : info.layer === "pollution_eutrophication"
+                  ? "Eutrophication · Chlorophyll-a µg/L (Carlson TSI)"
+                  : info.layer === "water_quality_ndci"
+                    ? "Chlorophyll-a scale · NDCI"
+                    : "Classified overlay · hover class"
           }</em>
         `;
         return;

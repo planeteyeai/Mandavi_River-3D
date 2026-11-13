@@ -51,6 +51,11 @@ import { loadLiveWaterMask } from "../geo/liveWaterMask.js";
 import { addLiveWaterSurfaceLayer } from "../layers/liveWaterSurfaceLayer.js";
 import { loadUpdatesAssets, projectLandmarksToWorld } from "../geo/updatesData.js";
 import { applySurveyBathymetry } from "../geo/applySurveyBathymetry.js";
+import {
+  snapStationsToWaterMask,
+  depthInWaterAtLocal,
+  fuseBathymetryFromWaterDepth,
+} from "../geo/snapStationsToWaterMask.js";
 import { estimateWaterVolume } from "../geo/estimateWaterVolume.js";
 import { fillPierUniforms, syncWaterMaterial, applyWaterPreset, getWaterDebugInfo } from "./waterShader.js";
 import { createFishingSystem } from "../features/fishing/createFishingSystem.js";
@@ -231,6 +236,14 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   clipRiverToHydrology(river, landCover, osmWater, dataset, liveWaterMask);
   const seaConnection = createSeaConnectionLayer(dataset, { liveWaterMask });
   dataset.liveWaterMask = liveWaterMask;
+  // Chainage is mid-water; bank↔bank width must follow the water face, not dry sides.
+  if (liveWaterMask?.available && liveWaterMask.isWaterAtLocal) {
+    const snap = snapStationsToWaterMask(
+      dataset.corridor?.stations,
+      liveWaterMask.isWaterAtLocal,
+    );
+    console.info("[river] banks snapped to live water", snap);
+  }
 
   // Keep the ground below the drawn water everywhere — incl. the narrow channel at the river start.
   let carved = carveTerrainUnderRiver(terrain.mesh, dataset.corridor.stations);
@@ -270,14 +283,14 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     fresh.material.dispose();
   }
 
-  // JalNetra SAR permanent water + relative depth — tight mask, bridge-gap fuse only.
-  // Depth scale 1.69–3.0 m. Non-blocking: LULC ribbon shows first.
+  // JalNetra permanent water + water_depth.kml bathymetry (1.5–8 m). Non-blocking.
   fetchJalnetraWaterDepth({
     depth_min_m: SURVEY_DEPTH_MIN_M,
     depth_max_m: SURVEY_DEPTH_MAX_M,
   })
     .then((wd) => {
       if (!wd?.mask) return;
+      dataset.waterDepthMask = wd.mask;
       state.jalnetraWaterDepth = {
         water_area_ha: wd.water_area_ha,
         depth_min_m: wd.depth_min_m,
@@ -287,7 +300,17 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
         s2: wd.meta?.sentinel2_image_date ?? null,
         provenance: wd.provenance,
       };
-      // Keep Mandovi clipped to user live_water_mandavi.kml — do not replace with JalNetra invent.
+      // Width / depth follow permanent water; Mandovi clip stays on live_water footprint.
+      const waterTest =
+        dataset.isMandovi && liveWaterMask?.isWaterAtLocal
+          ? liveWaterMask.isWaterAtLocal
+          : wd.mask.isWaterAtLocal;
+      if (typeof waterTest === "function") {
+        const snap = snapStationsToWaterMask(dataset.corridor?.stations, waterTest);
+        console.info("[river] banks snapped to permanent/live water", snap);
+      }
+      const fused = fuseBathymetryFromWaterDepth(dataset, wd.mask);
+      console.info("[river] bathymetry fused from water_depth / permanent water", fused);
       clipRiverToHydrology(
         river,
         landCover,
@@ -305,6 +328,7 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
         { includeBaseStage: false },
       );
       rebuildWaterFill();
+      refreshRiverStationMeasure();
       console.info("[river] JalNetra water-depth fused into ribbon", {
         water_area_ha: wd.water_area_ha,
         carved,
@@ -1301,7 +1325,10 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
             hydroId === "geology" ||
             hydroId === "salinity" ||
             hydroId === "water_quality_ndci" ||
-            hydroId === "water_quality_tss"
+            hydroId === "water_quality_tss" ||
+            hydroId === "pollution_eutrophication" ||
+            hydroId === "pollution_nitrogen" ||
+            hydroId === "pollution_coliform"
           ) {
             if (state.chainageTipActive) hideChainageTip();
             return;
@@ -1349,7 +1376,10 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       hydroId === "geology" ||
       hydroId === "salinity" ||
       hydroId === "water_quality_ndci" ||
-      hydroId === "water_quality_tss"
+      hydroId === "water_quality_tss" ||
+      hydroId === "pollution_eutrophication" ||
+      hydroId === "pollution_nitrogen" ||
+      hydroId === "pollution_coliform"
     ) {
       if (state.chainageTipActive) hideChainageTip();
       return;

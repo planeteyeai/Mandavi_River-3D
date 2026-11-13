@@ -95,11 +95,48 @@ function usesExactGroundOverlayFootprint(id) {
   return id === "water_depth" || isMandoviFlatRaster(id);
 }
 
+/** Chlorophyll-a in µg/L (Carlson TSI) — matches product legend. */
 const EUTROPHICATION_CLASSES = [
-  { id: "oligo", label: "Oligotrophic", range: "< 2.6 µg/L", color: "#2c7bb6" },
-  { id: "meso", label: "Mesotrophic", range: "2.6–7.3 µg/L", color: "#abd9e9" },
-  { id: "eutro", label: "Eutrophic", range: "7.3–56 µg/L", color: "#fdae61" },
-  { id: "hyper", label: "Hypereutrophic", range: "> 56 µg/L", color: "#d7191c" },
+  {
+    id: "oligo",
+    label: "Oligotrophic",
+    range: "< 2.6 µg/L (TSI < 40)",
+    color: "#2c7bb6",
+    unit: "µg/L",
+    min: 0,
+    max: 2.6,
+    inclusiveMax: false,
+  },
+  {
+    id: "meso",
+    label: "Mesotrophic",
+    range: "2.6–7.3 µg/L (TSI 40–50)",
+    color: "#abd9e9",
+    unit: "µg/L",
+    min: 2.6,
+    max: 7.3,
+    inclusiveMax: true,
+  },
+  {
+    id: "eutro",
+    label: "Eutrophic",
+    range: "7.3–56 µg/L (TSI 50–70)",
+    color: "#fdae61",
+    unit: "µg/L",
+    min: 7.3,
+    max: 56,
+    inclusiveMax: true,
+  },
+  {
+    id: "hyper",
+    label: "Hypereutrophic",
+    range: "> 56 µg/L (TSI > 70)",
+    color: "#d7191c",
+    unit: "µg/L",
+    min: 56,
+    max: null,
+    inclusiveMax: false,
+  },
 ];
 
 const NITROGEN_RISK_CLASSES = [
@@ -369,8 +406,8 @@ const BUILTIN_LAYER_DEFS = {
     flipU: false,
     flipV: true,
     legendTitle: "TSS",
-    legendSubtitle: "3 classes · Mandovi Sentinel-2 proxy",
-    unit: "Index",
+    legendSubtitle: "3 classes · Mandovi Sentinel-2 · mg/L",
+    unit: "mg/L",
     classes: TSS_CLASSES,
     legendClasses: TSS_CLASSES,
     renderType: "terrainDrapedTexture",
@@ -551,7 +588,7 @@ const BUILTIN_LAYER_DEFS = {
     flipU: false,
     flipV: true,
     legendTitle: "Eutrophication",
-    legendSubtitle: "Trophic class · chlorophyll-a (Carlson TSI)",
+    legendSubtitle: "Chlorophyll-a in µg/L (Carlson TSI)",
     unit: "µg/L",
     classes: EUTROPHICATION_CLASSES,
     legendClasses: EUTROPHICATION_CLASSES,
@@ -2160,6 +2197,15 @@ export function createHydrologyLayer(dataset) {
     ) {
       return sampleLandUseAt(x, z);
     }
+    if (
+      activeId === "water_quality_tss" ||
+      activeId === "pollution_eutrophication" ||
+      activeId === "water_quality_ndci" ||
+      activeId === "pollution_coliform" ||
+      activeId === "pollution_nitrogen"
+    ) {
+      return sampleWqRasterAt(x, z);
+    }
     if (activeId === "pollution") {
       return pollutionGarbage.userData?.pickAt?.(x, z) || null;
     }
@@ -2193,6 +2239,78 @@ export function createHydrologyLayer(dataset) {
       z,
       lon: ll.lon,
       lat: ll.lat,
+      hydrology: id,
+    };
+  }
+
+  /** TSS / eutrophication / other Mandovi class rasters — hover value + unit. */
+  function sampleWqRasterAt(x, z) {
+    const id = activeId;
+    const hit = sampleDrapedClassAt(id, x, z);
+    if (!hit) return null;
+    const def = layerDef(id);
+    const scheme = WQ_LAYER_SCHEMES[id];
+    const classes =
+      (scheme?.classes?.length ? scheme.classes : null) ||
+      (def?.classes?.length ? def.classes : null) ||
+      (id === "pollution_eutrophication" ? EUTROPHICATION_CLASSES : null) ||
+      [];
+    const raw = String(hit.class_label || hit.label || hit.class || "").trim();
+    const schemeClass =
+      classes.find((c) => String(c.label).toLowerCase() === raw.toLowerCase()) ||
+      classes.find((c) => String(c.id).toLowerCase() === String(hit.id || "").toLowerCase()) ||
+      classes.find(
+        (c) => c.kmlClass && String(c.kmlClass).toLowerCase() === raw.toLowerCase(),
+      ) ||
+      null;
+
+    const forceUnit =
+      id === "water_quality_tss"
+        ? "mg/L"
+        : id === "pollution_eutrophication"
+          ? "µg/L"
+          : null;
+    const unit =
+      forceUnit ||
+      schemeClass?.unit ||
+      scheme?.unit ||
+      def?.unit ||
+      hit.unit ||
+      null;
+    const mid =
+      hit.value != null && Number.isFinite(Number(hit.value))
+        ? Number(hit.value)
+        : schemeClass
+          ? classRepresentativeValue(
+              forceUnit && schemeClass.unit !== forceUnit
+                ? { ...schemeClass, unit: forceUnit }
+                : schemeClass,
+            )
+          : null;
+    const valueText =
+      mid != null && unit
+        ? formatWqValue(mid, unit)
+        : schemeClass?.range || hit.valueText || null;
+
+    const layerTitles = {
+      water_quality_tss: "TSS",
+      water_quality_ndci: "Chlorophyll-a",
+      pollution_eutrophication: "EUTROPHICATION",
+      pollution_nitrogen: "NITROGEN",
+      pollution_coliform: "COLIFORM",
+    };
+
+    return {
+      ...hit,
+      class_label: schemeClass?.label || hit.class_label || hit.label,
+      label: schemeClass?.label || hit.label || hit.class_label,
+      range: schemeClass?.range || hit.range || null,
+      unit,
+      value: mid,
+      valueText,
+      metric: scheme?.metric || def?.legendTitle || def?.name || null,
+      color: schemeClass?.color || hit.color,
+      layerTitle: layerTitles[id] || def?.legendTitle || def?.name || id,
       hydrology: id,
     };
   }
