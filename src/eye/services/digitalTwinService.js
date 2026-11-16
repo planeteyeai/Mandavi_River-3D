@@ -83,16 +83,30 @@ async function _bootstrap() {
 
 async function _fetchLandmarks() {
   const currentDs = window.__RIVER_DATASET__;
-  const isMulaMutha = /mula[\s-]*mutha/i.test(currentDs?.riverName || window.__RIVER_SESSION__?.riverName || "");
+  const rName = currentDs?.riverName || window.__RIVER_SESSION__?.riverName || "";
+  const isMulaMutha = /mula[\s-]*mutha/i.test(rName);
+  const isMandovi = !!currentDs?.isMandovi || /mandov|mandav/i.test(rName);
+
+  const mapDest = (d) => ({
+    name: d.name,
+    chainage_m: d.chainage_m ?? d.meters ?? 0,
+    chainage_km: (d.chainage_m ?? d.meters ?? 0) / 1000,
+    lon: d.lon,
+    lat: d.lat,
+    snap_distance_m: 50,
+  });
+
   if (currentDs?.destinations?.length > 0 && !isMulaMutha) {
-    return currentDs.destinations.map((d) => ({
-      name: d.name,
-      chainage_m: d.chainage_m ?? d.meters ?? 0,
-      chainage_km: (d.chainage_m ?? d.meters ?? 0) / 1000,
-      lon: d.lon,
-      lat: d.lat,
-      snap_distance_m: 50,
-    }));
+    return currentDs.destinations.map(mapDest);
+  }
+  // Mandovi: never fall back to Pune naditwin landmarks.
+  if (isMandovi) {
+    try {
+      const { MANDOVI_CHAINAGE_DESTINATIONS } = await import("../geo/chainage.js");
+      return MANDOVI_CHAINAGE_DESTINATIONS.map(mapDest);
+    } catch {
+      return [];
+    }
   }
   if (!isMulaMutha && currentDs?.riverName) {
     return [];

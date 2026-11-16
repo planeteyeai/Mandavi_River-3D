@@ -9,7 +9,7 @@ import {
   parseChainageAnalysisKml,
   parseDrainageKml,
 } from "./kml.js";
-import { nearestChainage } from "./chainage.js";
+import { nearestChainage, MANDOVI_CHAINAGE_DESTINATIONS } from "./chainage.js";
 import { lonLatToUtm } from "./projection.js";
 import { initGeoReference, getGeoReference } from "./geoReference.js";
 import { buildCorridorFromKml } from "./corridor.js";
@@ -555,7 +555,7 @@ export async function buildDatasetFromKml(prepared, onProgress) {
   const kmlOverviewBounds = computeKmlOverviewBounds(partial);
   const activeSceneBounds = computeActiveSceneBounds(partial);
 
-  onProgress?.(0.7, "Resolving local geographical areas & landmarks...");
+  onProgress?.(0.7, "Resolving Mandovi geographical areas & landmarks...");
 
   const ds = {
     lite: false,
@@ -579,7 +579,9 @@ export async function buildDatasetFromKml(prepared, onProgress) {
     activeSceneBounds,
     dtm: null,
     destinations: [],
-    providedDestinations,
+    providedDestinations: isMandovi && !providedDestinations.length
+      ? MANDOVI_CHAINAGE_DESTINATIONS.map((d) => ({ ...d }))
+      : providedDestinations,
     fishingLocationsRaw: [],
     fishingZones: [],
     drainage: mandoviDrainage,

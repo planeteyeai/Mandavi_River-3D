@@ -1066,16 +1066,23 @@ export function mountHydroIntelPanel(root) {
   async function _populateStationDropdown() {
     _stationOptions = [{ value: "", label: "— Select station —" }];
     const currentDs = window.__RIVER_DATASET__;
-    const isMulaMutha = /mula[\s-]*mutha/i.test(currentDs?.riverName || window.__RIVER_SESSION__?.riverName || "");
-    if (currentDs?.destinations?.length > 0 && !isMulaMutha) {
-      currentDs.destinations.forEach((d) => {
+    const rName = currentDs?.riverName || window.__RIVER_SESSION__?.riverName || "";
+    const isMulaMutha = /mula[\s-]*mutha/i.test(rName);
+    const isMandovi = !!currentDs?.isMandovi || /mandov|mandav/i.test(rName);
+    const dests = currentDs?.destinations?.length
+      ? currentDs.destinations
+      : isMandovi
+        ? (await import("../../geo/chainage.js")).MANDOVI_CHAINAGE_DESTINATIONS
+        : null;
+    if (dests?.length && !isMulaMutha) {
+      dests.forEach((d) => {
         const m = d.chainage_m ?? d.meters ?? 0;
         _stationOptions.push({
           value: String(m),
           label: `${d.name} (CH ${_fmt(m)})`,
         });
       });
-    } else {
+    } else if (isMulaMutha) {
       try {
         const res = await fetch("/data/naditwin/landmarks.json", { signal: AbortSignal.timeout(4000) });
         if (res.ok) {

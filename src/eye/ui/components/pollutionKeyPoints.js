@@ -2,9 +2,9 @@ import { POLLUTION_KEY_SIDES } from "../../scene/pollution/pollutionSides.js";
 import { state } from "../../state.js";
 
 /**
- * Arrow HUD:  ←  Sangam side  1/6  →
- * Steps through the 6 corridor sides; within a side, steps each garbage site
- * so the tour covers every location.
+ * Arrow HUD:  ←  Miramar / Aguada Bay  1/6  →
+ * Steps through the 6 Mandovi corridor sides; within a side, steps each site
+ * so the tour covers every location (Mandovi place names only).
  *
  * Important: do NOT re-sync from chainage after a tour step — many western
  * sites share CH 0+000 and that was resetting every Next click back to site 1.

@@ -45,7 +45,7 @@ export function nearestChainage(x, z, chainage) {
   return { ...best, dist: Math.sqrt(bestD) };
 }
 
-// Chainage on Mula-Mutha_River_10m_ch_merged.kml (same places as public/data/naditwin/landmarks.json).
+// Mula–Mutha only — never use these names on Mandovi.
 export const CHAINAGE_DESTINATIONS = [
   { id: "sangam", name: "Sangam", chainage_m: 565 },
   { id: "bund-garden", name: "Bund Garden", chainage_m: 3468 },
@@ -54,7 +54,17 @@ export const CHAINAGE_DESTINATIONS = [
   { id: "hadapsar", name: "Hadapsar", chainage_m: 9136 },
   { id: "mundhwa", name: "Mundhwa", chainage_m: 9547 },
   { id: "kharadi", name: "Kharadi", chainage_m: 10712 },
-  { id: "manjari", name: "Manjari", chainage_m: 15430 }
+  { id: "manjari", name: "Manjari", chainage_m: 15430 },
+];
+
+/** Mandovi River place markers along chainage (west / mouth → east). */
+export const MANDOVI_CHAINAGE_DESTINATIONS = [
+  { id: "miramar", name: "Miramar / Aguada Bay", chainage_m: 800 },
+  { id: "reis-magos", name: "Reis Magos / Betim", chainage_m: 3200 },
+  { id: "panaji", name: "Panaji", chainage_m: 5500 },
+  { id: "ribandar", name: "Ribandar", chainage_m: 9800 },
+  { id: "chorao", name: "Chorao / Chimbel", chainage_m: 14000 },
+  { id: "old-goa", name: "Old Goa / Divar", chainage_m: 18500 },
 ];
 
 export function getDestinations(sel, customList = null) {
@@ -64,8 +74,11 @@ export function getDestinations(sel, customList = null) {
   let list = Array.isArray(customList) && customList.length > 0 ? customList : null;
   if (!list) {
     const rName = window.__RIVER_SESSION__?.riverName || window.__RIVER_DATASET__?.riverName || "";
+    const isMandovi = /mandov|mandav/i.test(rName) || window.__RIVER_DATASET__?.isMandovi;
     if (window.__RIVER_DATASET__?.destinations?.length > 0) {
       list = window.__RIVER_DATASET__.destinations;
+    } else if (isMandovi) {
+      list = MANDOVI_CHAINAGE_DESTINATIONS;
     } else if (/mula[\s-]*mutha/i.test(rName)) {
       list = CHAINAGE_DESTINATIONS;
     } else {

@@ -1,6 +1,10 @@
 import { state } from "../../state.js";
 import { metersToStation } from "../../scene/chainageMarkers.js";
-import { interpolateChainage, CHAINAGE_DESTINATIONS } from "../../geo/chainage.js";
+import {
+  interpolateChainage,
+  CHAINAGE_DESTINATIONS,
+  MANDOVI_CHAINAGE_DESTINATIONS,
+} from "../../geo/chainage.js";
 
 /** Minimum horizontal gap (px) between neighbouring tick labels before one is hidden. */
 const TICK_GAP_PX = 6;
@@ -43,6 +47,8 @@ export function mountChainageRuler(root, dataset) {
     .join("");
 
   const isMulaMutha = /mula[\s-]*mutha/i.test(dataset?.riverName || "");
+  const isMandovi =
+    !!dataset?.isMandovi || /mandov|mandav/i.test(dataset?.riverName || "");
   const effectiveDestinations = (dataset?.destinations && dataset.destinations.length > 0)
     ? dataset.destinations
     : (dataset?.osm?.places && dataset.osm.places.length > 0)
@@ -51,7 +57,11 @@ export function mountChainageRuler(root, dataset) {
           name: p.name,
           chainage_m: p.chainage_m ?? p.meters ?? p.along ?? 0,
         }))
-      : (isMulaMutha ? CHAINAGE_DESTINATIONS : []);
+      : isMandovi
+        ? MANDOVI_CHAINAGE_DESTINATIONS
+        : isMulaMutha
+          ? CHAINAGE_DESTINATIONS
+          : [];
 
   const destinationsHtml = effectiveDestinations.map(dest => {
     const pct = ((dest.chainage_m - minM) / spanM) * 100;

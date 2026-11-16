@@ -1,18 +1,20 @@
 /**
- * Six named pollution corridor sides (west → east).
- * Every garbage KML site is assigned to the nearest side so arrow
- * navigation covers the full set.
+ * Named pollution / WQ corridor sides along Mandovi River (west → east).
+ * Every garbage / pollution site is assigned to the nearest side so arrow
+ * navigation covers the full set with Mandovi place names only.
+ *
+ * Pune (Mula–Mutha) side names are not used in this project.
  */
 export const POLLUTION_KEY_SIDES = [
-  { id: "sangam", index: 1, name: "Sangam side", lon: 73.8598, lat: 18.5316 },
-  { id: "sangamwadi", index: 2, name: "Sangamwadi side", lon: 73.8620, lat: 18.5345 },
-  { id: "bund_garden", index: 3, name: "Bund Garden side", lon: 73.8831, lat: 18.5430 },
-  { id: "mundhwa", index: 4, name: "Mundhwa side", lon: 73.9398, lat: 18.5366 },
-  { id: "kharadi", index: 5, name: "Kharadi side", lon: 73.9493, lat: 18.5455 },
-  { id: "manjari", index: 6, name: "Manjari side", lon: 73.9831, lat: 18.5298 },
+  { id: "miramar_aguada", index: 1, name: "Miramar / Aguada Bay", lon: 73.80504, lat: 15.48367 },
+  { id: "reis_magos_betim", index: 2, name: "Reis Magos / Betim", lon: 73.8115, lat: 15.4965 },
+  { id: "panaji", index: 3, name: "Panaji / Santa Monica", lon: 73.82821, lat: 15.50186 },
+  { id: "ribandar", index: 4, name: "Ribandar", lon: 73.8455, lat: 15.5052 },
+  { id: "chorao_chimbel", index: 5, name: "Chorao / Chimbel", lon: 73.86206, lat: 15.50445 },
+  { id: "old_goa_divar", index: 6, name: "Old Goa / Divar", lon: 73.8805, lat: 15.5038 },
 ];
 
-/** Squared lon/lat distance — fine for local Pune AOI ranking. */
+/** Squared lon/lat distance — fine for local Mandovi AOI ranking. */
 export function nearestPollutionSide(lon, lat, sides = POLLUTION_KEY_SIDES) {
   let best = sides[0];
   let bestD = Infinity;
@@ -29,9 +31,10 @@ export function nearestPollutionSide(lon, lat, sides = POLLUTION_KEY_SIDES) {
 /**
  * Assign each record to a side; return side summaries with sites sorted west→east.
  * @param {object[]} records
+ * @param {typeof POLLUTION_KEY_SIDES} [sidesList]
  */
-export function buildPollutionSides(records = []) {
-  const buckets = POLLUTION_KEY_SIDES.map((s) => ({
+export function buildPollutionSides(records = [], sidesList = POLLUTION_KEY_SIDES) {
+  const buckets = sidesList.map((s) => ({
     ...s,
     sites: [],
     count: 0,
@@ -40,7 +43,7 @@ export function buildPollutionSides(records = []) {
   const byId = new Map(buckets.map((b) => [b.id, b]));
 
   for (const r of records) {
-    const side = nearestPollutionSide(r.lon, r.lat);
+    const side = nearestPollutionSide(r.lon, r.lat, sidesList);
     const bucket = byId.get(side.id);
     if (!bucket) continue;
     r.sideId = side.id;

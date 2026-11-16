@@ -4,7 +4,12 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { SURFACE_Y } from "./river.js";
 import { state } from "../state.js";
-import { CHAINAGE_DESTINATIONS, getDestinations, interpolateChainage } from "../geo/chainage.js";
+import {
+  CHAINAGE_DESTINATIONS,
+  MANDOVI_CHAINAGE_DESTINATIONS,
+  getDestinations,
+  interpolateChainage,
+} from "../geo/chainage.js";
 
 /** Flat markers sit just above water surface. */
 const MARKER_Y = SURFACE_Y + 0.55;
@@ -183,6 +188,8 @@ export function createChainageLayer(dataset) {
 
   const destinationEls = [];
   const isMulaMutha = /mula[\s-]*mutha/i.test(dataset.riverName || "");
+  const isMandovi =
+    !!dataset.isMandovi || /mandov|mandav/i.test(dataset.riverName || "");
   const effectiveDestinations = (dataset.destinations && dataset.destinations.length > 0)
     ? dataset.destinations
     : (dataset.osm?.places && dataset.osm.places.length > 0)
@@ -191,7 +198,11 @@ export function createChainageLayer(dataset) {
           name: p.name,
           chainage_m: p.chainage_m ?? p.meters ?? p.along ?? 0,
         }))
-      : (isMulaMutha ? CHAINAGE_DESTINATIONS : []);
+      : isMandovi
+        ? MANDOVI_CHAINAGE_DESTINATIONS
+        : isMulaMutha
+          ? CHAINAGE_DESTINATIONS
+          : [];
   for (const dest of effectiveDestinations) {
     const el = document.createElement("div");
     el.className = "chainage-destination-marker";
