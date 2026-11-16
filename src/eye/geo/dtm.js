@@ -11,13 +11,19 @@ const MAX_SAMPLE_DIM = 384;
  * Load FABDEM DTM (EPSG:4326) and build a scene-aligned elevation sampler.
  * Vertical offset anchors median bank elevation; exag amplifies hills/valleys.
  */
-export async function loadFabdemDtm(url, frame, corridor, onProgress, options = {}) {
-  onProgress?.("Downloading terrain elevation…");
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`DTM fetch failed (${res.status})`);
-  const buf = await res.arrayBuffer();
+export async function loadFabdemDtm(urlOrBuffer, frame, corridor, onProgress, options = {}) {
+  let buf = null;
+  if (urlOrBuffer instanceof ArrayBuffer) {
+    buf = urlOrBuffer;
+    onProgress?.("Decoding terrain elevation…");
+  } else {
+    onProgress?.("Downloading terrain elevation…");
+    const res = await fetch(urlOrBuffer);
+    if (!res.ok) throw new Error(`DTM fetch failed (${res.status})`);
+    buf = await res.arrayBuffer();
+    onProgress?.("Decoding terrain elevation…");
+  }
 
-  onProgress?.("Decoding terrain elevation…");
   // Yield so the loading bar can paint before heavy geotiff work
   await yieldToBrowser();
 
@@ -153,13 +159,13 @@ export async function loadFabdemDtm(url, frame, corridor, onProgress, options = 
 }
 
 /** Race DTM load against a timeout so the app never hangs on terrain. */
-export function loadFabdemDtmWithTimeout(url, frame, corridor, onProgress, ms = 90_000, options = {}) {
+export function loadFabdemDtmWithTimeout(urlOrBuffer, frame, corridor, onProgress, ms = 90_000, options = {}) {
   let timer;
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => reject(new Error(`DTM timed out after ${ms}ms`)), ms);
   });
   return Promise.race([
-    loadFabdemDtm(url, frame, corridor, onProgress, options).finally(() => clearTimeout(timer)),
+    loadFabdemDtm(urlOrBuffer, frame, corridor, onProgress, options).finally(() => clearTimeout(timer)),
     timeout,
   ]);
 }

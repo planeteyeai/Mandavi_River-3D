@@ -11,8 +11,8 @@ export function createLoadingScene(canvas) {
       destroy: () => {},
     };
   }
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "low-power" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -70,29 +70,33 @@ export function createLoadingScene(canvas) {
   let progress = 0;
   let last = performance.now();
 
-  loadGltf(LIVE_URL).then((gltf) => {
-    if (disposed) return;
-    const model = gltf.scene;
-    const bounds = new THREE.Box3().setFromObject(model);
-    const size = bounds.getSize(new THREE.Vector3());
-    const scale = 1.25 / Math.max(size.x, size.y, size.z, 0.001);
-    model.scale.setScalar(scale);
-    bounds.setFromObject(model);
-    const center = bounds.getCenter(new THREE.Vector3());
-    model.position.sub(center);
-    model.traverse((node) => {
-      if (!node.isMesh) return;
-      node.castShadow = false;
-      node.receiveShadow = false;
-      if (node.material) node.material.roughness = 0.58;
-    });
-    butterflyRoot.add(model);
-    mixer = new THREE.AnimationMixer(model);
-    const clip = gltf.animations.find((item) => /flying/i.test(item.name)) || gltf.animations[0];
-    if (clip) mixer.clipAction(clip).play();
-    modelReady = true;
-    butterflyRoot.visible = true;
-  }).catch((error) => console.warn("Loading butterfly asset:", error));
+  // Skip butterfly GLB during boot — frees network + GPU while Mandovi data loads.
+  // Optional: ?loaderGltf=1 to re-enable the decorative model.
+  if (new URLSearchParams(location.search).get("loaderGltf") === "1") {
+    loadGltf(LIVE_URL).then((gltf) => {
+      if (disposed) return;
+      const model = gltf.scene;
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = bounds.getSize(new THREE.Vector3());
+      const scale = 1.25 / Math.max(size.x, size.y, size.z, 0.001);
+      model.scale.setScalar(scale);
+      bounds.setFromObject(model);
+      const center = bounds.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+      model.traverse((node) => {
+        if (!node.isMesh) return;
+        node.castShadow = false;
+        node.receiveShadow = false;
+        if (node.material) node.material.roughness = 0.58;
+      });
+      butterflyRoot.add(model);
+      mixer = new THREE.AnimationMixer(model);
+      const clip = gltf.animations.find((item) => /flying/i.test(item.name)) || gltf.animations[0];
+      if (clip) mixer.clipAction(clip).play();
+      modelReady = true;
+      butterflyRoot.visible = true;
+    }).catch((error) => console.warn("Loading butterfly asset:", error));
+  }
 
   function resize() {
     const width = canvas.clientWidth || window.innerWidth;
@@ -148,7 +152,7 @@ export function createLoadingScene(canvas) {
 }
 
 function createWater() {
-  const geometry = new THREE.PlaneGeometry(18, 12, 72, 48);
+  const geometry = new THREE.PlaneGeometry(18, 12, 24, 16);
   const material = new THREE.ShaderMaterial({
     transparent: true,
     uniforms: { uTime: { value: 0 } },

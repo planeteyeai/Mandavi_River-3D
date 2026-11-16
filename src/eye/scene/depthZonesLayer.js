@@ -290,13 +290,16 @@ export function pickDepthZoneAt(group, x, z) {
   const k = Math.min(n - 1, Math.max(0, Math.floor((hit.depth - minDepth) / step)));
   const lo = minDepth + k * step;
   const hi = lo + step;
+  // One sampled depth at the cursor — not a two-point class band.
+  const depthM = Number(hit.depth);
+  const avg = Number.isFinite(depthM) ? depthM : (lo + hi) * 0.5;
   return {
     id: `bathy-${Math.round(x)}-${Math.round(z)}`,
     name: isMandovi ? "Water Depth (Sentinel-2 Bathymetry)" : "Bathymetry (KMZ raster)",
-    depthClass: `${lo.toFixed(2)}–${hi.toFixed(2)} m`,
+    depthClass: `${avg.toFixed(2)}`,
     depthMin: lo,
     depthMax: hi,
-    depthMid: hit.depth,
+    depthMid: avg,
     x,
     z,
     lon: hit.lon,

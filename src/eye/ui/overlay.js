@@ -166,8 +166,12 @@ export function createTooltip(root) {
                 : cls;
           }
         } else if (info.depthZoneHover) {
-          what = "DEPTH ZONE";
-          val = info.depthClass ? info.depthClass + " m" : "—";
+          what = "DEPTH";
+          const mid = Number(info.depthMid);
+          const raw = Number.isFinite(mid)
+            ? mid
+            : Number(String(info.depthClass || "").replace(/[^\d.]/g, ""));
+          val = Number.isFinite(raw) ? `${raw.toFixed(2)} m` : "—";
         } else if (info.compact || info.depth != null) {
           what = "DEPTH";
           if (info.compact) what = "RIVER";
@@ -527,14 +531,14 @@ export function createTooltip(root) {
         return;
       }
       if (info.depthZoneHover) {
+        const mid = Number(info.depthMid);
+        const depthTxt = Number.isFinite(mid) ? `${mid.toFixed(2)} m` : "—";
         el.innerHTML = `
-          <h3>💎 BATHYMETRY</h3>
-          <div class="kv"><span class="k">Water depth</span><span class="v depth">${info.depthMid != null ? Number(info.depthMid).toFixed(2) + " m" : "—"}</span></div>
-          <div class="kv"><span class="k">Depth class</span><span class="v">${info.depthClass ?? "—"} m</span></div>
+          <h3>DEPTH</h3>
+          <div class="kv"><span class="k">Water depth</span><span class="v depth">${depthTxt}</span></div>
           <div class="kv"><span class="k">Elevation</span><span class="v">${info.elevation != null ? Number(info.elevation).toFixed(1) + " m" : "—"}</span></div>
           ${info.lat != null ? `<div class="kv"><span class="k">Latitude</span><span class="v">${Number(info.lat).toFixed(6)}° N</span></div>` : ""}
           ${info.lon != null ? `<div class="kv"><span class="k">Longitude</span><span class="v">${Number(info.lon).toFixed(6)}° E</span></div>` : ""}
-          <em style="display:block;margin-top:6px;font-size:9px;color:var(--muted);">mula_mutha_depth_blueshade_smoothed.kmz · raster colour → depth</em>
         `;
         return;
       }

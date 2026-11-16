@@ -6,7 +6,7 @@
 import {
   parseKmlGeometry,
   parsePointPlacemarksKml,
-  parseChainageAnalysisKml,
+  parseTenMeterChainagePoints,
   parseDrainageKml,
   parseJoiningStreamPlacemarks,
 } from "./kml.js";
@@ -41,14 +41,30 @@ async function loadMandoviReferenceKmls() {
       throw new Error(`Bundled Mandovi reference is not valid KML: ${key}`);
     }
   }
-  const parsedChainage = parseChainageAnalysisKml(textByKey.chainageKml);
+  // Fast pin-only parse — skip ~1.2k segment LineStrings + full geometry scan.
+  const parsedChainage = parseTenMeterChainagePoints(textByKey.chainageKml);
+  const clBlock = String(textByKey.chainageKml).match(
+    /<name>\s*River\s+centerline[\s\S]*?<\/name>[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/i,
+  );
+  let chainageCenterline = null;
+  if (clBlock) {
+    const pts = clBlock[1]
+      .trim()
+      .split(/\s+/)
+      .map((tok) => {
+        const [lon, lat] = tok.split(",").map(Number);
+        return Number.isFinite(lon) && Number.isFinite(lat) ? { lon, lat } : null;
+      })
+      .filter(Boolean);
+    if (pts.length >= 2) chainageCenterline = pts;
+  }
   const mainFeatures = parseDrainageKml(textByKey.mainStreamKml);
   const mainFeature = mainFeatures
     .filter((feature) => feature.coordinates?.length >= 2)
     .sort((a, b) => b.coordinates.length - a.coordinates.length)[0];
   if (!parsedChainage.chainage.length) throw new Error("Mandovi 10 m chainage KML contains no named chainage points");
   if (!mainFeature) throw new Error("Mandovi main stream KML contains no usable line");
-  const mainCenterline = mainFeature.coordinates.slice();
+  const mainCenterline = (chainageCenterline?.length >= 2 ? chainageCenterline : mainFeature.coordinates).slice();
   const chainageStart = parsedChainage.chainage[0];
   if (coordinateDistanceSquared(mainCenterline.at(-1), chainageStart) < coordinateDistanceSquared(mainCenterline[0], chainageStart)) {
     mainCenterline.reverse();
@@ -68,12 +84,12 @@ async function loadMandoviReferenceKmls() {
   console.info("[mandovi-kml] supplied river references loaded", {
     chainagePoints: parsedChainage.chainage.length,
     chainageIntervalM: parsedChainage.intervalM,
-    mainStreamPoints: mainFeature.coordinates.length,
+    mainStreamPoints: mainCenterline.length,
     joiningStreamPaths: upstreams.length,
   });
   return {
     chainage: parsedChainage.chainage,
-    chainageIntervalM: parsedChainage.intervalM,
+    chainageIntervalM: parsedChainage.intervalM || 10,
     mainCenterline,
     mainStemKml: textByKey.mainStreamKml,
     upstreams,
@@ -257,11 +273,19 @@ export function prepareRiverUpload(kmlText, filename) {
   };
 }
 
+function yieldFrame() {
+  return new Promise((r) => requestAnimationFrame(() => r()));
+}
+
 export async function buildDatasetFromKml(prepared, onProgress) {
-  onProgress?.(0.2, "Building the river corridor…");
+  onProgress?.(0.18, "Building the river corridor…");
+  await yieldFrame();
   const ring = prepared.ring;
   const isMandovi = isMandoviSource(prepared, ring);
+  onProgress?.(0.22, isMandovi ? "Loading Mandovi chainage…" : "Loading river references…");
   const mandoviSources = isMandovi ? await loadMandoviReferenceKmls() : null;
+  onProgress?.(0.32, "Projecting corridor…");
+  await yieldFrame();
   const ringUtm = ring.map((c) => {
     const u = lonLatToUtm(c.lon, c.lat);
     return { ...c, easting: u.easting, northing: u.northing };
@@ -306,12 +330,16 @@ export async function buildDatasetFromKml(prepared, onProgress) {
     });
   }
 
-  onProgress?.(0.45, "Shaping the water surface…");
+  onProgress?.(0.4, "Shaping the water surface…");
+  await yieldFrame();
   const corridor = buildCorridorFromKml(ringLocal, [], {
-    across: 36,
-    nStations: 480,
+    across: 32,
+    // Fewer stations → faster corridor + terrain carve; still smooth for Mandovi span.
+    nStations: isMandovi ? 320 : 480,
     centerlineLocal,
   });
+  onProgress?.(0.55, "Building chainage stations…");
+  await yieldFrame();
 
   const chainage = [];
   let meters = 0;
@@ -562,7 +590,7 @@ export async function buildDatasetFromKml(prepared, onProgress) {
   const kmlOverviewBounds = computeKmlOverviewBounds(partial);
   const activeSceneBounds = computeActiveSceneBounds(partial);
 
-  onProgress?.(0.7, "Resolving Mandovi geographical areas & landmarks...");
+  onProgress?.(0.58, "Resolving Mandovi areas & landmarks…");
 
   const ds = {
     lite: false,

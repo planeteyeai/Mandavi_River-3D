@@ -110,8 +110,9 @@ export async function createTerrain(dataset) {
   const depth = b.spanZ;
   const lite = dataset.lite === true;
   // Full tier resolves FABDEM's ~30 m hills and valleys; lite keeps the lighter grid.
-  const segsX = activeDtm ? (lite ? 200 : 360) : (lite ? 140 : 200);
-  const segsZ = activeDtm ? (lite ? 100 : 180) : (lite ? 70 : 100);
+  // Keep grid modest — FABDEM is ~30 m; denser meshes mostly burn load time.
+  const segsX = activeDtm ? (lite ? 160 : 260) : (lite ? 120 : 180);
+  const segsZ = activeDtm ? (lite ? 80 : 140) : (lite ? 60 : 90);
   const geo = new THREE.PlaneGeometry(width, depth, segsX, segsZ);
   geo.rotateX(-Math.PI / 2);
   geo.translate(b.cx, 0, b.cz);

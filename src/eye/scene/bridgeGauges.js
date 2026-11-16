@@ -86,7 +86,10 @@ function pierFrontReach(bridgeObj, at, fx, fz) {
 }
 
 function drawScale(depthM, freeboardM) {
-  const totalM = depthM + freeboardM;
+  const depth = Math.max(0.5, Number(depthM) || 1);
+  // Cap freeboard so the board stays readable; numbers only mark water depth (bed → surface).
+  const free = Math.max(1.2, Math.min(6, Number(freeboardM) || 1.5));
+  const totalM = depth + free;
   const h = Math.ceil(totalM * PX_PER_M);
   const w = Math.round(BOARD_W * PX_PER_M);
   const c = document.createElement("canvas");
@@ -96,51 +99,83 @@ function drawScale(depthM, freeboardM) {
   const yOf = (m) => h - m * PX_PER_M; // 0 m = bed (bottom)
   ctx.fillStyle = "#fbfaf5";
   ctx.fillRect(0, 0, w, h);
-  // Left 40 %: staff-gauge "E" pattern — 10 cm bands alternating red / black every 0.5 m.
+
+  // Left 40 %: staff-gauge "E" pattern — only on the wet (depth) section.
   const tickW = w * 0.4;
-  for (let k = 0; k * 0.1 < totalM; k++) {
+  for (let k = 0; k * 0.1 < depth; k++) {
     if (k % 2) continue;
     const y0 = yOf((k + 1) * 0.1);
     ctx.fillStyle = Math.floor(k / 5) % 2 === 0 ? "#d32f2f" : "#111";
     ctx.fillRect(0, y0, tickW * (k % 10 === 0 ? 1 : 0.75), 0.1 * PX_PER_M);
   }
   ctx.fillStyle = "#111";
-  ctx.fillRect(tickW, 0, 6, h); // divider
-  // Right 60 %: large metre numbers, one per metre, centred in that metre.
+  ctx.fillRect(tickW, 0, 6, h);
+
+  // Metre marks + numbers ONLY for river depth (0 → depth). Number N sits ON the N m line
+  // so the waterline reading matches the label (e.g. 13.6 m sits between 13 and 14).
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const fontPx = Math.round(PX_PER_M * 1.0);
-  for (let m = 0; m <= Math.floor(totalM); m++) {
+  const fontPx = Math.round(PX_PER_M * 0.92);
+  const maxMark = Math.ceil(depth);
+  for (let m = 0; m <= maxMark; m++) {
+    if (m > depth + 0.02) break;
     const y = yOf(m);
     ctx.fillStyle = "#111";
-    ctx.fillRect(0, y - 4, w, 8); // full-width metre line
-    if (m < Math.floor(totalM) || totalM - m > 0.75) {
-      const cy = yOf(m + 0.5);
-      ctx.font = `900 ${fontPx}px 'Segoe UI', Arial, sans-serif`;
-      ctx.lineWidth = 12;
-      ctx.strokeStyle = "#fbfaf5";
-      ctx.strokeText(String(m + 1), tickW + (w - tickW) * 0.42, cy);
-      ctx.fillStyle = (m + 1) % 5 === 0 ? "#d32f2f" : "#111";
-      ctx.fillText(String(m + 1), tickW + (w - tickW) * 0.42, cy);
-      ctx.font = `700 ${Math.round(fontPx * 0.34)}px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillStyle = "#333";
-      ctx.fillText("m", tickW + (w - tickW) * 0.85, cy + fontPx * 0.12);
-    }
+    ctx.fillRect(0, y - 4, w, 8);
+    if (m === 0) continue;
+    ctx.font = `900 ${fontPx}px 'Segoe UI', Arial, sans-serif`;
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = "#fbfaf5";
+    const labelX = tickW + (w - tickW) * 0.42;
+    // Keep digit just above its metre line so it stays readable at the waterline.
+    const cy = Math.min(y - fontPx * 0.38, yOf(Math.max(0, m - 0.15)));
+    ctx.strokeText(String(m), labelX, cy);
+    ctx.fillStyle = m % 5 === 0 ? "#d32f2f" : "#111";
+    ctx.fillText(String(m), labelX, cy);
+    ctx.font = `700 ${Math.round(fontPx * 0.32)}px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillStyle = "#333";
+    ctx.fillText("m", tickW + (w - tickW) * 0.85, cy + fontPx * 0.1);
   }
-  // Waterline.
-  const yw = yOf(depthM);
+
+  // Dry freeboard: plain face + light ticks (not depth numbers).
+  const yw = yOf(depth);
+  ctx.fillStyle = "#f3f1ea";
+  ctx.fillRect(0, 0, w, Math.max(0, yw - 8));
+  ctx.strokeStyle = "rgba(0,0,0,0.18)";
+  ctx.lineWidth = 3;
+  for (let m = 1; m <= Math.floor(free); m++) {
+    const y = yOf(depth + m);
+    if (y < 8) break;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(tickW * 0.55, y);
+    ctx.stroke();
+  }
+
+  // Waterline — the reading on the scale.
   ctx.fillStyle = "#00b8f0";
-  ctx.fillRect(0, yw - 8, w, 16);
-  // Darken the submerged part a little so the waterline reads from far away.
-  ctx.fillStyle = "rgba(12, 52, 80, 0.28)";
-  ctx.fillRect(0, yw + 8, w, h - yw);
+  ctx.fillRect(0, yw - 10, w, 20);
+  ctx.fillStyle = "rgba(12, 52, 80, 0.30)";
+  ctx.fillRect(0, yw + 10, w, h - (yw + 10));
+
+  // Depth callout on the board at the waterline.
+  ctx.font = `900 ${Math.round(fontPx * 0.55)}px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "rgba(8,22,34,0.85)";
+  const callout = `${depth.toFixed(1)} m`;
+  ctx.strokeText(callout, 10, yw - fontPx * 0.55);
+  ctx.fillStyle = "#00e0ff";
+  ctx.fillText(callout, 10, yw - fontPx * 0.55);
+
   ctx.strokeStyle = "#222";
   ctx.lineWidth = 10;
   ctx.strokeRect(5, 5, w - 10, h - 10);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  return { tex, totalM };
+  return { tex, totalM, depthM: depth, freeboardM: free };
 }
 
 function makeLabel(text) {
@@ -217,8 +252,14 @@ export function createBridgeGauges(bridges, dataset, exag = 1) {
       ? { x: pier.x, z: pier.z }
       : { x: cross.x - -st.flowZ * leftHalf * 0.3, z: cross.z - st.flowX * leftHalf * 0.3 };
 
-    let depthM = surveyDepthAt(dataset, at.x, at.z);
+    // Prefer station thalweg depth at this crossing (same family as River Data), then survey mix.
+    let depthM = Number.isFinite(st?.depth) ? Number(st.depth) : null;
     let approxM = null;
+    const survey = surveyDepthAt(dataset, at.x, at.z);
+    if (Number.isFinite(survey)) {
+      // Blend toward local survey when pier is off-centreline.
+      depthM = Number.isFinite(depthM) ? depthM * 0.35 + survey * 0.65 : survey;
+    }
     if (!Number.isFinite(depthM)) {
       const ns = nearestSurvey(dataset, at.x, at.z);
       if (!ns) continue; // no survey data anywhere near — no honest depth to show
@@ -226,10 +267,11 @@ export function createBridgeGauges(bridges, dataset, exag = 1) {
       approxM = ns.distM;
     }
 
-    // Scale runs from the river bed up to the road deck.
+    // Scale: bed → water depth (numbered) + short freeboard above water (unnumbered).
     const deckTop = (Number.isFinite(span.deckY) ? span.deckY : SURFACE_Y + 8) - 0.3;
     const freeboardM = Math.max(1.5, deckTop - SURFACE_Y);
-    const { tex, totalM } = drawScale(depthM, freeboardM);
+    const { tex, totalM, depthM: depthDrawn, freeboardM: freeDrawn } = drawScale(depthM, freeboardM);
+    depthM = depthDrawn;
     const board = new THREE.Mesh(
       new THREE.PlaneGeometry(BOARD_W, 1),
       new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, toneMapped: false }),
@@ -250,7 +292,7 @@ export function createBridgeGauges(bridges, dataset, exag = 1) {
     }
     board.rotation.y = Math.atan2(fx, fz);
     const off = pier ? pierFrontReach(bridges.getObjectByName(name), at, fx, fz) + FRONT_GAP_M : FRONT_GAP_M;
-    board.userData = { x: at.x + fx * off, z: at.z + fz * off, depthM, totalM, freeboardM };
+    board.userData = { x: at.x + fx * off, z: at.z + fz * off, depthM, totalM, freeboardM: freeDrawn };
 
     const text = approxM == null
       ? `Depth ${depthM.toFixed(2)} m`
@@ -298,7 +340,8 @@ export function updateBridgeGauges(group, exag = 1) {
     // Piecewise mapping is not possible with one plane; split exactly at the waterline instead.
     board.geometry.dispose();
     board.geometry = splitBoardGeometry(below / height, waterV);
-    label.position.set(x, SURFACE_Y + freeboardM + 2.4, z);
+    // Keep the depth label just above the waterline (not floating up the freeboard).
+    label.position.set(x, SURFACE_Y + Math.min(3.2, freeboardM * 0.45 + 1.6), z);
     if (post) {
       post.scale.set(1, height + 0.6, 1);
       post.position.set(post.userData.x, bedY + (height + 0.6) * 0.5, post.userData.z);

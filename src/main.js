@@ -245,27 +245,43 @@ async function dtmFromBody(dataset, body) {
   );
 }
 
-async function maybeDtm(dataset) {
-  // First load prebundled high-res Mandovi FABDEM DTM with full 3D topography
+/** Prefetch FABDEM bytes early so decode overlaps dataset build. */
+function prefetchLocalDtm() {
+  return fetch("/data/mandovi/fabdem_dtm.tif")
+    .then((res) => {
+      if (!res.ok) throw new Error(`DTM fetch failed (${res.status})`);
+      return res.arrayBuffer();
+    })
+    .catch((err) => {
+      console.warn("Local DTM prefetch skipped:", err?.message || err);
+      return null;
+    });
+}
+
+async function maybeDtm(dataset, prefetchedBuf = null) {
+  // First load prebundled Mandovi FABDEM (lower sample grid = much faster decode).
   try {
     const localDtm = await loadFabdemDtmWithTimeout(
-      "/data/mandovi/fabdem_dtm.tif",
+      prefetchedBuf || "/data/mandovi/fabdem_dtm.tif",
       dataset.frame,
       dataset.corridor,
       () => {},
-      15000,
-      { maxSampleDim: 512 }
+      12000,
+      { maxSampleDim: 256 },
     );
     if (localDtm) {
       dataset.dtm = localDtm;
-      console.info("Loaded high-resolution Mandovi FABDEM DTM:", localDtm);
+      console.info("Loaded Mandovi FABDEM DTM:", {
+        grid: `${localDtm.width}×${localDtm.height}`,
+        prefetched: !!prefetchedBuf,
+      });
       return;
     }
   } catch (err) {
     console.warn("Local DTM load notice:", err.message);
   }
 
-  const body = await waitForEndpoint("fabdem-dtm", 50000);
+  const body = await waitForEndpoint("fabdem-dtm", 20000);
   if (!body) return;
   try {
     dataset.dtm = await dtmFromBody(dataset, body);
@@ -303,8 +319,8 @@ async function boot() {
   let shown = 0;
   let frame = 0;
   function paint() {
-    shown += (target - shown) * 0.12;
-    if (Math.abs(target - shown) < 0.08) shown = target;
+    shown += (target - shown) * 0.28;
+    if (Math.abs(target - shown) < 0.15) shown = target;
     if (loadBar) loadBar.style.width = `${shown}%`;
     if (loadPercent) loadPercent.textContent = `${Math.round(shown)}%`;
     if (shown !== target || !loading.classList.contains("hidden")) frame = requestAnimationFrame(paint);
@@ -317,6 +333,9 @@ async function boot() {
   }
 
   try {
+    // Overlap DTM download with KML/session prep (biggest wall-clock win).
+    const dtmPrefetch = prefetchLocalDtm();
+
     const urlParams = new URLSearchParams(window.location.search);
     const forceUpload = urlParams.get("upload") === "true";
 
@@ -395,20 +414,16 @@ async function boot() {
     }
     pointWeather(session);
     pill.show();
-    // Silt classification + volume POST immediately in parallel (no queue delay).
-    runJalNetra((evt) => {
-      pill.update(evt);
-      if (evt.state === "ok" || evt.state === "error") saveSession(session);
-    });
 
-    progress(0.15, `Reading ${session.riverName}…`);
+    progress(0.12, `Reading ${session.riverName}…`);
     const dataset = await buildDatasetFromKml(prepared, progress);
     window.__RIVER_DATASET__ = dataset;
 
-    progress(0.45, "Loading full 3D elevation topography…");
-    await maybeDtm(dataset);
+    progress(0.62, "Loading elevation topography…");
+    const prefetchedBuf = await dtmPrefetch;
+    await maybeDtm(dataset, prefetchedBuf);
 
-    progress(0.85, "Constructing 3D river digital twin…");
+    progress(0.82, "Constructing 3D river digital twin…");
 
     const tooltip = createTooltip(uiRoot);
     mountCinematicOverlays(uiRoot, dataset);
@@ -466,6 +481,14 @@ async function boot() {
     }
     requestAnimationFrame(loop);
     saveSession(session);
+
+    // JalNetra after first paint — don't compete with DTM/scene for bandwidth/CPU.
+    setTimeout(() => {
+      runJalNetra((evt) => {
+        pill.update(evt);
+        if (evt.state === "ok" || evt.state === "error") saveSession(session);
+      });
+    }, 0);
   } catch (err) {
     console.error(err);
     if (loadMsg) loadMsg.textContent = err?.message || String(err);
