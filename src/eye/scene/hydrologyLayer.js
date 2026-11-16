@@ -95,45 +95,45 @@ function usesExactGroundOverlayFootprint(id) {
   return id === "water_depth" || isMandoviFlatRaster(id);
 }
 
-/** Chlorophyll-a in µg/L (Carlson TSI) — matches product legend. */
+/** Eutrophication — Carlson TSI only (no Chl-a µg/L in UI). */
 const EUTROPHICATION_CLASSES = [
   {
     id: "oligo",
     label: "Oligotrophic",
-    range: "< 2.6 µg/L (TSI < 40)",
+    range: "TSI < 40",
     color: "#2c7bb6",
-    unit: "µg/L",
+    unit: "TSI",
     min: 0,
-    max: 2.6,
+    max: 40,
     inclusiveMax: false,
   },
   {
     id: "meso",
     label: "Mesotrophic",
-    range: "2.6–7.3 µg/L (TSI 40–50)",
+    range: "TSI 40–50",
     color: "#abd9e9",
-    unit: "µg/L",
-    min: 2.6,
-    max: 7.3,
+    unit: "TSI",
+    min: 40,
+    max: 50,
     inclusiveMax: true,
   },
   {
     id: "eutro",
     label: "Eutrophic",
-    range: "7.3–56 µg/L (TSI 50–70)",
+    range: "TSI 50–70",
     color: "#fdae61",
-    unit: "µg/L",
-    min: 7.3,
-    max: 56,
+    unit: "TSI",
+    min: 50,
+    max: 70,
     inclusiveMax: true,
   },
   {
     id: "hyper",
     label: "Hypereutrophic",
-    range: "> 56 µg/L (TSI > 70)",
+    range: "TSI > 70",
     color: "#d7191c",
-    unit: "µg/L",
-    min: 56,
+    unit: "TSI",
+    min: 70,
     max: null,
     inclusiveMax: false,
   },
@@ -588,8 +588,8 @@ const BUILTIN_LAYER_DEFS = {
     flipU: false,
     flipV: true,
     legendTitle: "Eutrophication",
-    legendSubtitle: "Chlorophyll-a in µg/L (Carlson TSI)",
-    unit: "µg/L",
+    legendSubtitle: "Carlson TSI",
+    unit: "TSI",
     classes: EUTROPHICATION_CLASSES,
     legendClasses: EUTROPHICATION_CLASSES,
     renderType: "terrainDrapedTexture",
@@ -2268,7 +2268,7 @@ export function createHydrologyLayer(dataset) {
       id === "water_quality_tss"
         ? "mg/L"
         : id === "pollution_eutrophication"
-          ? "µg/L"
+          ? "TSI"
           : null;
     const unit =
       forceUnit ||

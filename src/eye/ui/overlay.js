@@ -126,7 +126,7 @@ export function createTooltip(root) {
             info.layer === "water_quality_tss"
               ? "mg/L"
               : info.layer === "pollution_eutrophication"
-                ? "µg/L"
+                ? "TSI"
                 : null;
           const isNumericWq =
             info.hydrologySalinity ||
@@ -137,9 +137,9 @@ export function createTooltip(root) {
           } else if (info.value != null && Number.isFinite(Number(info.value))) {
             const n = Number(info.value);
             const unit = forceUnit || info.unit || "";
-            val = unit
-              ? `${n.toFixed(unit === "mg/L" || unit === "µg/L" ? 2 : 1)} ${unit}`
-              : String(n);
+            const digits =
+              unit === "TSI" ? 0 : unit === "mg/L" || unit === "µg/L" ? 2 : 1;
+            val = unit ? `${n.toFixed(digits)} ${unit}` : String(n);
           } else if (isNumericWq && info.range) {
             val = info.range;
           } else {
@@ -465,7 +465,7 @@ export function createTooltip(root) {
           info.layer === "water_quality_tss"
             ? "mg/L"
             : info.layer === "pollution_eutrophication"
-              ? "µg/L"
+              ? "TSI"
               : null;
         const unit = forceUnit || info.unit || "";
         const isNumericWq =
@@ -483,9 +483,9 @@ export function createTooltip(root) {
           Number.isFinite(Number(info.value))
         ) {
           const n = Number(info.value);
-          valueDisplay = unit
-            ? `${n.toFixed(unit === "mg/L" || unit === "µg/L" ? 2 : 1)} ${unit}`
-            : String(n);
+          const digits =
+            unit === "TSI" ? 0 : unit === "mg/L" || unit === "µg/L" ? 2 : 1;
+          valueDisplay = unit ? `${n.toFixed(digits)} ${unit}` : String(n);
         }
         if (!valueDisplay && forceUnit && info.range) valueDisplay = info.range;
         el.innerHTML = `
@@ -502,7 +502,7 @@ export function createTooltip(root) {
               : info.layer === "water_quality_tss"
                 ? "TSS · value + unit (mg/L)"
                 : info.layer === "pollution_eutrophication"
-                  ? "Eutrophication · Chlorophyll-a µg/L (Carlson TSI)"
+                  ? "Eutrophication · Carlson TSI only"
                   : info.layer === "water_quality_ndci"
                     ? "Chlorophyll-a scale · NDCI"
                     : "Classified overlay · hover class"

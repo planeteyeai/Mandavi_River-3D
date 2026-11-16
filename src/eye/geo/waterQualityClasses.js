@@ -12,10 +12,10 @@ export const TSS_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "Low",
     label: "Low",
     color: "#2196F3",
-    range: "≤ 0.62 mg/L",
+    range: "0–25 mg/L",
     unit: "mg/L",
     min: 0,
-    max: 0.62,
+    max: 25,
     inclusiveMax: true,
   },
   {
@@ -23,10 +23,10 @@ export const TSS_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "Medium",
     label: "Medium",
     color: "#FFC107",
-    range: "0.62–1.17 mg/L",
+    range: "25–50 mg/L",
     unit: "mg/L",
-    min: 0.62,
-    max: 1.17,
+    min: 25,
+    max: 50,
     inclusiveMax: true,
   },
   {
@@ -34,9 +34,9 @@ export const TSS_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "High",
     label: "High",
     color: "#F44336",
-    range: "> 1.17 mg/L",
+    range: "> 50 mg/L",
     unit: "mg/L",
-    min: 1.17,
+    min: 50,
     max: null,
     inclusiveMax: false,
   },
@@ -254,7 +254,7 @@ export const WQ_LAYER_SCHEMES = {
 /**
  * Classify a numeric sample into the official scheme.
  * Boundary rules:
- * - TSS: 10 → Low, 50 → Moderate, >50 → High
+ * - TSS: 0–25 Low, 25–50 Medium, >50 High (mg/L)
  * - Salinity (NDSI): lower edge inclusive, 1.00 → Very High
  * - Chlorophyll-a: 2 → Low, >2 → High
  * @param {number} value
@@ -297,6 +297,7 @@ export function classRepresentativeValue(c) {
   const min = Number(c.min);
   if (!Number.isFinite(min)) return null;
   if (c.max == null) {
+    if (c.unit === "TSI") return min + 5;
     if (c.unit === "µg/L" || c.unit === "mg/L") return min + (min < 2 ? 0.2 : 1);
     return min + 10;
   }
@@ -308,8 +309,10 @@ export function formatWqValue(value, unit) {
   if (!Number.isFinite(v)) return "—";
   const u = String(unit || "").trim();
   const digits =
-    u === "NDSI" || u === "NDCI" || u === "mg/L" || u === "µg/L" || u === "ug/L"
-      ? 2
-      : 1;
+    u === "TSI"
+      ? 0
+      : u === "NDSI" || u === "NDCI" || u === "mg/L" || u === "µg/L" || u === "ug/L"
+        ? 2
+        : 1;
   return u ? `${v.toFixed(digits)} ${u}` : v.toFixed(digits);
 }
