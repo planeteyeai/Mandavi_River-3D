@@ -35,8 +35,10 @@ export function mountJoiningStreamsNav(root) {
   function setWq(rec) {
     const q = rec ? streamBodCodFor(rec) : null;
     if (!wqEl) return;
-    wqEl.hidden = !q;
-    wqEl.innerHTML = q
+    const has =
+      !!q && (Number.isFinite(q.bodMean) || Number.isFinite(q.codMean));
+    wqEl.hidden = !has;
+    wqEl.innerHTML = has
       ? `<span class="jsl-wq" data-level="${bodLevel(q.bodMean)}">BOD <b>${fmtMgL(q.bodMean)}</b></span>` +
         `<span class="jsl-wq" data-level="${codLevel(q.codMean)}">COD <b>${fmtMgL(q.codMean)}</b></span>` +
         `<span class="jsl-wq-unit">mg/L</span>`

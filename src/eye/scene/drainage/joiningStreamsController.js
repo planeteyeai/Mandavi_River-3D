@@ -80,6 +80,9 @@ export function createJoiningStreamsController({ dataset, nallaFlow, cam, system
       .sort((a, b) => {
         const d = getActualRiverChainageMeters(a) - getActualRiverChainageMeters(b);
         if (d !== 0) return d;
+        const na = Number(/upstream\s*0*(\d+)/i.exec(a.meta?.name || a.name || "")?.[1]);
+        const nb = Number(/upstream\s*0*(\d+)/i.exec(b.meta?.name || b.name || "")?.[1]);
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
         return String(a.drainageId || a.displayId || a.id).localeCompare(
           String(b.drainageId || b.displayId || b.id),
         );
@@ -183,7 +186,8 @@ export function createJoiningStreamsController({ dataset, nallaFlow, cam, system
       if (!Number.isFinite(cm) || cm === Number.POSITIVE_INFINITY) continue;
       any = true;
       const d = Math.abs(cm - m);
-      if (d < bestD) {
+      // Keep current selection on near-ties (Upstream 07/08/09 share confluence km).
+      if (d < bestD - 0.5 || (Math.abs(d - bestD) <= 0.5 && i === selectedIndex)) {
         bestD = d;
         best = i;
       }
@@ -545,9 +549,18 @@ export function createJoiningStreamsController({ dataset, nallaFlow, cam, system
     state.joiningStreamsTipActive = false;
   }
 
-  function onChainageSelect(meters) {
+  function onChainageSelect(meters, detail = {}) {
     if (!active || syncLock) return;
     if (!Number.isFinite(Number(meters))) return;
+    const src = String(detail?.source || "");
+    // Never re-pick nearest while Joining Streams nav/click already owns the selection.
+    if (
+      /^(nav|click|activate|view|refocus|joining-streams|next-drainage|previous-drainage|focus|overview|select-drainage)$/i.test(
+        src,
+      )
+    ) {
+      return;
+    }
     // Ruler owns camera — only refresh which nalla card is nearest
     selectNearestToChainage(meters, {
       source: "chainage",

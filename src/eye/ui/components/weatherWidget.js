@@ -182,12 +182,35 @@ export function mountWeatherWidget(root) {
     return raw;
   }
 
+  const weatherWqEl = el.querySelector(".weather-wq");
+
+  function setWeatherWqVisible(on) {
+    if (weatherWqEl) weatherWqEl.hidden = !on;
+  }
+
+  function clearWeatherBodCod() {
+    if (bodEl) {
+      bodEl.textContent = "";
+      bodEl.title = "";
+    }
+    if (codEl) {
+      codEl.textContent = "";
+      codEl.title = "";
+    }
+  }
+
+  /**
+   * Joining Streams BOD/COD: only the stream table (S01–S07).
+   * No pixel / chainage invent — if the stream has no row, hide BOD/COD entirely.
+   * @returns {"ok"|"missing"|false}
+   */
   function applyJoiningStreamBodCod(rec) {
     if (!bodEl && !codEl) return false;
     if (!rec) return false;
 
     const q = streamBodCodFor(rec);
     if (q) {
+      setWeatherWqVisible(true);
       if (bodEl) {
         bodEl.textContent = formatMetricNumber(q.bodMean, 1);
         bodEl.title = `BOD · ${q.name || joiningStreamLabel(rec)} (joining stream)`;
@@ -196,35 +219,24 @@ export function mountWeatherWidget(root) {
         codEl.textContent = formatMetricNumber(q.codMean, 1);
         codEl.title = `COD · ${q.name || joiningStreamLabel(rec)} (joining stream)`;
       }
-      return true;
+      return "ok";
     }
 
-    const lon = Number(rec.outletLon);
-    const lat = Number(rec.outletLat);
-    if (Number.isFinite(lon) && Number.isFinite(lat)) {
-      const fromLl = sampleBodCodAtLonLat(lon, lat);
-      if (fromLl) {
-        if (bodEl) {
-          bodEl.textContent = formatMetricNumber(fromLl.bod, 1);
-          bodEl.title = `BOD at joining stream ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-        }
-        if (codEl) {
-          codEl.textContent = formatMetricNumber(fromLl.cod, 1);
-          codEl.title = `COD at joining stream ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-        }
-        return true;
-      }
-    }
-    return false;
+    setWeatherWqVisible(false);
+    clearWeatherBodCod();
+    return "missing";
   }
 
   function renderBodCod() {
     if (!bodEl && !codEl) return;
 
-    // Joining Streams: prefer that stream's table / outlet lat-lon BOD·COD.
-    if (state.joiningStreamsMode && lastJoiningRec && applyJoiningStreamBodCod(lastJoiningRec)) {
+    // Joining Streams: stream-table only — never invent BOD/COD from nearby pixels.
+    if (state.joiningStreamsMode && lastJoiningRec) {
+      applyJoiningStreamBodCod(lastJoiningRec);
       return;
     }
+
+    setWeatherWqVisible(true);
 
     const meters =
       lastMeters != null
@@ -331,14 +343,8 @@ export function mountWeatherWidget(root) {
 
   function updateBodCodForChainage(point) {
     lastMeters = point?.meters ?? state.selectedChainageMeters ?? null;
-    // Chainage sync from joining-stream select must not wipe stream BOD/COD.
-    if (!(state.joiningStreamsMode && lastJoiningRec)) {
-      void ensureBodData().then(() => renderBodCod());
-    } else {
-      void ensureBodData().then(() => {
-        if (!applyJoiningStreamBodCod(lastJoiningRec)) renderBodCod();
-      });
-    }
+    // Chainage sync from joining-stream select must not wipe / invent stream BOD/COD.
+    void ensureBodData().then(() => renderBodCod());
     void renderDischarge();
   }
 

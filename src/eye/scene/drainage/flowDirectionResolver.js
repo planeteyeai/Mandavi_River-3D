@@ -65,12 +65,31 @@ export function resolveNallaFlow(path, riverStations) {
     }
   }
 
+  const forceJoining = !!(meta.joiningStream || meta.forceConnected || path.joiningStream);
+
   // Authoritative connection: OUTLET tip segment must meet the bank
-  const outletHit = outletRiverConnection(pts, flowTowardEnd, riverStations, RIVER_CONNECTION_THRESHOLD_M);
-  const connectsToRiver = !!outletHit;
-  const connection = connectsToRiver ? outletHit : null;
+  let outletHit = outletRiverConnection(
+    pts,
+    flowTowardEnd,
+    riverStations,
+    forceJoining ? Math.max(RIVER_CONNECTION_THRESHOLD_M * 8, 280) : RIVER_CONNECTION_THRESHOLD_M,
+  );
+  // Mandovi supplied upstreams always join navigation — synthesize confluence if tip is farther.
+  if (!outletHit && forceJoining) {
+    const tip = flowTowardEnd ? end : start;
+    const probe = bankGapAtPoint(tip, riverStations) || endProbe || startProbe;
+    if (probe) {
+      outletHit = {
+        ...probe,
+        pathIndex: flowTowardEnd ? pts.length - 1 : 0,
+        confidence: "joining-stream",
+      };
+    }
+  }
+  const connectsToRiver = forceJoining ? true : !!outletHit;
+  const connection = outletHit || null;
   const distanceToRiverM = connectsToRiver
-    ? outletHit.distanceToBank
+    ? outletHit?.distanceToBank ?? 0
     : (flowTowardEnd ? endProbe : startProbe)?.distanceToBank ?? null;
 
   return {
@@ -78,6 +97,7 @@ export function resolveNallaFlow(path, riverStations) {
     // Preserve source name only; empty string when OSM/KML has no valid name
     name: String(meta.name || meta.nameEn || meta.intName || "").trim(),
     meta,
+    joiningStream: forceJoining,
     pts,
     lengthM: path.lengthM || pathLength(pts),
     elevStart,
@@ -96,6 +116,8 @@ export function resolveNallaFlow(path, riverStations) {
 /** True when record is eligible for Joining Streams navigation. */
 export function isRiverConnectedDrainage(rec) {
   if (!rec) return false;
+  // Bundled Mandovi upstream placemarks are always navigable.
+  if (rec.joiningStream || rec.meta?.joiningStream) return true;
   if (rec.connectsToRiver !== true) return false;
   if (!rec.connection?.bankPoint && !rec.connection?.riverPoint) return false;
   const gap = rec.distanceToRiverM ?? rec.connection?.distanceToBank;

@@ -214,6 +214,67 @@ export function parseDrainageKml(text) {
 }
 
 /**
+ * Mandovi joining-stream KML: one stream per Placemark (longest LineString only).
+ * MultiGeometry branches are not counted as separate streams.
+ */
+export function parseJoiningStreamPlacemarks(text) {
+  const features = [];
+  const placemarks = [...String(text || "").matchAll(/<Placemark[\s\S]*?<\/Placemark>/gi)];
+  let index = 0;
+  for (const block of placemarks) {
+    const content = block[0];
+    const nameM = content.match(/<name>\s*([^<]*)\s*<\/name>/i);
+    const name = nameM?.[1]?.trim() || "";
+    if (!name || /^mandvi\b/i.test(name) || /upstreams?\s*\(/i.test(name)) continue;
+
+    const props = {};
+    for (const m of content.matchAll(/<SimpleData name="([^"]+)">\s*([^<]*)\s*<\/SimpleData>/gi)) {
+      const key = m[1].trim();
+      const val = m[2].trim();
+      if (val) props[key] = val;
+    }
+
+    let best = null;
+    let bestLen = 0;
+    for (const c of content.matchAll(/<coordinates>([\s\S]*?)<\/coordinates>/gi)) {
+      const coordinates = parseCoords(c[1]);
+      if (coordinates.length >= 2 && coordinates.length > bestLen) {
+        best = coordinates;
+        bestLen = coordinates.length;
+      }
+    }
+    if (!best) continue;
+
+    index += 1;
+    const ch = name.match(/CH\s*(\d+)\+(\d+)/i);
+    features.push({
+      name,
+      waterway: "stream",
+      osmId: props.osm_id || props.full_id || `mandovi-upstream-${index}`,
+      osmType: props.osm_type || "",
+      nameEn: props["name:en"] || "",
+      nameMr: props["name:mr"] || "",
+      nameHi: props["name:hi"] || "",
+      nameGu: props["name:gu"] || "",
+      width: props.width || "",
+      intermittent: props.intermittent || "",
+      tunnel: props.tunnel || "",
+      bridge: props.bridge || "",
+      boat: props.boat || "",
+      city: props["addr:city"] || "",
+      intName: props.int_name || "",
+      wikidata: props.wikidata || "",
+      layer: props.layer || "",
+      props,
+      coordinates: best,
+      chainageKey: ch ? `${ch[1]}+${ch[2]}` : `placemark-${index}`,
+      pointCount: bestLen,
+    });
+  }
+  return features;
+}
+
+/**
  * Parse Jul 2026 smoothed depth-class polygons (1.5–2.0 m bands).
  * Each Placemark Polygon → one feature with depth class + opacity metadata.
  */

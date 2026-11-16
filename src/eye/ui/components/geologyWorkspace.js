@@ -396,10 +396,11 @@ export function mountGeologyWorkspace(root) {
     if (joiningPanelCount) joiningPanelCount.textContent = total ? `${idx} / ${total}` : "0 / 0";
   }
 
-  /** BOD / COD tiles for the selected joining stream (satellite estimate, mg/L). */
+  /** BOD / COD tiles — only when this stream has table data; otherwise show nothing. */
   function joiningBodCodHtml(rec) {
     const q = streamBodCodFor(rec);
     if (!q) return "";
+    if (!Number.isFinite(q.bodMean) && !Number.isFinite(q.codMean)) return "";
     const meta = streamsBodCodMeta;
     const fmtDay = (d) => {
       const t = d ? new Date(`${d}T00:00:00`) : null;

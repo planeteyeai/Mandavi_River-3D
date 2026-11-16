@@ -250,7 +250,8 @@ export function createNallaFlowSystem(dataset, drainageGroup, opts = {}) {
     r.displayName = formatDisplayName(r);
   }
 
-  // Joining Streams navigation: ONLY Mula–Mutha-connected drainages, river confluence order
+  // Joining Streams navigation: river-connected drainages, confluence order.
+  // Count follows the supplied upstream dataset (no hard cap).
   const riverOrderedRecords = [...records]
     .filter((r) => isRiverConnectedDrainage(r))
     .sort((a, b) => {

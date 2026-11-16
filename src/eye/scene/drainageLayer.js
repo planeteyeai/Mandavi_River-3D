@@ -60,6 +60,7 @@ export function createDrainageLayer(dataset) {
         nameKey: displayName ? `${displayName.toLowerCase()}::${String(f.waterway || "stream").toLowerCase()}` : "",
         displayName,
         waterway: f.waterway,
+        joiningStream: !!f.joiningStream,
         meta: {
           // Empty when OSM/KML has no name — never invent "Unnamed …"
           name: displayName,
@@ -79,6 +80,7 @@ export function createDrainageLayer(dataset) {
           intName: f.intName || "",
           wikidata: f.wikidata || "",
           layer: f.layer || "",
+          joiningStream: !!f.joiningStream,
         },
         pts: (f.vertices || [])
           .filter((v) => Number.isFinite(v?.x) && Number.isFinite(v?.z))
@@ -89,7 +91,13 @@ export function createDrainageLayer(dataset) {
 
   const named = new Map();
   const unnamed = [];
+  const joiningPaths = [];
   for (const p of rawPaths) {
+    // Mandovi upstream placemarks stay 1:1 — never stitch/split into extra streams.
+    if (p.joiningStream) {
+      joiningPaths.push(p);
+      continue;
+    }
     if (p.nameKey) {
       if (!named.has(p.nameKey)) named.set(p.nameKey, []);
       named.get(p.nameKey).push(p);
@@ -98,6 +106,9 @@ export function createDrainageLayer(dataset) {
 
   /** @type {{ pts: {x:number,z:number,lon?:number,lat?:number}[], meta: object }[]} */
   const chains2d = [];
+  for (const p of joiningPaths) {
+    chains2d.push({ pts: p.pts, meta: { ...p.meta } });
+  }
   for (const list of named.values()) {
     // Only stitch ways that actually touch — preserve KML planimetry otherwise
     const merged = mergePaths(list.map((p) => p.pts), JOIN_DIST_M);
@@ -119,12 +130,19 @@ export function createDrainageLayer(dataset) {
   for (const chain of chains2d) {
     const dense = densifyPath(chain.pts, DENSIFY_M);
     if (dense.length < 2) continue;
-    // OSM nullahs often continue into mid-river — keep water only to the bank edge
-    const bankRuns = clipPathToRiverBanks(dense, stations);
-    if (!bankRuns.length) continue;
-    if (bankRuns.length > 1 || bankRuns[0].length < dense.length) clippedToBank++;
 
-    for (const run of bankRuns) {
+    // Mandovi joining streams: keep one continuous path (do not split into extra nav items).
+    let runs;
+    if (chain.meta?.joiningStream) {
+      runs = [dense];
+    } else {
+      // OSM nullahs often continue into mid-river — keep water only to the bank edge
+      runs = clipPathToRiverBanks(dense, stations);
+      if (!runs.length) continue;
+      if (runs.length > 1 || runs[0].length < dense.length) clippedToBank++;
+    }
+
+    for (const run of runs) {
       if (run.length < 2) continue;
       const draped = run.map((p) => {
         const under = underBuildingAmount(p.x, p.z, buildings);

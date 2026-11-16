@@ -8,6 +8,7 @@ import {
   parsePointPlacemarksKml,
   parseChainageAnalysisKml,
   parseDrainageKml,
+  parseJoiningStreamPlacemarks,
 } from "./kml.js";
 import { nearestChainage, MANDOVI_CHAINAGE_DESTINATIONS } from "./chainage.js";
 import { lonLatToUtm } from "./projection.js";
@@ -52,7 +53,9 @@ async function loadMandoviReferenceKmls() {
   if (coordinateDistanceSquared(mainCenterline.at(-1), chainageStart) < coordinateDistanceSquared(mainCenterline[0], chainageStart)) {
     mainCenterline.reverse();
   }
-  const upstreams = parseDrainageKml(textByKey.upstreamsKml)
+  // One stream per Placemark only — count matches the supplied upstream KML (6/7/8…).
+  // MultiGeometry branches inside a Placemark are not counted as extra streams.
+  const upstreams = parseJoiningStreamPlacemarks(textByKey.upstreamsKml)
     .filter((feature) => feature.coordinates?.length >= 2)
     .map((feature, index) => ({
       name: String(feature.name || `Upstream ${index + 1}`).trim(),
@@ -276,8 +279,12 @@ export async function buildDatasetFromKml(prepared, onProgress) {
   const origin = { lon: (minLon + maxLon) / 2, lat: (minLat + maxLat) / 2 };
   initGeoReference(origin, ringUtm);
   const frame = getGeoReference().frame;
-  const mandoviDrainage = mandoviSources?.upstreams.map((feature) => ({
+  const mandoviDrainage = mandoviSources?.upstreams.map((feature, index) => ({
     ...feature,
+    // Authoritative Mandovi joining streams — always navigable (no OSM bank filter drop).
+    joiningStream: true,
+    waterway: feature.waterway || "stream",
+    osmId: feature.osmId || `mandovi-upstream-${index + 1}`,
     vertices: feature.vertices.map(({ lon, lat }) => {
       const utm = lonLatToUtm(lon, lat);
       const local = frame.toLocal(utm.easting, utm.northing);

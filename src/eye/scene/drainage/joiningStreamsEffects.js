@@ -616,9 +616,10 @@ function makeMistSpriteTexture() {
   return tex;
 }
 
-/** "BOD 9.0 · COD 24.7 mg/L" chip for a joining stream label (empty when no data). */
+/** "BOD 9.0 · COD 24.7 mg/L" chip — omit entirely when this stream has no BOD/COD row. */
 function bodCodChipHtml(q) {
   if (!q) return "";
+  if (!Number.isFinite(q.bodMean) && !Number.isFinite(q.codMean)) return "";
   return `<span class="joining-stream-label__wq">
     <span class="jsl-wq" data-level="${bodLevel(q.bodMean)}">BOD <b>${fmtMgL(q.bodMean)}</b></span>
     <span class="jsl-wq" data-level="${codLevel(q.codMean)}">COD <b>${fmtMgL(q.codMean)}</b></span>
@@ -730,19 +731,31 @@ function buildNameLabels(records, uiRoot) {
         it.world.copy(anchorPoint(it.rec));
         const text = it.el.querySelector(".joining-stream-label__text");
         if (text) text.textContent = labelText(it.rec);
+        // Refresh BOD/COD chip — remove entirely when this stream has no table row.
+        const oldWq = it.el.querySelector(".joining-stream-label__wq");
+        const nextWq = bodCodChipHtml(streamBodCodFor(it.rec));
+        if (oldWq && !nextWq) oldWq.remove();
+        else if (!oldWq && nextWq) {
+          text?.insertAdjacentHTML("afterend", nextWq);
+        } else if (oldWq && nextWq) {
+          oldWq.outerHTML = nextWq;
+        }
       }
     }
 
     const cAnchor = rec ? confluenceAnchor(rec) : null;
-    if (confluenceWq) confluenceWq.innerHTML = rec ? bodCodChipHtml(streamBodCodFor(rec)) : "";
+    const wqHtml = rec ? bodCodChipHtml(streamBodCodFor(rec)) : "";
+    if (confluenceWq) confluenceWq.innerHTML = wqHtml;
     if (cAnchor) {
       confluenceItem.rec = rec;
       confluenceItem.world.copy(cAnchor);
       confluenceEl.hidden = false;
       confluenceEl.classList.add("is-selected");
+      confluenceEl.classList.toggle("has-wq", !!wqHtml);
     } else {
       confluenceItem.rec = null;
       confluenceEl.hidden = true;
+      confluenceEl.classList.remove("has-wq");
     }
   }
 

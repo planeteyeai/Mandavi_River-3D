@@ -115,6 +115,22 @@ export function createTooltip(root) {
         } else if (info.nullahHover) {
           what = info.joiningHover ? "JOINING STREAM" : "DRAINAGE CHANNEL";
           val = info.name && !/^unnamed\b/i.test(String(info.name)) ? info.name : info.chainageLabel || "—";
+          // Readable chip — solid dark plate (no bare white text over the map).
+          el.className = "hud tooltip visible tooltip--joining-hover";
+          el.style.left = `${x + 14}px`;
+          el.style.top = `${y + 14}px`;
+          el.style.padding = "8px 11px";
+          el.style.borderRadius = "8px";
+          el.style.minWidth = "auto";
+          el.style.maxWidth = "220px";
+          el.style.background = "rgba(8, 20, 30, 0.94)";
+          el.style.border = "1px solid rgba(120, 190, 220, 0.45)";
+          el.style.boxShadow = "0 8px 20px rgba(0,0,0,0.45)";
+          el.innerHTML = `
+            <div class="hover-title" style="font-weight:750;font-size:10px;color:#cfe8f2;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.05em;line-height:1.2;">${tipEsc(what)}</div>
+            <div class="hover-value" style="font-size:13px;color:#ffffff;font-weight:700;line-height:1.25;">${tipEsc(val)}</div>
+          `;
+          return;
         } else if (info.hydrologyPollution) {
           what = "POLLUTION";
           val = info.displayName || info.name || "—";
