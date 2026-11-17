@@ -141,15 +141,17 @@ export function createShipsLayer(scene) {
       const targetWidth = clamp(Number(p.width_m) || targetLength * 0.22, 2.2, Math.min(28, targetLength * 0.72));
       const lengthScale = targetLength / modelLength;
       const widthScale = targetWidth / modelWidth;
+      const heightScale = lengthScale * 0.58;
+      // Sink a little so the hull reads as floating in the water, not hovering.
+      const draughtM = clamp(targetLength * 0.045, 0.35, 1.4);
       const root = new THREE.Group();
       root.name = `ship-detection-${p.id || entries.length + 1}`;
-      root.position.set(local.x, SURFACE_Y - modelBottom * lengthScale * 0.58 + 0.35, local.z);
       root.rotation.y = THREE.MathUtils.degToRad(Number(p.heading_axis_deg) || 0) - (longAxis === "x" ? Math.PI / 2 : 0);
 
       const model = base.clone(true);
       model.scale.set(
         longAxis === "x" ? lengthScale : widthScale,
-        lengthScale * 0.58,
+        heightScale,
         longAxis === "x" ? widthScale : lengthScale,
       );
       model.traverse((object) => {
@@ -168,7 +170,19 @@ export function createShipsLayer(scene) {
       root.add(hitbox);
 
       const info = detectionInfo(feature, { ...data.scene, runId: data.runId });
-      const entry = { root, info, baseScale: 1, feature };
+      const entry = {
+        root,
+        info,
+        baseScale: 1,
+        feature,
+        modelBottom,
+        heightScale,
+        draughtM,
+        baseX: local.x,
+        baseZ: local.z,
+      };
+      // Keel at waterY − draught → sits on the surface.
+      root.position.set(local.x, SURFACE_Y - draughtM - modelBottom * heightScale, local.z);
       root.traverse((object) => { object.userData.shipDetectionEntry = entry; });
       group.add(root);
       entries.push(entry);
@@ -183,12 +197,23 @@ export function createShipsLayer(scene) {
     return { count: 0, error };
   });
 
+  function setWaterSurfaceY(waterY) {
+    const y = Number.isFinite(waterY) ? waterY : SURFACE_Y;
+    for (const entry of entries) {
+      const draught = entry.draughtM ?? 0.6;
+      const bottom = entry.modelBottom ?? 0;
+      const hs = entry.heightScale ?? 1;
+      entry.root.position.y = y - draught - bottom * hs;
+    }
+  }
+
   return {
     group,
     ready,
     pick,
     select,
     setThematicSuppressed,
+    setWaterSurfaceY,
     isVisible: () => group.visible,
     getTemplate: () => template,
     getDetections: () => entries.map((entry) => entry.info),

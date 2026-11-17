@@ -1,5 +1,7 @@
 import { state } from "../state.js";
 import { SURFACE_Y } from "../scene/river.js";
+import { getCachedLiveHydrology } from "../services/hydrology/liveHydrologyService.js";
+import { hydrologyStore } from "../services/hydrology/hydrologyStore.js";
 import { sceneName } from "../scene/cinematic.js";
 import { whenChainageSettled } from "../scene/riverJourney.js";
 import { mountProjectIdentity } from "./components/projectIdentity.js";
@@ -214,6 +216,11 @@ export function createTooltip(root) {
       el.classList.toggle("tooltip--lithology", !!info.lithologyClick);
       el.classList.toggle("tooltip--ship", !!info.shipClick);
       el.classList.toggle("is-garbage-panel", !!info.hydrologyPollution);
+      // Enable clicks for panels that contain action buttons (e.g. Cross-Section).
+      el.classList.toggle(
+        "tooltip--interactive",
+        !!(info.hydrologyInspect || info.lithologyClick || info.shipClick || info.garbageSelected),
+      );
       if (info.lithologyClick) {
         // Anchor at geographic screen point; CSS translates card above + leader to tip
         el.style.left = `${x}px`;
@@ -264,23 +271,43 @@ export function createTooltip(root) {
           (ship.lengthM != null && ship.widthM != null
             ? `${Number(ship.lengthM).toFixed(2)} m × ${Number(ship.widthM).toFixed(1)} m`
             : null);
+        const capPax = Number(ship.capacityPassengers);
+        const capCrew = Number(ship.capacityCrew);
+        const capacityTxt =
+          Number.isFinite(capPax) && Number.isFinite(capCrew)
+            ? `${capPax.toLocaleString()} pax · ${capCrew} crew`
+            : Number.isFinite(capPax)
+              ? `${capPax.toLocaleString()} passengers`
+              : null;
+        const gt = Number(ship.grossTonnage);
+        let headingDeg = Number(ship.heading);
+        if (Number.isFinite(headingDeg)) headingDeg = ((headingDeg % 360) + 360) % 360;
+        // Live Mandovi discharge (GloFAS / hydrology summary) — not a ship sensor.
+        const cachedLive = getCachedLiveHydrology();
+        const summaryQ = Number(hydrologyStore.getSummary?.()?.discharge_m3s);
+        const liveQCandidates = [
+          Number(ship.liveDischargeM3s),
+          Number(state.discharge_m3s),
+          Number(cachedLive?.Q_total),
+          summaryQ,
+          Number(window.__MM_SCENE__?.getLiveDischargeM3s?.()),
+        ];
+        const liveQ = liveQCandidates.find((q) => Number.isFinite(q) && q > 0);
+        const liveQTxt = Number.isFinite(liveQ) ? `${liveQ.toFixed(1)} m³/s` : "Updating…";
+        // Basic vessel details only — no model / sensor / area source lines.
         const shipRows = [
           ["Type", ship.type || ship.vesselClass],
-          ["IMO", ship.imo],
           ["Flag", ship.flag],
-          ["Size (LOA × beam)", sizeText],
+          ["IMO", ship.imo],
           ["Length (LOA)", tipNum(ship.lengthM, 2, " m")],
           ["Width (beam)", tipNum(ship.widthM, 1, " m")],
-          ["Confidence", tipNum(ship.confidence != null ? Number(ship.confidence) * 100 : null, 0, "%")],
-          ["Heading", ship.heading != null ? `${Math.round(Number(ship.heading))}°` : null],
+          ["Draught", tipNum(ship.draughtM, 1, " m")],
+          ["Capacity", capacityTxt],
+          ["Gross tonnage", Number.isFinite(gt) ? `${gt.toLocaleString()} GT` : null],
+          ["Live discharge", liveQTxt],
+          ["Heading", Number.isFinite(headingDeg) ? `${Math.round(headingDeg)}°` : null],
           ["Position", ship.lat != null && ship.lon != null ? `${Number(ship.lat).toFixed(6)}° N, ${Number(ship.lon).toFixed(6)}° E` : null],
-          ["Area", ship.locationNote],
-          ["Time", ship.datetime ? new Date(ship.datetime).toLocaleString() : null],
-          ["AIS name", ship.aisName],
-          ["MMSI", ship.aisMmsi],
           ["Status", ship.aisStatus],
-          ["Model", ship.modelSource],
-          ["Wake", ship.wake],
         ];
         if (info.shipPinned) {
           el.style.left = `${Math.max(12, window.innerWidth - 340)}px`;
@@ -295,7 +322,7 @@ export function createTooltip(root) {
               <div class="be-title">VESSEL · ${shipEsc(title)}</div>
               ${sizeText ? `<div class="be-row ship-size-row"><span class="be-label">LOA × beam</span><span class="be-pct">${shipEsc(sizeText)}</span></div>` : ""}
               ${shipRows
-                .filter(([label, value]) => value != null && String(value).trim() !== "" && label !== "Size (LOA × beam)")
+                .filter(([_, value]) => value != null && String(value).trim() !== "" && String(value).trim() !== "—")
                 .map(([label, value]) => `<div class="be-row"><span class="be-label">${shipEsc(label)}</span><span class="be-pct">${shipEsc(value)}</span></div>`)
                 .join("")}
               ${info.shipPinned ? `<em class="tip-garbage-foot">Selected · click elsewhere to clear</em>` : `<em class="tip-garbage-foot">Click ship to pin details</em>`}
@@ -611,40 +638,66 @@ export function createTooltip(root) {
       }
       if (info.hydrologyInspect) {
         const riverTitle = (info.riverName || window.__RIVER_DATASET__?.riverName || "MANDOVI RIVER").toUpperCase();
+        const depthTxt =
+          info.surveyDepthM != null
+            ? `${Number(info.surveyDepthM).toFixed(2)} m`
+            : info.depth != null
+              ? `${Number(info.depth).toFixed(2)} m`
+              : "—";
+        const wseTxt =
+          info.waterSurfaceElevation != null
+            ? `${Number(info.waterSurfaceElevation).toFixed(2)} m`
+            : info.waterSurface != null
+              ? `${Number(info.waterSurface).toFixed(2)} m`
+              : "—";
+        const bedTxt =
+          info.riverbedElevation != null
+            ? `${Number(info.riverbedElevation).toFixed(2)} m`
+            : info.bedElevationMsl != null
+              ? `${Number(info.bedElevationMsl).toFixed(2)} m`
+              : info.depth != null
+                ? `${(-info.depth).toFixed(2)} m`
+                : "—";
+        // Compact hover: main values only (no survey source / datum / provenance noise).
         el.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <h3 style="margin:0;">${riverTitle.includes("HYDROLOGY") ? riverTitle : `${riverTitle} BATHYMETRY &amp; HYDROLOGY`}</h3>
-            <span class="badge" style="background:rgba(0,242,254,0.18);color:#00f2fe;border:1px solid rgba(0,242,254,0.4);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">
-              ${info.provenance || (info.surveyDepthM != null ? "OBSERVED SURVEY" : "INTERPOLATED")}
-            </span>
-          </div>
-          <div class="kv"><span class="k">Location</span><span class="v">${info.lat != null && info.lon != null ? `${Number(info.lat).toFixed(6)}° N, ${Number(info.lon).toFixed(6)}° E` : "—"}</span></div>
+          <h3 style="margin:0 0 6px;">${riverTitle.includes("HYDROLOGY") ? riverTitle : `${riverTitle} · DEPTH`}</h3>
           <div class="kv"><span class="k">Chainage</span><span class="v depth">${info.chainageLabel ?? "—"}</span></div>
-          <div class="kv"><span class="k">Water Depth</span><span class="v depth">${info.surveyDepthM != null ? Number(info.surveyDepthM).toFixed(2) + " m" : (info.depth != null ? Number(info.depth).toFixed(2) + " m" : "—")}</span></div>
-          <div class="kv"><span class="k">Water Surface Elevation</span><span class="v">${info.waterSurfaceElevation != null ? Number(info.waterSurfaceElevation).toFixed(2) + " m" : (info.waterSurface != null ? Number(info.waterSurface).toFixed(2) + " m" : "—")}${info.stageLabel ? ` · ${info.stageLabel}` : ""}</span></div>
-          <div class="kv"><span class="k">Riverbed Elevation</span><span class="v">${info.riverbedElevation != null ? Number(info.riverbedElevation).toFixed(2) + " m" : (info.bedElevationMsl != null ? Number(info.bedElevationMsl).toFixed(2) + " m CD/MSL" : (info.depth != null ? (-info.depth).toFixed(2) + " m" : "—"))}</span></div>
-          <div class="kv"><span class="k">Nearest Survey Station</span><span class="v">${info.nearestSurveyPoint || "—"}</span></div>
-          <div class="kv"><span class="k">Distance to Survey</span><span class="v">${info.distanceToSurveyPointM != null ? Number(info.distanceToSurveyPointM).toFixed(1) + " m" : "—"}</span></div>
-          <div class="kv"><span class="k">Survey Date</span><span class="v">${info.surveyDate || "March 2020 / Jan 2021"}</span></div>
-          <div class="kv"><span class="k">Vertical Datum</span><span class="v">${info.verticalDatum || "Chart Datum (CD) / MSL"}</span></div>
-          <div class="kv"><span class="k">Channel Top Width</span><span class="v">${info.widthM != null ? Number(info.widthM).toFixed(1) + " m" : "—"}</span></div>
-          <div class="kv"><span class="k">Cross-Section Area</span><span class="v">${info.crossSectionAreaM2 != null ? Number(info.crossSectionAreaM2).toFixed(1) + " m²" : "—"}</span></div>
-          <div class="kv"><span class="k">Water Volume (reach)</span><span class="v">${info.waterVolumeM3 != null ? Number(info.waterVolumeM3).toLocaleString() + " m³ · " + (info.waterVolumeProvenance || "") : "—"}</span></div>
-          <div class="kv"><span class="k">Hydraulic Radius</span><span class="v">${info.hydraulicRadiusM != null ? Number(info.hydraulicRadiusM).toFixed(2) + " m" : "—"}</span></div>
+          <div class="kv"><span class="k">Water Depth</span><span class="v depth">${depthTxt}</span></div>
+          <div class="kv"><span class="k">Water Surface</span><span class="v">${wseTxt}</span></div>
+          <div class="kv"><span class="k">Riverbed</span><span class="v">${bedTxt}</span></div>
+          <div class="kv"><span class="k">Channel Width</span><span class="v">${info.widthM != null ? Number(info.widthM).toFixed(1) + " m" : "—"}</span></div>
           <button id="tip-cs-btn" style="margin-top:8px;width:100%;background:rgba(79,200,235,0.25);border:1px solid rgba(79,200,235,0.45);color:#00f2fe;padding:6px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">
-            📊 View Cross-Section Depth Profile
+            View Cross-Section
           </button>
           ${isDigitalTwinActive() ? `
           <button id="tip-tg-btn" style="margin-top:6px;width:100%;background:rgba(0,229,180,0.15);border:1px solid rgba(0,229,180,0.35);color:#00e5b4;padding:5px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer">
-            📈 View Threshold Graph
+            Threshold Graph
           </button>
           <button id="tip-hi-btn" style="margin-top:6px;width:100%;background:rgba(255,195,0,0.12);border:1px solid rgba(255,195,0,0.3);color:#ffc300;padding:5px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer">
-            🌊 Hydrology Intelligence Panel
+            Hydrology Intelligence
           </button>` : ""}
         `;
         el.querySelector("#tip-cs-btn")?.addEventListener("click", (ev) => {
+          ev.preventDefault();
           ev.stopPropagation();
-          window.__MM_CROSS_SECTION_MODAL__?.show?.(info.stationRecord);
+          const csArg =
+            info.stationRecord ||
+            (Number.isFinite(Number(info.stationRecord?.chainage_m))
+              ? Number(info.stationRecord.chainage_m)
+              : null) ||
+            (Number.isFinite(Number(state.selectedChainageMeters))
+              ? Number(state.selectedChainageMeters)
+              : null);
+          const modal = window.__MM_CROSS_SECTION_MODAL__;
+          if (!modal?.show) {
+            console.warn("[tooltip] Cross-Section modal not mounted");
+            return;
+          }
+          modal.show(csArg);
+          el.classList.remove("visible");
+          el.classList.remove("tooltip--interactive");
+          // Notify inspect layer to drop the sticky river panel.
+          document.dispatchEvent(new CustomEvent("hydrology-inspect-opened"));
         });
         el.querySelector("#tip-tg-btn")?.addEventListener("click", (ev) => {
           ev.stopPropagation();
@@ -699,6 +752,7 @@ export function createTooltip(root) {
       el.classList.remove("tooltip--lithology");
       el.classList.remove("tooltip--ship");
       el.classList.remove("is-garbage-panel");
+      el.classList.remove("tooltip--interactive");
     },
   };
 }
@@ -1438,7 +1492,9 @@ export function mountUI(root, {
     </div>
   `;
   root.appendChild(depthLegend);
-  
+  // Hidden until Depth zones / bathymetry — default view is solid Mandovi blue water.
+  depthLegend.hidden = true;
+
   function updateDepthLegend(min, max) {
     if (!depthLegend) return;
     const ticks = depthLegend.querySelector(".depth-ticks");
@@ -1547,13 +1603,20 @@ export function mountUI(root, {
     nav.syncActive();
     if (depthLegend) {
       const cine = state.cinematicActive;
+      // Legend only in bathymetry / depth-zones — not over the solid blue Mandovi water.
       const showLegend =
         !cine &&
-        (state.showWater || state.cameraMode === "bathymetry" || state.showBathymetry);
+        (state.showDepthZones === true ||
+          state.cameraMode === "bathymetry" ||
+          (state.showBathymetry && !state.showWater));
       depthLegend.hidden = !showLegend;
       const title = depthLegend.querySelector("strong");
       if (title) {
-        title.innerHTML = state.showWater ? "WATER<br>DEPTH<br>(m)" : "CHANNEL<br>DEPTH<br>(m)";
+        title.innerHTML = state.showDepthZones
+          ? "BATHY<br>DEPTH<br>(m)"
+          : state.showWater
+            ? "WATER<br>DEPTH<br>(m)"
+            : "CHANNEL<br>DEPTH<br>(m)";
       }
     }
   }

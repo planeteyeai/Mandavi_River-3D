@@ -3,7 +3,8 @@
  * Canonical source: public/data/mandovi/live_water_mandavi.kml
  * Extracted overlay: /data/mandovi/live_water_extent.png
  *
- * Authoritative Mandovi water footprint — do not invent bay polygons.
+ * Optical half of the Mandovi water footprint (fused with S1 SAR in fusedWaterMask.js).
+ * Do not invent bay polygons outside this overlay + SAR fusion rules.
  */
 import { localToLonLat } from "./geoReference.js";
 

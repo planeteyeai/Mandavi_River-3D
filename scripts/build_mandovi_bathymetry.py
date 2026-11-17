@@ -12,7 +12,6 @@ Based on:
 import json
 import math
 import os
-import xml.etree.ElementTree as ET
 
 def dms_to_dd(d, m, s, direction):
     dd = float(d) + float(m)/60.0 + float(s)/3600.0
@@ -187,19 +186,23 @@ reaches = [
     }
 ]
 
-# Extract KML river boundary and centerline stations
-kml_path = 'public/data/mandovi/Mandovi_River_Coordinates_Cleaned.kml'
-tree = ET.parse(kml_path)
-root = tree.getroot()
-ns = {'kml': 'http://www.opengis.net/kml/2.2'}
-coords_text = root.find('.//kml:coordinates', ns).text
-boundary_ring = [list(map(float, c.split(',')[:2])) for c in coords_text.strip().split() if c]
+# Authoritative bank-to-bank widths (same source used by the 3D corridor).
+# Do NOT pair KML polygon halves — that inflated channelWidthM to ~9 km.
+widths_path = 'public/data/mandovi/river_widths.json'
+with open(widths_path, 'r', encoding='utf-8') as wf:
+    river_widths = json.load(wf)
+river_widths = sorted(river_widths, key=lambda r: float(r.get('chainage_m') or 0))
 
-# Compute centerline points from the polygon halfs
-n_poly = len(boundary_ring)
-half_n = n_poly // 2
-left_bank = boundary_ring[:half_n]
-right_bank = boundary_ring[half_n:][::-1]
+
+def width_at_chainage(ch_m: float) -> dict:
+    """Nearest river_widths.json sample (true Mandovi top-width)."""
+    if not river_widths:
+        return {"width_m": 450.0, "lon": 73.82, "lat": 15.50,
+                "left_bank_lon": 73.82, "left_bank_lat": 15.503,
+                "right_bank_lon": 73.82, "right_bank_lat": 15.497}
+    best = min(river_widths, key=lambda r: abs(float(r['chainage_m']) - ch_m))
+    return best
+
 
 # Resample into 120 cross-sections along the main navigation corridor (0+000 to 18+832)
 n_cross = 120
@@ -211,22 +214,16 @@ total_chainage_m = 18832.0
 for i in range(n_cross):
     t = i / float(n_cross - 1)
     ch_m = round(t * total_chainage_m, 1)
-    
-    # Left and right bank coords
-    idx_l = int(t * (len(left_bank) - 1))
-    idx_r = int(t * (len(right_bank) - 1))
-    pl = left_bank[idx_l]
-    pr = right_bank[idx_r]
-    
-    cl_lon = (pl[0] + pr[0]) * 0.5
-    cl_lat = (pl[1] + pr[1]) * 0.5
-    
-    # Channel width in meters
-    # Approx: 1 deg lat = 110540m, 1 deg lon = 111320 * cos(15.5 deg) = 107270m
-    d_lon_m = (pr[0] - pl[0]) * 107270.0
-    d_lat_m = (pr[1] - pl[1]) * 110540.0
-    channel_width_m = round(math.hypot(d_lon_m, d_lat_m), 1)
-    channel_width_m = max(180.0, channel_width_m)
+
+    rw = width_at_chainage(ch_m)
+    channel_width_m = float(rw.get('width_m') or 450.0)
+    # Estuary mouth can be wide; inland Mandovi stays under ~2.2 km in river_widths.json.
+    channel_width_m = round(max(180.0, min(2200.0, channel_width_m)), 1)
+
+    pl = [float(rw['left_bank_lon']), float(rw['left_bank_lat'])]
+    pr = [float(rw['right_bank_lon']), float(rw['right_bank_lat'])]
+    cl_lon = float(rw.get('lon') or (pl[0] + pr[0]) * 0.5)
+    cl_lat = float(rw.get('lat') or (pl[1] + pr[1]) * 0.5)
     
     # Calculate measured thalweg depth from CSIR-NIO survey profile:
     # 0+000 to 4+200: Aguada Bay (11.5m to 13.8m)

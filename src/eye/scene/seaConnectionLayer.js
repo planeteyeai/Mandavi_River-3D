@@ -1,8 +1,8 @@
 /**
  * Sea / mouth connection stub.
  *
- * Mandovi water must follow ONLY the user-provided live_water_mandavi.kml
- * (water_extent.png). Do not invent Aguada Bay polygons or corridor aprons.
+ * Mandovi water follows fused optical∪SAR extent (S2 MNDWI + S1 permanent),
+ * falling back to live_water_mandavi.kml. Do not invent Aguada Bay aprons.
  */
 import * as THREE from "three";
 

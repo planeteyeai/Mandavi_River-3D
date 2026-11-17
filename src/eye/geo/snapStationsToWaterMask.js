@@ -106,9 +106,14 @@ export function depthInWaterAtLocal(dataset, x, z, helpers = {}) {
 
 /**
  * Overwrite corridor bathymetry depths with permanent-water depth raster where wet.
- * Dry / bank cells stay shallow so the mesh stays continuous.
+ * When a fused optical∪SAR extent mask is provided, only force shallow banks
+ * outside that footprint — optical-only water keeps corridor/survey depth.
+ *
+ * @param {object} dataset
+ * @param {object} mask  JalNetra SAR depth mask (sampleAtLonLat)
+ * @param {{ extentMask?: { isWaterAtLocal?: Function, isWaterAtLonLat?: Function }|null }} [opts]
  */
-export function fuseBathymetryFromWaterDepth(dataset, mask) {
+export function fuseBathymetryFromWaterDepth(dataset, mask, opts = {}) {
   const bath = dataset?.bathymetry;
   const stations = dataset?.corridor?.stations || [];
   if (!bath?.depths?.length || !stations.length || !mask?.sampleAtLonLat) {
@@ -118,8 +123,10 @@ export function fuseBathymetryFromWaterDepth(dataset, mask) {
   const cols = across + 1;
   const frame = dataset.frame;
   if (!frame?.toLonLat) return { fused: 0 };
+  const extent = opts.extentMask || null;
 
   let fused = 0;
+  let keptOptical = 0;
   let minD = Infinity;
   let maxD = -Infinity;
   for (let i = 0; i < bath.depths.length; i++) {
@@ -129,20 +136,37 @@ export function fuseBathymetryFromWaterDepth(dataset, mask) {
     const x = st.leftX + (st.rightX - st.leftX) * u;
     const z = st.leftZ + (st.rightZ - st.leftZ) * u;
     let sample = null;
+    let ll = null;
     try {
-      const ll = frame.toLonLat(x, z);
+      ll = frame.toLonLat(x, z);
       sample = mask.sampleAtLonLat(ll.lon, ll.lat);
     } catch {
       sample = null;
     }
+    const extentWet =
+      !extent ||
+      (typeof extent.isWaterAtLocal === "function"
+        ? extent.isWaterAtLocal(x, z)
+        : typeof extent.isWaterAtLonLat === "function" && ll
+          ? extent.isWaterAtLonLat(ll.lon, ll.lat)
+          : true);
+
     if (sample?.water && Number.isFinite(sample.depth_m) && sample.depth_m > 0) {
       bath.depths[i] = sample.depth_m;
       if (bath.exact) bath.exact[i] = 0.75;
       fused += 1;
       minD = Math.min(minD, sample.depth_m);
       maxD = Math.max(maxD, sample.depth_m);
-    } else if (sample && !sample.water) {
-      // Outside permanent water — keep shallow bank placeholder, not side-channel invent.
+    } else if (extentWet && !sample?.water) {
+      // Optical/fused wet but SAR dry — keep corridor/survey depth (cloud-gap fill).
+      keptOptical += 1;
+      const d = bath.depths[i];
+      if (Number.isFinite(d)) {
+        minD = Math.min(minD, d);
+        maxD = Math.max(maxD, d);
+      }
+    } else if (sample && !sample.water && !extentWet) {
+      // Outside fused water — shallow bank placeholder, not side-channel invent.
       const bankDist = Math.abs(u * 2 - 1);
       bath.depths[i] = bankDist > 0.75 ? 0.6 : 1.0;
       if (bath.exact) bath.exact[i] = 0;
@@ -157,7 +181,9 @@ export function fuseBathymetryFromWaterDepth(dataset, mask) {
     bath.minDepth = dataset.minDepth;
     bath.maxDepth = dataset.maxDepth;
     bath.waterDepthFused = true;
-    bath.waterDepthSource = "permanent_water + water_depth.kml";
+    bath.waterDepthSource = extent
+      ? "fused optical∪SAR + water_depth.kml"
+      : "permanent_water + water_depth.kml";
   }
 
   for (const st of stations) {
@@ -170,7 +196,7 @@ export function fuseBathymetryFromWaterDepth(dataset, mask) {
     }
   }
 
-  return { fused, depthRange: [dataset.minDepth, dataset.maxDepth] };
+  return { fused, keptOptical, depthRange: [dataset.minDepth, dataset.maxDepth] };
 }
 
 function crossAxis(s) {

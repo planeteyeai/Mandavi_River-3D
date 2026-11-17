@@ -278,7 +278,13 @@ const frag = /* glsl */ `
       -(slope.x * fdir.y + slope.y * perp.y) * nBoost * 0.01
     ));
 
-    vec3 col = depthColor(vDepth);
+    // Light permanent water: brighter cyan sheet, even lighter at banks.
+    vec3 hydroCol = depthColor(vDepth);
+    vec3 solidCol = mix(uC1, uC2, 0.18);
+    float shore = smoothstep(0.50, 1.0, abs(vAcross * 2.0 - 1.0));
+    solidCol = mix(solidCol, uC0, shore * 0.62);
+    float depthMode = clamp(uShowDepth, 0.0, 1.0);
+    vec3 col = mix(solidCol, hydroCol, depthMode);
     vec3 baseCol = col;
 
     // Downstream flow movement (Old Goa -> Aguada Bay / Arabian Sea)
@@ -300,10 +306,11 @@ const frag = /* glsl */ `
       col += vec3(1.0, 0.45, 0.45) * (lightBand * 0.12 * anim + floodWaveHighlight);
       col += vec3(1.0, 0.7, 0.7) * sparkle * 0.08;
     } else {
-      // Permanent-water shimmer (matches reference: bright cerulean + white glints)
-      col += vec3(0.12, 0.28, 0.42) * lightBand * 0.07 * anim;
-      col += vec3(0.85, 0.95, 1.0) * sparkle * 0.055;
-      col += vec3(0.18, 0.42, 0.62) * clamp(vWave * 2.2, 0.0, 0.06) * uWaveHighlight;
+      // Very soft shimmer so solid mode stays one even colour.
+      float shimmer = mix(0.012, 0.055, depthMode);
+      col += vec3(0.08, 0.20, 0.34) * lightBand * shimmer * anim;
+      col += vec3(0.85, 0.95, 1.0) * sparkle * mix(0.012, 0.045, depthMode);
+      col += vec3(0.14, 0.34, 0.52) * clamp(vWave * 1.8, 0.0, 0.04) * uWaveHighlight * mix(0.25, 1.0, depthMode);
     }
 
     float edge = abs(vAcross * 2.0 - 1.0);
@@ -348,20 +355,21 @@ const frag = /* glsl */ `
     // -----------------------------------------------------------
     // DEPTH-BASED UNDERWATER TRANSMISSION
     // -----------------------------------------------------------
-    // Shallow water stays transparent so the underwater riverbed and hydrographic
-    // depth colors read clearly through it; central channel turns deep marine blue.
+    // Normal view: near-opaque solid sheet. Bathymetry view: more transparent
+    // so hydrographic bed / depth colours read through.
     float depthM = max(vDepth, 0.0);
     float absorb = 1.0 - exp(-depthM * 0.14);
-    // Solid permanent-water sheet (reference photo) — less see-through terrain tint.
     float volumeAlpha = mix(0.72, 0.92, absorb);
-    float alpha = mix(0.72, 0.94, smoothstep(0.02, 0.85, depthT)) * uOpacity;
+    float alphaSolid = mix(0.88, 0.96, smoothstep(0.02, 0.85, depthT)) * uOpacity;
+    float alphaDepth = mix(0.72, 0.94, smoothstep(0.02, 0.85, depthT)) * uOpacity;
+    float alpha = mix(alphaSolid, alphaDepth, clamp(uShowDepth, 0.0, 1.0));
 
     // Surface reflections stay visible over the transparent shallows
     float surfaceFeatures = clamp(fresnel * 1.5 + spec * 2.8 + foam * 1.4 + sparkle * 1.5, 0.0, 1.0);
     alpha = max(alpha, surfaceFeatures * mix(0.80, 0.60, uIsFlood));
 
-    // Soft shoreline: subtle outer blending into banks
-    alpha *= 1.0 - smoothstep(0.96, 1.0, edge) * 0.35;
+    // Soft shoreline feather — smooth corners into banks (no hard polygon edge).
+    alpha *= 1.0 - smoothstep(0.82, 1.0, edge) * 0.55;
 
     alpha = mix(alpha, mix(0.12, 0.32, depthT) * uOpacity, uCutaway);
     alpha *= mix(0.08, 1.0, revealMask);
@@ -471,7 +479,8 @@ export function createWaterMaterial(dataset) {
       uRippleAmplitude: { value: preset.rippleAmplitude ?? 0.015 },
       uFlowSpeed: { value: preset.flowSpeed ?? state.flowSpeed },
       uFlowStrength: { value: preset.flowStrength ?? 0.85 },
-      uShowDepth: { value: 1 },
+      // 0 = solid Mandovi blue sheet; 1 = hydrographic depth colour overlay
+      uShowDepth: { value: 0 },
       uCutaway: { value: 0 },
       uShowFlowVis: { value: state.flowVisibility ?? 0.55 },
       uOpacity: { value: preset.waterOpacity ?? state.waterOpacity ?? 0.82 },
@@ -549,18 +558,24 @@ export function syncWaterMaterial(material) {
   u.uOpacity.value = num("waterOpacity", preset?.waterOpacity ?? 0.82);
   u.uReflectionStrength.value = num("reflectionStrength", preset?.reflectionStrength ?? 0.65);
   u.uWaveHighlight.value = num("waveHighlight", preset?.waveHighlight ?? 0.75);
+  // Depth colouring only for Bathymetry / Depth-zones / bathymetry camera — not default.
+  const depthView =
+    state.showDepthZones === true ||
+    state.cameraMode === "bathymetry" ||
+    (state.showBathymetry === true && state.showWater === false);
+  if (u.uShowDepth) u.uShowDepth.value = depthView ? 1 : 0;
 
-  // Permanent Water reference palette (user photo sample).
-  const veryShallowHex = state.veryShallowWaterColor || "#4EB8E0";
+  // Brighter permanent-water palette (lighter river sheet).
+  const veryShallowHex = state.veryShallowWaterColor || "#7AD8F5";
   const shallowHex =
     state.shallowWaterColor && state.shallowWaterColor !== "#4fc8eb"
       ? state.shallowWaterColor
-      : preset?.shallowColor || "#3282BE";
-  const mediumHex = state.mediumWaterColor || "#2A79AB";
+      : preset?.shallowColor || "#5EC8F0";
+  const mediumHex = state.mediumWaterColor || "#4EB8E0";
   const deepHex =
     state.deepWaterColor && state.deepWaterColor !== "#07529d"
       ? state.deepWaterColor
-      : preset?.deepColor || "#1E5D8F";
+      : preset?.deepColor || "#3AA0D0";
 
   u.uC0.value.set(veryShallowHex);
   u.uC1.value.set(shallowHex);

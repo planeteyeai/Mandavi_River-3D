@@ -432,10 +432,10 @@ export function runJalNetra(onProgress) {
   const priority = todo.filter((spec) => SILT_PRIORITY_IDS.includes(spec.id));
   const rest = todo.filter((spec) => !SILT_PRIORITY_IDS.includes(spec.id));
 
-  // Silt pair fires at once; remaining layers continue with higher concurrency.
+  // Silt pair fires at once; keep other layers low-concurrency so banks/trees stay responsive.
   running = Promise.all([
     Promise.all(priority.map((spec) => runOneEndpoint(spec, session, onProgress))),
-    mapLimit(rest, 5, (spec) => runOneEndpoint(spec, session, onProgress)),
+    mapLimit(rest, 2, (spec) => runOneEndpoint(spec, session, onProgress)),
   ]).finally(() => {
     running = null;
   });

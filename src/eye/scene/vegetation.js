@@ -50,19 +50,20 @@ export async function createVegetation(dataset, opts = {}) {
   const osmWater =
     opts.osmWater ||
     (await loadOsmWater().catch(() => null));
-  // Authoritative Mandovi water = user live_water_mandavi.kml (not invented bay rings).
-  const liveWaterMask =
+  // Prefer fused optical∪SAR extent on dataset (updates after JalNetra SAR loads).
+  const fallbackLiveWater =
     opts.liveWaterMask ||
-    dataset.liveWaterMask ||
     (isMandoviRiver ? await loadLiveWaterMask().catch(() => null) : null);
   const cell = terrainCellDiag(opts.terrainMesh);
   const blendStart = cell + 6 + cell;
   const outerD = blendStart + cell * 0.35;
   const locate = makeStationLocator(stations);
   /**
-   * No trees on live-water KML extent (or OSM water / ribbon fallback).
+   * No trees on fused / live-water extent (or OSM water / ribbon fallback).
+   * Reads dataset.liveWaterMask each call so SAR fusion upgrades apply.
    */
   const isOpenWater = (x, z) => {
+    const liveWaterMask = dataset.liveWaterMask || dataset.fusedWaterMask || fallbackLiveWater;
     if (liveWaterMask?.available && liveWaterMask.isWaterAtLocal?.(x, z)) return true;
     if (osmWater?.isWaterAtLocal?.(x, z)) return true;
     const st = locate(x, z);

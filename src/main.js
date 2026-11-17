@@ -482,13 +482,13 @@ async function boot() {
     requestAnimationFrame(loop);
     saveSession(session);
 
-    // JalNetra after first paint — don't compete with DTM/scene for bandwidth/CPU.
+    // JalNetra after banks have a head start — 15 layers were starving OSM/buildings.
     setTimeout(() => {
       runJalNetra((evt) => {
         pill.update(evt);
         if (evt.state === "ok" || evt.state === "error") saveSession(session);
       });
-    }, 0);
+    }, 3500);
   } catch (err) {
     console.error(err);
     if (loadMsg) loadMsg.textContent = err?.message || String(err);

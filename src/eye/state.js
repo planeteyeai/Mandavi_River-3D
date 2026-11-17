@@ -76,15 +76,18 @@ export const state = {
   hydrologyHidesWater: false,
   /** When true, hide API/illustrative flood so bank erosion ribbon stays readable. */
   hydrologyHidesFlood: false,
+  /** Bed mesh available; depth-colour overlay is off unless Depth zones / bathymetry camera. */
   showBathymetry: true,
   showRiverbed: true,
   showSurveyStations: true,
   /** PROJECT LANDMARKS from src/data/Updates/original/*.kmz */
   showProjectLandmarks: true,
   /** Sentinel-2 MNDWI water extent GroundOverlay (reference, not live sensor). */
-  // Clip uses live_water_mandavi.kml mask always; visual blue overlay off so
+  // Clip prefers fused S2∪S1 mask; visual blue overlay off so
   // hydrographic depth colours stay as before.
   showLiveWaterExtent: false,
+  /** Fused optical∪SAR extent provenance (set after JalNetra SAR loads). */
+  fusedWaterMask: null,
   /** Sentinel-2 relative band-ratio depth — RELATIVE ESTIMATE, not survey bathymetry. */
   showRelativeWaterDepth: false,
   /** Selected PROJECT LANDMARK id/name for inspect panel. */
@@ -157,6 +160,8 @@ export const state = {
   lithologyTipActive: false,
   /** True while a casino / AIS ship info card is click-pinned. */
   shipTipActive: false,
+  /** River click depth panel pinned so Cross-Section stays clickable. */
+  hydrologyTipActive: false,
   /** True while Geology → Joining Streams drainage mode is active. */
   joiningStreamsMode: false,
   /** True while Joining Streams updates chainage without river camera fly */

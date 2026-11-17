@@ -385,8 +385,8 @@ const BUILTIN_LAYER_DEFS = {
     rasterizeWaterOverlay: true,
     bounds: { ...MANDOVI_POLLUTION_BOUNDS },
     legendTitle: "Salinity",
-    legendSubtitle: "5 classes · Mandovi smoothed PSU",
-    unit: "PSU",
+    legendSubtitle: "5 classes · Mandovi smoothed ppt",
+    unit: "ppt",
     classes: SALINITY_CLASSES,
     legendClasses: SALINITY_CLASSES,
     renderType: "waterSurfaceRasterFromPolygons",
@@ -3559,7 +3559,7 @@ function polygonToTerrainGeometry(verts, stations, lift) {
   }
 }
 
-/** Flat class polygons on the water sheet — used for Mandovi salinity PSU. */
+/** Flat class polygons on the water sheet — used for Mandovi salinity ppt. */
 function polygonToWaterSurfaceGeometry(verts, lift) {
   try {
     if (!verts || verts.length < 3) return null;

@@ -64,13 +64,17 @@ export async function loadOsmContext(frame, corridor, urls = {}) {
     roadsFc,
     buildingsFc,
     vegFc,
-    treesFc,
+    // Lite: fewer tree points so planting finishes faster.
+    treesFc: lite && treesFc?.features
+      ? { ...treesFc, features: treesFc.features.slice(0, 4000) }
+      : treesFc,
     treeRowsFc,
     waterFc,
     metadata,
     kmlValidation,
-    maxDist: 4200,
-    buildingMaxDist: 4200,
+    maxDist: lite ? 2200 : 4200,
+    buildingMaxDist: lite ? 2000 : 4200,
+    buildingCap: lite ? 12000 : 60000,
   });
 }
 
@@ -86,11 +90,12 @@ export function assembleOsmContext(frame, corridor, parts = {}) {
     kmlValidation = null,
     maxDist = 900,
     buildingMaxDist = 700,
+    buildingCap = 60000,
   } = parts;
   const roads = projectLines(roadsFc, frame, corridor, maxDist);
   // Keep corridor buildings along full river + inland blocks (roads beyond bank)
   const buildingsAll = projectBuildings(buildingsFc, frame, corridor, buildingMaxDist);
-  const buildings = stratifyAlongCorridor(buildingsAll, corridor, 60000);
+  const buildings = stratifyAlongCorridor(buildingsAll, corridor, buildingCap);
   const green = projectPolygons(vegFc, frame, corridor, maxDist + 400);
   const trees = projectTrees(treesFc, frame, corridor, maxDist + 200);
   const treeRows = projectLines(treeRowsFc, frame, corridor, maxDist + 200);

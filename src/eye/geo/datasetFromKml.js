@@ -640,17 +640,32 @@ export async function buildDatasetFromKml(prepared, onProgress) {
       : null,
     isMandovi,
     isMulaMutha: !isMandovi,
-    loadOsmLater: async () => {
+    loadOsmLater: async (opts = {}) => {
       if (isMandovi) {
         try {
           const res = await fetch("/data/mandovi/osm_mandovi_corridor.json");
           if (res.ok) {
             const data = await res.json();
-            
+            // Fast first paint vs full clarity: lite caps, then background enrich uses full.
+            const fast = opts.lite === true || opts.detail === "fast";
+            const BUILDING_CAP = fast ? 850 : 2400;
+            const ROAD_CAP = fast ? 650 : 2540;
+            const GREEN_CAP = fast ? 280 : 1620;
+            const yieldTick = () => new Promise((r) => setTimeout(r, 0));
+
+            const subsample = (arr, cap) => {
+              if (!arr?.length || arr.length <= cap) return arr || [];
+              const step = arr.length / cap;
+              const out = [];
+              for (let i = 0; i < cap; i++) out.push(arr[Math.floor(i * step)]);
+              return out;
+            };
+
             // 1. Process verified OSM buildings & houses
             const buildings = [];
             const buildingIds = new Set();
-            for (const b of data.buildings || []) {
+            const rawBuildings = subsample(data.buildings || [], BUILDING_CAP);
+            for (const b of rawBuildings) {
               if (!b.coordinates || b.coordinates.length < 3) continue;
               const verts = [];
               let sumX = 0, sumZ = 0;
@@ -677,11 +692,13 @@ export async function buildDatasetFromKml(prepared, onProgress) {
                 source: "OPENSTREETMAP",
               });
             }
+            await yieldTick();
 
             // 2. Process verified OSM roads & streets
             const roads = [];
             const roadIds = new Set();
-            for (const r of data.roads || []) {
+            const rawRoads = subsample(data.roads || [], ROAD_CAP);
+            for (const r of rawRoads) {
               if (!r.coordinates || r.coordinates.length < 2) continue;
               const verts = [];
               let sumX = 0, sumZ = 0;
@@ -717,11 +734,13 @@ export async function buildDatasetFromKml(prepared, onProgress) {
                 source: "OPENSTREETMAP",
               });
             }
+            await yieldTick();
 
             // 3. Process verified OSM landuse & natural areas
             const green = [];
             const greenIds = new Set();
-            for (const lu of data.landuse || []) {
+            const rawGreen = subsample(data.landuse || [], GREEN_CAP);
+            for (const lu of rawGreen) {
               if (!lu.coordinates || lu.coordinates.length < 3) continue;
               const verts = [];
               let sumX = 0, sumZ = 0;
@@ -763,9 +782,8 @@ export async function buildDatasetFromKml(prepared, onProgress) {
               });
             }
 
-            // 5. Bundled OSM trees (offline). Do NOT await live Overpass here —
-            // that blocked vegetation for minutes and left the layer empty.
-            const trees = await loadMandoviBundledTrees(frame);
+            // Trees: fast path plants from green; full detail loads bundled OSM trees.
+            const trees = fast ? [] : await loadMandoviBundledTrees(frame);
 
             console.info("[mandovi] Loaded authentic OSM corridor data:", {
               buildings: buildings.length,
@@ -774,6 +792,7 @@ export async function buildDatasetFromKml(prepared, onProgress) {
               trees: trees.length,
               places: places.length,
               bridges: (ds.bridges || []).length,
+              fast,
             });
 
             const osmResult = {
@@ -789,8 +808,15 @@ export async function buildDatasetFromKml(prepared, onProgress) {
               alignment: { ok: true, medianDistM: 0 },
             };
 
+            // Background: merge bundled trees without blocking banks.
+            if (fast) {
+              loadMandoviBundledTrees(frame).then((extra) => {
+                if (!extra?.length || !osmResult.trees) return;
+                osmResult.trees.push(...extra);
+              }).catch(() => {});
+            }
+
             // Skip live Overpass on Mandovi — endpoints time out and delay the scene.
-            // Trees come from bundled OSM points + bank/landuse planting in createVegetation.
             return osmResult;
           }
         } catch (err) {

@@ -18,6 +18,7 @@ import { createRiparianVegetationLayer, RIPARIAN_LABEL_MIN_M2 } from "./riparian
 import { prefetchTreeAssets } from "./treeRegistry.js";
 import { fetchVegetationForAoi } from "../services/vegetationService.js";
 import { mountVegetationStatus } from "../ui/components/vegetationStatus.js";
+import { mountWaterExtentStatus } from "../ui/components/waterExtentStatus.js";
 import { createBridges, rebuildBridges, updateBridgeLabels, updateBridgePiers } from "./bridges.js";
 import { createBridgeLabels } from "./bridgeLabels.js";
 import { createCameraSystem } from "./cinematic.js";
@@ -48,6 +49,7 @@ import { createProjectLandmarksLayer } from "./projectLandmarksLayer.js";
 import { createUpdatesOverlayLayers } from "./updatesOverlayLayers.js";
 import { createSeaConnectionLayer } from "./seaConnectionLayer.js";
 import { loadLiveWaterMask } from "../geo/liveWaterMask.js";
+import { createFusedWaterMask } from "../geo/fusedWaterMask.js";
 import { addLiveWaterSurfaceLayer } from "../layers/liveWaterSurfaceLayer.js";
 import { loadUpdatesAssets, projectLandmarksToWorld } from "../geo/updatesData.js";
 import { applySurveyBathymetry } from "../geo/applySurveyBathymetry.js";
@@ -232,10 +234,11 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       return null;
     }),
   ]);
-  // Mandovi river water = live_water_mandavi.kml only (no invented bay / apron).
+  // Mandovi river water starts on optical live_water; SAR fusion upgrades it below.
   clipRiverToHydrology(river, landCover, osmWater, dataset, liveWaterMask);
   const seaConnection = createSeaConnectionLayer(dataset, { liveWaterMask });
   dataset.liveWaterMask = liveWaterMask;
+  dataset.fusedWaterMask = liveWaterMask;
   // Chainage is mid-water; bank↔bank width must follow the water face, not dry sides.
   if (liveWaterMask?.available && liveWaterMask.isWaterAtLocal) {
     const snap = snapStationsToWaterMask(
@@ -255,12 +258,14 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     state.depthExaggeration = 2.2;
   }
 
-  // Fill live_water_mandavi.kml with the EXACT same water material as the corridor river.
+  // Reference look (user image 2): light cyan bank ribbon + darker mid-channel fill.
   let liveWaterSurface = null;
   if (dataset.isMandovi) {
     liveWaterSurface = await addLiveWaterSurfaceLayer(scene, {
       dataset,
-      sharedMaterial: river.material,
+      sharedMaterial: null,
+      channelColor: "deep",
+      mask: liveWaterMask,
       getTerrainY: (x, z) => terrainHeightAt(x, z, dataset.corridor.stations),
       getSurfaceY: () => SURFACE_Y,
       getVisibility: () => state.showWater !== false,
@@ -283,63 +288,106 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     fresh.material.dispose();
   }
 
-  // JalNetra permanent water + water_depth.kml bathymetry (1.5–8 m). Non-blocking.
+  // Fresh Sentinel water each run — short timeout so slow JalNetra does not stall the scene.
+  // Banks / trees load in parallel; water falls back to cache/bundle if API is slow.
   fetchJalnetraWaterDepth({
     depth_min_m: SURVEY_DEPTH_MIN_M,
     depth_max_m: SURVEY_DEPTH_MAX_M,
+    preferFresh: true,
+    forceRefresh: true,
+    timeoutMs: 45_000,
   })
     .then((wd) => {
       if (!wd?.mask) return;
-      dataset.waterDepthMask = wd.mask;
-      state.jalnetraWaterDepth = {
-        water_area_ha: wd.water_area_ha,
-        depth_min_m: wd.depth_min_m,
-        depth_max_m: wd.depth_max_m,
-        mean_m: wd.meta?.depth?.mean_m ?? null,
-        s1: wd.meta?.sentinel1_image_date ?? null,
-        s2: wd.meta?.sentinel2_image_date ?? null,
-        provenance: wd.provenance,
+      // Yield so the first paint / loading UI stays responsive after the fetch.
+      const applyFusion = () => {
+        try {
+          dataset.waterDepthMask = wd.mask;
+
+          // Functional sampler + small downsampled raster (never full 2800px grid).
+          const fusedExtent = dataset.isMandovi
+            ? createFusedWaterMask(liveWaterMask, wd.mask, {
+                stations: dataset.corridor?.stations || [],
+                corridorBufferM: 200,
+                buildRaster: true,
+              })
+            : null;
+          let extentMask = null;
+          if (fusedExtent?.available) extentMask = fusedExtent;
+          else if (liveWaterMask?.available) extentMask = liveWaterMask;
+          else if (wd.mask) extentMask = { ...wd.mask, available: true };
+          dataset.fusedWaterMask = extentMask;
+          dataset.liveWaterMask = extentMask;
+          state.fusedWaterMask = {
+            provenance: extentMask?.provenance || null,
+            source: extentMask?.source || null,
+            stats: extentMask?.stats || null,
+          };
+          state.jalnetraWaterDepth = {
+            water_area_ha: wd.water_area_ha,
+            depth_min_m: wd.depth_min_m,
+            depth_max_m: wd.depth_max_m,
+            mean_m: wd.meta?.depth?.mean_m ?? null,
+            s1: wd.meta?.sentinel1_image_date ?? null,
+            s2: wd.meta?.sentinel2_image_date ?? null,
+            asOf: wd.asOf || wd.meta?.sentinel1_image_date || wd.meta?.sentinel2_image_date || null,
+            provenance: wd.provenance,
+            extent: extentMask?.provenance || null,
+          };
+
+          if (typeof extentMask?.isWaterAtLocal === "function") {
+            const snap = snapStationsToWaterMask(
+              dataset.corridor?.stations,
+              extentMask.isWaterAtLocal,
+            );
+            console.info("[river] banks snapped to fused optical∪SAR water", snap);
+          }
+          const fused = fuseBathymetryFromWaterDepth(dataset, wd.mask, { extentMask });
+          console.info("[river] bathymetry fused from SAR depth + fused extent", fused);
+          clipRiverToHydrology(river, landCover, osmWater, dataset, extentMask);
+
+          // Mesh rebuild only when a downsampled raster exists (skip if functional-only).
+          if (
+            liveWaterSurface?.rebuildFromMask &&
+            fusedExtent?.available &&
+            fusedExtent.mask &&
+            fusedExtent.width > 0
+          ) {
+            liveWaterSurface.rebuildFromMask(fusedExtent);
+          }
+
+          buildChannelBanks(river, terrain.mesh, dataset.corridor.stations, channelBanks, landCover);
+          applyExaggeration(
+            river,
+            dataset,
+            state.depthExaggeration || 1,
+            state.floodMode === "api" ? Number(state.floodRiseM) || 0 : 0,
+            null,
+          );
+          rebuildWaterFill();
+          if (typeof refreshRiverStationMeasure === "function") refreshRiverStationMeasure();
+          console.info("[river] optical∪SAR water fused into ribbon", {
+            water_area_ha: wd.water_area_ha,
+            carved,
+            depthScale: [SURVEY_DEPTH_MIN_M, SURVEY_DEPTH_MAX_M],
+            extent: extentMask?.provenance,
+            stats: extentMask?.stats || null,
+          });
+          document.dispatchEvent(
+            new CustomEvent("jalnetra-water-depth-ready", { detail: state.jalnetraWaterDepth }),
+          );
+        } catch (err) {
+          console.warn("[river] optical∪SAR fusion failed — keeping optical footprint", err);
+        }
       };
-      // Width / depth follow permanent water; Mandovi clip stays on live_water footprint.
-      const waterTest =
-        dataset.isMandovi && liveWaterMask?.isWaterAtLocal
-          ? liveWaterMask.isWaterAtLocal
-          : wd.mask.isWaterAtLocal;
-      if (typeof waterTest === "function") {
-        const snap = snapStationsToWaterMask(dataset.corridor?.stations, waterTest);
-        console.info("[river] banks snapped to permanent/live water", snap);
-      }
-      const fused = fuseBathymetryFromWaterDepth(dataset, wd.mask);
-      console.info("[river] bathymetry fused from water_depth / permanent water", fused);
-      clipRiverToHydrology(
-        river,
-        landCover,
-        osmWater,
-        dataset,
-        dataset.isMandovi ? liveWaterMask || wd.mask : wd.mask,
-      );
-      buildChannelBanks(river, terrain.mesh, dataset.corridor.stations, channelBanks, landCover);
-      applyExaggeration(
-        river,
-        dataset,
-        state.depthExaggeration || 1,
-        state.floodMode === "api" ? Number(state.floodRiseM) || 0 : 0,
-        null,
-        { includeBaseStage: false },
-      );
-      rebuildWaterFill();
-      refreshRiverStationMeasure();
-      console.info("[river] JalNetra water-depth fused into ribbon", {
-        water_area_ha: wd.water_area_ha,
-        carved,
-        depthScale: [SURVEY_DEPTH_MIN_M, SURVEY_DEPTH_MAX_M],
-      });
-      document.dispatchEvent(
-        new CustomEvent("jalnetra-water-depth-ready", { detail: state.jalnetraWaterDepth }),
-      );
+      // Two rAFs: let the current frame finish before fusion work.
+      requestAnimationFrame(() => requestAnimationFrame(applyFusion));
     })
     .catch((err) => {
-      console.warn("[river] JalNetra water-depth unavailable — keeping LULC/OSM ribbon", err?.message || err);
+      console.warn(
+        "[river] JalNetra SAR water unavailable — keeping optical live_water footprint",
+        err?.message || err,
+      );
     });
 
   const UNDERWATER_COLOR = "#0e5f78";
@@ -751,18 +799,96 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   }
 
   const vegStatus = mountVegetationStatus(uiRoot);
+  const waterExtentStatus = mountWaterExtentStatus(uiRoot);
+  const showWaterExtentChip = (detail) => {
+    if (!detail) return;
+    waterExtentStatus.show(detail);
+  };
+  if (state.jalnetraWaterDepth) showWaterExtentChip(state.jalnetraWaterDepth);
+  document.addEventListener("jalnetra-water-depth-ready", (ev) => {
+    showWaterExtentChip(ev.detail || state.jalnetraWaterDepth);
+  });
 
-  // 50 m bank strip (buildings, roads, trees) always loads after first paint.
+  // Fast first paint for banks, then background enrich for a clear full picture.
+  vegStatus.show("Loading banks, buildings & trees…", "loading");
   prefetchTreeAssets();
+
+  async function mountUrbanAndTrees({ maxTrees, castShadow = false, label = "fast" }) {
+    const gUrban = await createUrban(dataset);
+    while (urbanGroup.children.length) urbanGroup.remove(urbanGroup.children[0]);
+    urbanResult = gUrban;
+    urbanGroup.add(gUrban);
+
+    const gTrees = await createVegetation(dataset, {
+      maxTrees,
+      castShadow,
+      terrainMesh: terrain.mesh,
+      osmWater,
+      liveWaterMask,
+    });
+    treesResult = gTrees;
+    treesGroup.clear();
+    treesGroup.add(gTrees);
+    treesGroup.visible = true;
+    state.showVegetation = true;
+    state.showOsmTrees = true;
+    gTrees.visible = true;
+    console.info(`[vegetation] ${label} trees ready`, {
+      treeCount: gTrees.userData?.treeCount || 0,
+      maxTrees,
+      buildings: dataset.osm?.buildings?.length || 0,
+    });
+  }
+
+  /** Background: reload full OSM + denser buildings/trees without blocking first view. */
+  async function enrichUrbanDetail() {
+    if (!dataset.isMandovi || typeof dataset.loadOsmLater !== "function") return;
+    try {
+      await new Promise((r) => setTimeout(r, 5000));
+      vegStatus.show("Enhancing detail…", "loading");
+
+      const osmFull = await dataset.loadOsmLater({ lite: false, detail: "full" });
+      clipOsmToTerrain(osmFull, getTerrainBounds());
+      dataset.osm = osmFull;
+      dataset.lite = false;
+      dataset.activeSceneBounds = computeActiveSceneBounds(dataset);
+
+      await new Promise((r) => setTimeout(r, 0));
+      const qNow = quality.get();
+      const fullTrees = Math.min(5200, Math.max(3200, qNow.maxTrees || 4500));
+      await mountUrbanAndTrees({
+        maxTrees: fullTrees,
+        castShadow: !!qNow.treeShadows,
+        label: "full",
+      });
+
+      vegStatus.show("Full banks & trees ready", "loading");
+      setTimeout(() => vegStatus.hide(), 2200);
+      console.info("[urban] background enrich complete", {
+        buildings: osmFull.buildings?.length || 0,
+        roads: osmFull.roads?.length || 0,
+        trees: osmFull.trees?.length || 0,
+        green: osmFull.green?.length || 0,
+      });
+    } catch (err) {
+      console.warn("[urban] background enrich failed:", err?.message || err);
+      vegStatus.hide();
+    }
+  }
+
   const loadUrbanLayers = async () => {
     try {
-        const lowTier = quality.get().tier === "low";
-      // Lite OSM still loads trees/vegetation; only skips heavy extras
+      const qNow = quality.get();
+      const lowTier = qNow.tier === "low";
+      // First paint: lite OSM so the user sees banks quickly.
+      const useLite = dataset.isMandovi || dataset.lite === true || lowTier;
+      const prevLite = dataset.lite;
+      if (useLite) dataset.lite = true;
+
       if (typeof dataset.loadOsmLater === "function" && !dataset.osm?.loaded) {
-        const osm = await dataset.loadOsmLater({ lite: dataset.lite === true || lowTier });
+        const osm = await dataset.loadOsmLater({ lite: useLite, detail: "fast" });
         clipOsmToTerrain(osm, getTerrainBounds());
         dataset.osm = osm;
-        // Mandovi keeps survey-curated bridges only — do not swap in OSM road stubs.
         if (
           osm.bridges?.length &&
           (!dataset.bridges || dataset.bridges.length === 0) &&
@@ -782,24 +908,28 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
             buildings: osm.buildings?.length || 0,
             roads: osm.roads?.length || 0,
             bridges: dataset.bridges?.length || 0,
+            lite: useLite,
           });
         }
         dataset.activeSceneBounds = computeActiveSceneBounds(dataset);
       }
+
+      const maxTrees = dataset.isMandovi
+        ? lowTier ? 900 : 1400
+        : Math.min(4500, qNow.maxTrees || 3200);
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      // Buildings first for a clear bank picture, then light tree cover.
       const gUrban = await createUrban(dataset);
       urbanResult = gUrban;
       urbanGroup.add(gUrban);
+      vegStatus.show("Banks ready", "loading");
+      setTimeout(() => vegStatus.hide(), 1400);
 
-      // Always plant trees across the full Mandovi / river corridor — density follows quality
-      const qNow = quality.get();
-      const mandoviBoost = dataset.isMandovi ? 2.4 : 1;
-      const maxTrees = Math.round(
-        (qNow.maxTrees || (lowTier ? 5500 : 14000)) * mandoviBoost,
-      );
-      const pending = [];
-      pending.push(createVegetation(dataset, {
+      const treesP = createVegetation(dataset, {
         maxTrees,
-        castShadow: !!qNow.treeShadows,
+        castShadow: false,
         terrainMesh: terrain.mesh,
         osmWater,
         liveWaterMask,
@@ -812,31 +942,35 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
           state.showVegetation = true;
           state.showOsmTrees = true;
           gTrees.visible = true;
-          console.info("[vegetation] corridor trees ready", {
-            meshes: gTrees.children?.length || 0,
+          console.info("[vegetation] fast trees ready", {
             treeCount: gTrees.userData?.treeCount || 0,
-            assets: gTrees.userData?.glbAssets || [],
             maxTrees,
-            quality: qNow.tier,
-            osmTrees: dataset.osm?.trees?.length || 0,
-            green: dataset.osm?.green?.length || 0,
-            mandovi: !!dataset.isMandovi,
           });
         })
-        .catch((err) => console.warn("Vegetation load failed:", err?.message || err)));
+        .catch((err) => console.warn("Vegetation load failed:", err?.message || err));
 
-      // Permanent vegetation_type overlay is Pune-bound — skip on Mandovi.
-      if (!dataset.isMandovi) {
-        pending.push(loadPermanentVegetationTypeTrees().catch((err) =>
-          console.warn("Permanent vegetation type trees:", err?.message || err),
-        ));
-        pending.push(loadRiparianVegetation().catch((err) =>
-          console.warn("[riparian] vegetation unavailable:", err?.message || err),
-        ));
+      dataset.lite = prevLite;
+
+      if (dataset.isMandovi) {
+        // Don't block — trees + full enrich run in background for a clear final scene.
+        treesP.finally(() => {
+          enrichUrbanDetail();
+        });
+      } else {
+        await Promise.allSettled([
+          treesP,
+          loadPermanentVegetationTypeTrees().catch((err) =>
+            console.warn("Permanent vegetation type trees:", err?.message || err),
+          ),
+          loadRiparianVegetation().catch((err) =>
+            console.warn("[riparian] vegetation unavailable:", err?.message || err),
+          ),
+        ]);
       }
-      await Promise.allSettled(pending);
     } catch (err) {
       console.warn("Progressive urban/vegetation load:", err.message);
+      vegStatus.show("Banks/trees load issue — check console", "error");
+      setTimeout(() => vegStatus.hide(), 6000);
     }
   };
 
@@ -892,10 +1026,18 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     }
   }
 
-  // Yield one frame so the canvas can present, then load the 50 m river-side strip.
+  // Yield one frame so the canvas can present, then load banks quickly.
+  // urbanDone resolves when buildings are in (trees may still finish in background).
   const urbanDone = new Promise((resolve) => {
-  requestAnimationFrame(() => {
-      setTimeout(() => loadUrbanLayers().finally(resolve), 50);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        loadUrbanLayers()
+          .then(() => resolve())
+          .catch((err) => {
+            console.warn("urban load:", err);
+            resolve();
+          });
+      }, 16);
     });
   });
 
@@ -915,7 +1057,12 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       .catch((err) => console.warn("Fishing system load:", err.message));
 
   const hydrologyDone = Promise.allSettled([hydrologyProfileReady, digitalTwinReady]);
-  const whenReady = Promise.allSettled([urbanDone, fishingDone, hydrologyDone, shipsLayer.ready, casinoShipsLayer.ready]);
+  const whenReady = Promise.allSettled([urbanDone, fishingDone, hydrologyDone, shipsLayer.ready, casinoShipsLayer.ready]).then((r) => {
+    const shipWaterY = SURFACE_Y + (Number(renderedWaterRiseM) || 0);
+    shipsLayer.setWaterSurfaceY?.(shipWaterY);
+    casinoShipsLayer.setWaterSurfaceY?.(shipWaterY);
+    return r;
+  });
 
   // Click a red chainage pin to select it; hover THAT pin for station/meters.
   // Everywhere else, river water-depth hover stays (inspect).
@@ -996,13 +1143,34 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     return null;
   }
   function showShipCard(clientX, clientY, ship, pinned = false) {
-    tooltip.show(clientX, clientY, { shipClick: true, shipPinned: pinned, ship });
+    const q =
+      Number(state.discharge_m3s) ||
+      Number(hydrologyStore.getSummary?.()?.discharge_m3s) ||
+      null;
+    const enriched = {
+      ...ship,
+      liveDischargeM3s: Number.isFinite(q) && q > 0 ? q : ship.liveDischargeM3s ?? null,
+    };
+    tooltip.show(clientX, clientY, { shipClick: true, shipPinned: pinned, ship: enriched });
   }
   function pinShipCard(ship) {
     pinnedShip = ship;
     state.shipTipActive = true;
     // Fixed readable corner so values stay on screen after click
     showShipCard(Math.max(16, window.innerWidth - 340), 96, ship, true);
+    // Refresh live river discharge once, then update the pinned card.
+    import("../services/hydrology/liveHydrologyService.js")
+      .then((m) => m.fetchLiveHydrology?.())
+      .then((live) => {
+        const liveQ = Number(live?.Q_total);
+        if (!Number.isFinite(liveQ) || liveQ <= 0) return;
+        state.discharge_m3s = liveQ;
+        if (pinnedShip && pinnedShip.id === ship.id) {
+          pinnedShip = { ...ship, liveDischargeM3s: liveQ };
+          showShipCard(Math.max(16, window.innerWidth - 340), 96, pinnedShip, true);
+        }
+      })
+      .catch(() => {});
   }
   function clearPinnedShip() {
     pinnedShip = null;
@@ -1025,7 +1193,7 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       showShipCard(e.clientX, e.clientY, hit.entry.info, false);
     } else if (hoveredShipId) {
       hoveredShipId = null;
-      tooltip.hide();
+      if (!state.hydrologyTipActive) tooltip.hide();
     }
   });
   canvas.addEventListener("pointerdown", (e) => {
@@ -1045,7 +1213,7 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   });
   canvas.addEventListener("pointerleave", () => {
     hoveredShipId = null;
-    if (!pinnedShip) tooltip.hide();
+    if (!pinnedShip && !state.hydrologyTipActive) tooltip.hide();
   });
 
   // Same along-chainage framing for every station — path centered, never skewed right.
@@ -1521,6 +1689,13 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
             ? Number(state.floodRiseM) || 0
             : Math.max(Number(state.floodRiseM) || 0, hydrologySimulationRiseM || 0);
       return estimateWaterVolume(dataset, { stageRiseM: rise });
+    },
+    getLiveDischargeM3s() {
+      const fromState = Number(state.discharge_m3s);
+      if (Number.isFinite(fromState) && fromState > 0) return fromState;
+      const fromSummary = Number(hydrologyStore.getSummary?.()?.discharge_m3s);
+      if (Number.isFinite(fromSummary) && fromSummary > 0) return fromSummary;
+      return null;
     },
     getHydrologySimulationRise: () => hydrologySimulationRiseM,
     getRenderedHydrologySimulationRise: () => renderedHydrologySimulationRiseM,
@@ -2122,8 +2297,14 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     },
     setBathymetryVisible(on) {
       state.showBathymetry = !!on;
-      applyRiverLook(river, on ? "depth" : "water");
-      lastRiverLook = on ? "depth" : "water";
+      // Depth-colour sheet only when Depth zones / bathymetry camera — keep solid blue otherwise.
+      const depthView =
+        state.showDepthZones === true || state.cameraMode === "bathymetry" || (!state.showWater && !!on);
+      applyRiverLook(river, depthView ? "depth" : "water");
+      lastRiverLook = depthView ? "depth" : "water";
+      if (river.material?.uniforms?.uShowDepth) {
+        river.material.uniforms.uShowDepth.value = depthView ? 1 : 0;
+      }
     },
     setWaterSurfaceVisible(on) {
       state.showWater = !!on;
@@ -2408,8 +2589,13 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       if (active) {
         state.glassyRevealActive = true;
         state.glassyVizMode = "data";
-        state.glassyWaterOpacity = Math.max(state.glassyWaterOpacity ?? 0.72, 0.85);
+        state.glassyWaterOpacity = Math.max(state.glassyWaterOpacity ?? 0.72, 0.95);
+        state.showWater = true;
         depthZonesLayer.userData?.playReveal?.();
+        // Depth-tint the filled water sheet under the colour overlay.
+        if (river.material?.uniforms?.uShowDepth) {
+          river.material.uniforms.uShowDepth.value = 1;
+        }
       } else {
         state.glassyRevealActive = false;
         if (state.glassyVizMode === "data") state.glassyVizMode = "cinematic";
@@ -2571,20 +2757,18 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
         hydroActiveId === "water_quality_ndci" ||
         hydroActiveId === "pollution_coliform";
       if (!cinematic.isActive() && state.showDepthZones && river.material.uniforms.uOpacity) {
-        // Keep river translucent so Jul 2026 depth classes read clearly
-        const cap = state.bathymetryMode ? 0.42 : 0.78;
+        // Bathymetry: keep a solid filled sheet under the colour overlay (no empty gaps).
+        const cap = state.bathymetryMode ? 0.96 : 0.78;
         river.material.uniforms.uOpacity.value = Math.max(
-          state.bathymetryMode ? 0.28 : 0.58,
+          state.bathymetryMode ? 0.88 : 0.58,
           Math.min(state.waterOpacity, cap),
         );
       }
-      // Salinity / WQ class paints sit on the water sheet — dim the blue fill so PSU colours read.
+      // Salinity / WQ class paints sit on the water sheet — dim the blue fill so ppt colours read.
       if (!cinematic.isActive() && wqOnWater && river.material.uniforms.uOpacity) {
         const cap = hydroActiveId === "salinity" ? 0.08 : 0.16;
         river.material.uniforms.uOpacity.value = Math.min(state.waterOpacity, cap);
       }
-      // Depth tint competes with salinity — disable while WQ overlays own the river.
-      river.material.uniforms.uShowDepth.value = wqOnWater ? 0 : 1;
       const cutaway = state.visualMode === "cutaway";
       river.material.uniforms.uCutaway.value = cutaway ? 1 : 0;
       if (cutaway && !cinematic.isActive()) {
@@ -2592,6 +2776,16 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       }
       const waterOn = !!state.showWater && !state.hydrologyHidesWater;
       const erosionDark = !!state.hydrologyHidesWater;
+      // Depth tint only for Depth Zones / bathymetry — never in normal solid-water view.
+      // (WQ overlays also force solid so class paints stay readable.)
+      const depthTintOn =
+        !wqOnWater &&
+        (state.showDepthZones === true ||
+          state.cameraMode === "bathymetry" ||
+          (!waterOn && !!state.showBathymetry));
+      if (river.material.uniforms.uShowDepth) {
+        river.material.uniforms.uShowDepth.value = depthTintOn ? 1 : 0;
+      }
       // River OFF → excavated ground deep view (boosted vertical relief)
       const bedExag = cutaway
         ? Math.max(5, state.depthExaggeration)
@@ -2621,12 +2815,16 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
           state.floodRiseM = floodRise;
         }
       }
-      // Bank erosion: dark channel so neon green/yellow ribbon pops (reference look)
+      // Default = solid Mandovi blue water. Depth colouring only for bathymetry / depth-zones.
+      const depthViewOn =
+        state.showDepthZones === true ||
+        state.cameraMode === "bathymetry" ||
+        (!waterOn && state.showBathymetry);
       const riverLook = cutaway
         ? "cutaway"
         : erosionDark
           ? "erosionDark"
-          : (!waterOn || state.showBathymetry)
+          : depthViewOn
             ? "depth"
             : "water";
       // Keep a smoothed copy of hydraulic station WSE for HUD / telemetry only.
@@ -2704,15 +2902,14 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
         floodLayer.visible = false;
         apiFloodLayer.visible = false;
       }
-      // Mandovi: one shared water material on the live KML sheet — no second tint.
+      // Corridor = light cyan banks; live mask = darker mid fill on top (image-2 look).
       const liveFillOn = !!(
         dataset.isMandovi &&
         liveWaterSurface?.group &&
         liveWaterSurface?.surface
       );
-      river.mesh.visible = waterOn && state.showWater !== false && !liveFillOn;
+      river.mesh.visible = waterOn && state.showWater !== false;
       if (river.material) river.material.visible = waterOn && state.showWater !== false;
-      // Hide corridor bed under live fill in water mode so colour stays uniform.
       river.bed.visible =
         state.showRiverbed !== false &&
         state.showBathymetry !== false &&
@@ -2726,6 +2923,10 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
       }
       if (waterFill) waterFill.visible = false;
       if (liveWaterSurface?.refresh) liveWaterSurface.refresh();
+      // Keep hulls on the current water surface (no floating-in-air gap).
+      const shipWaterY = SURFACE_Y + (Number(renderedWaterRiseM) || 0);
+      shipsLayer.setWaterSurfaceY?.(shipWaterY);
+      casinoShipsLayer.setWaterSurfaceY?.(shipWaterY);
       if (bathymetrySurveyLayer) {
         bathymetrySurveyLayer.visible = state.showSurveyStations !== false;
         bathymetrySurveyLayer.userData?.update?.(dt, cam.camera);

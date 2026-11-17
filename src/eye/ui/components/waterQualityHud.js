@@ -33,7 +33,7 @@ export const WATER_QUALITY_OPTIONS = [
   },
   {
     id: "salinity",
-    tip: "Salinity (PSU)",
+    tip: "Salinity (ppt)",
     icon: Waves,
     tone: "wq-tone-salinity",
     layerId: "salinity",

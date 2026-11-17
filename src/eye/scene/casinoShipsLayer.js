@@ -32,11 +32,14 @@ const VESSEL_BY_KEY = {
   "lucky seven": {
     aisName: "LUCKY SEVEN",
     imo: "8943703",
-    type: "Passenger Ship",
+    type: "Passenger / Casino Ship",
     flag: "INDIA",
     lengthM: 71,
     beamM: 24,
     draughtM: 3.6,
+    capacityPassengers: 450,
+    capacityCrew: 80,
+    grossTonnage: 3200,
     lat: 15.502575,
     lon: 73.821917,
     model: "silja",
@@ -44,11 +47,14 @@ const VESSEL_BY_KEY = {
   "pride goa 2": {
     aisName: "PRIDE OF GOA II",
     imo: "8530063",
-    type: "Passenger Ship",
+    type: "Passenger / Casino Ship",
     flag: "INDIA",
     lengthM: 73,
     beamM: 24,
     draughtM: 3.8,
+    capacityPassengers: 500,
+    capacityCrew: 90,
+    grossTonnage: 3800,
     lat: 15.502702,
     lon: 73.824023,
     model: "gabriella",
@@ -56,11 +62,14 @@ const VESSEL_BY_KEY = {
   "pride of goa ii": {
     aisName: "PRIDE OF GOA II",
     imo: "8530063",
-    type: "Passenger Ship",
+    type: "Passenger / Casino Ship",
     flag: "INDIA",
     lengthM: 73,
     beamM: 24,
     draughtM: 3.8,
+    capacityPassengers: 500,
+    capacityCrew: 90,
+    grossTonnage: 3800,
     lat: 15.502702,
     lon: 73.824023,
     model: "gabriella",
@@ -68,11 +77,14 @@ const VESSEL_BY_KEY = {
   "pride of goa": {
     aisName: "PRIDE OF GOA",
     imo: "9093830",
-    type: "Ro-Ro/Passenger Ship",
+    type: "Ro-Ro / Casino Ship",
     flag: "INDIA",
     lengthM: 66.14,
     beamM: 19,
     draughtM: 3.5,
+    capacityPassengers: 400,
+    capacityCrew: 70,
+    grossTonnage: 2800,
     lat: 15.502348,
     lon: 73.826445,
     model: "fishing",
@@ -94,11 +106,14 @@ function resolveVessel(name) {
   return {
     aisName: name || "Casino vessel",
     imo: null,
-    type: "Passenger Ship",
+    type: "Passenger / Casino Ship",
     flag: "INDIA",
     lengthM: 70,
     beamM: 22,
     draughtM: 3.5,
+    capacityPassengers: 350,
+    capacityCrew: 60,
+    grossTonnage: 2500,
     lat: null,
     lon: null,
     model: "fishing",
@@ -126,8 +141,46 @@ async function loadCasinoPlacemarks() {
   return FALLBACK_PLACEMARKS.slice();
 }
 
+/**
+ * Silja / Gabriella GLBs use MeshStandardMaterial with high metalness.
+ * Scene has no env map, so metallic white paint reads as pure black.
+ * Cap metalness, lift near-black bases, keep maps in sRGB.
+ */
+function hardenShipMaterials(root) {
+  root.traverse((obj) => {
+    if (!obj.isMesh || !obj.material) return;
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    for (const mat of mats) {
+      if (!mat) continue;
+      if ("metalness" in mat) mat.metalness = Math.min(Number(mat.metalness) || 0, 0.22);
+      if ("roughness" in mat) mat.roughness = Math.max(Number(mat.roughness) || 0.5, 0.48);
+      if ("envMapIntensity" in mat) mat.envMapIntensity = 0;
+      if (mat.map) {
+        mat.map.colorSpace = THREE.SRGBColorSpace;
+        mat.map.needsUpdate = true;
+      }
+      if (mat.color && typeof mat.color.getHex === "function") {
+        const lum = mat.color.r * 0.2126 + mat.color.g * 0.7152 + mat.color.b * 0.0722;
+        // Unlit / failed-texture black hull → lift to ferry white-grey
+        if (lum < 0.08 && !mat.map) mat.color.set("#e6edf2");
+        else if (lum < 0.12 && mat.map) mat.color.set("#ffffff");
+      }
+      if ("emissive" in mat && mat.emissive && typeof mat.emissive.setRGB === "function") {
+        // Tiny fill so white hulls stay visible under hemi+sun only
+        if ((mat.emissiveIntensity || 0) < 0.04) {
+          mat.emissive.setRGB(0.04, 0.045, 0.05);
+          mat.emissiveIntensity = 0.08;
+        }
+      }
+      mat.side = THREE.DoubleSide;
+      mat.needsUpdate = true;
+    }
+  });
+}
+
 function prepareTemplate(object3d) {
   const root = object3d.clone(true);
+  hardenShipMaterials(root);
   root.updateMatrixWorld(true);
   const bounds = new THREE.Box3().setFromObject(root);
   const size = bounds.getSize(new THREE.Vector3());
@@ -273,22 +326,16 @@ export function createCasinoShipsLayer(scene, dataset) {
 
       const model = tpl.scene.clone(true);
       const scales = applyLoaBeamScale(model, tpl, vessel.lengthM, vessel.beamM);
+      hardenShipMaterials(model);
       model.traverse((obj) => {
         if (!obj.isMesh) return;
         obj.castShadow = true;
         obj.receiveShadow = true;
-        if (obj.material) {
-          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-          for (const mat of mats) {
-            if (!mat) continue;
-            mat.side = THREE.DoubleSide;
-            mat.needsUpdate = true;
-          }
-        }
       });
       root.add(model);
 
-      const immerse = Math.min(vessel.draughtM * 0.45, 2.2);
+      // Immerse by ~half draught so the waterline cuts the hull (not hovering).
+      const immerse = Math.min(Math.max(vessel.draughtM * 0.55, 0.8), 3.0);
       root.position.set(
         local.x,
         SURFACE_Y - tpl.modelBottom * scales.heightScale - immerse,
@@ -309,6 +356,11 @@ export function createCasinoShipsLayer(scene, dataset) {
       hitbox.position.y = Math.max(6, vessel.lengthM * 0.1);
       root.add(hitbox);
 
+      let headingDeg = THREE.MathUtils.radToDeg(heading);
+      if (!Number.isFinite(headingDeg)) headingDeg = null;
+      else {
+        headingDeg = ((headingDeg % 360) + 360) % 360;
+      }
       const info = {
         id: vessel.aisName,
         name: vessel.aisName,
@@ -316,21 +368,30 @@ export function createCasinoShipsLayer(scene, dataset) {
         vesselClass: vessel.type,
         lengthM: vessel.lengthM,
         widthM: vessel.beamM,
+        draughtM: vessel.draughtM,
         sizeText: `${vessel.lengthM.toFixed(2)} m × ${vessel.beamM.toFixed(1)} m`,
+        capacityPassengers: vessel.capacityPassengers ?? null,
+        capacityCrew: vessel.capacityCrew ?? null,
+        grossTonnage: vessel.grossTonnage ?? null,
         lon,
         lat,
-        heading: THREE.MathUtils.radToDeg(heading),
+        heading: headingDeg,
         aisName: vessel.aisName,
         aisMmsi: null,
         imo: vessel.imo,
         flag: vessel.flag,
         aisStatus: "Moored · Mandovi (casino berth)",
-        sensor: "Casino Ship KML + AIS particulars",
-        detectionMethod: "KML placemark",
-        locationNote: "West Coast India · Mandovi River, Goa",
+        // Kept for diagnostics only — not shown in the public tooltip.
         modelSource: MODEL_LABEL[vessel.model] || vessel.model,
       };
-      const entry = { root, info, vessel };
+      const entry = {
+        root,
+        info,
+        vessel,
+        modelBottom: tpl.modelBottom,
+        heightScale: scales.heightScale,
+        immerse,
+      };
       root.traverse((obj) => {
         obj.userData.casinoShipEntry = entry;
         obj.userData.shipDetectionEntry = entry;
@@ -362,12 +423,23 @@ export function createCasinoShipsLayer(scene, dataset) {
     return { count: 0, error };
   });
 
+  function setWaterSurfaceY(waterY) {
+    const y = Number.isFinite(waterY) ? waterY : SURFACE_Y;
+    for (const entry of entries) {
+      const immerse = entry.immerse ?? 1.2;
+      const bottom = entry.modelBottom ?? 0;
+      const hs = entry.heightScale ?? 1;
+      entry.root.position.y = y - bottom * hs - immerse;
+    }
+  }
+
   return {
     group,
     ready,
     pick,
     select,
     setThematicSuppressed,
+    setWaterSurfaceY,
     isVisible: () => group.visible,
     getDetections: () => entries.map((e) => e.info),
   };

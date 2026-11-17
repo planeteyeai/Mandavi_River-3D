@@ -57,6 +57,11 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
   let stickySurveyTimer = 0;
   let stickySurveyXY = { x: 0, y: 0 };
   const STICKY_SURVEY_MS = 5000;
+  /** River depth panel stays pinned after click so Cross-Section is reachable. */
+  let stickyHydroInfo = null;
+  let stickyHydroTimer = 0;
+  let stickyHydroXY = { x: 0, y: 0 };
+  const STICKY_HYDRO_MS = 5000;
   /** Bank-erosion class card stays until click-away / layer off / other module. */
   let stickyBankErosion = null;
   let stickyBankErosionXY = { x: 0, y: 0 };
@@ -251,6 +256,31 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
     getRawSurveyLayer?.()?.userData?.setSelected?.(null);
   }
 
+  function clearStickyHydro() {
+    if (stickyHydroTimer) {
+      window.clearTimeout(stickyHydroTimer);
+      stickyHydroTimer = 0;
+    }
+    stickyHydroInfo = null;
+    state.hydrologyTipActive = false;
+  }
+
+  function holdStickyHydro(info, e) {
+    if (stickyHydroTimer) window.clearTimeout(stickyHydroTimer);
+    stickyHydroInfo = info;
+    stickyHydroXY = { x: e.clientX, y: e.clientY };
+    state.hydrologyTipActive = true;
+    stickyHydroTimer = window.setTimeout(() => {
+      stickyHydroTimer = 0;
+      stickyHydroInfo = null;
+      state.hydrologyTipActive = false;
+      // Only hide if nothing else took over the tooltip.
+      if (!state.shipTipActive && !stickySurveyPoint && !stickyBankErosion) {
+        tooltip.hide();
+      }
+    }, STICKY_HYDRO_MS);
+  }
+
   function holdStickySurvey(pick, e) {
     if (stickySurveyTimer) window.clearTimeout(stickySurveyTimer);
     stickySurveyPoint = pick;
@@ -355,7 +385,12 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
     const geo = dataset.frame.toLonLat(x, z);
     const cls = lulc?.classAtLonLat(geo.lon, geo.lat) || null;
     const lc = cls ? LULC_HOVER[cls] : null;
-    const elev = dataset.dtm?.sampleLonLat?.(geo.lon, geo.lat);
+    let elev = dataset.dtm?.sampleLonLat?.(geo.lon, geo.lat);
+    // Fallback: scene terrain height when DTM sample is missing (avoids TERRAIN —).
+    if (!Number.isFinite(elev)) {
+      const ty = terrainHeightAt(x, z, dataset.corridor?.stations);
+      if (Number.isFinite(ty)) elev = ty;
+    }
     const bank = distanceToBank(x, z, dataset.corridor?.stations || []);
     return {
       landHover: true,
@@ -420,6 +455,15 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
 
     // Casino / AIS vessel card owns the tooltip until cleared by world.js.
     if (state.shipTipActive) return;
+
+    // Keep river depth / Cross-Section panel sticky after click — ignore hover moves.
+    if (!fromClick && stickyHydroInfo) {
+      tooltip.show(stickyHydroXY.x, stickyHydroXY.y, stickyHydroInfo);
+      return;
+    }
+
+    // Any new click drops the previous pin; river click will re-hold below.
+    if (fromClick) clearStickyHydro();
 
     // 4-point silt area analysis — own clicks; never move camera / chainage; no hover work.
     if (siltAreaTool?.isAccepting?.()) {
@@ -1184,7 +1228,7 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
       const stageLabel = stageRise > 0.01 ? "SIMULATED" : "REFERENCE";
       const waterSurfaceShown = SURFACE_Y + stageRise;
       const vol = window.__MM_SCENE__?.getWaterVolume?.(stageRise) || null;
-      tooltip.show(e.clientX, e.clientY, {
+      const hydroPayload = {
         hydrologyInspect: true,
         riverName: "MANDOVI RIVER",
         chainageLabel: stLabel,
@@ -1218,7 +1262,10 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
         surveyDate: nearestSurvey?.survey_date || nearestSurvey?.station?.survey_date || "March 2020 / Jan 2021",
         verticalDatum: "Chart Datum (CD) / MSL [Mormugao Datum]",
         stationRecord: rec,
-      });
+      };
+      // Pin for 5s so the user can move to / click View Cross-Section.
+      holdStickyHydro(hydroPayload, e);
+      tooltip.show(e.clientX, e.clientY, hydroPayload);
       return;
     }
 
@@ -1316,10 +1363,16 @@ export function attachInspect(canvas, camera, riverMeshes, terrainMesh, dataset,
   canvas.addEventListener("pointermove", onMove);
   canvas.addEventListener("click", (e) => inspect(e, { fromClick: true }));
   canvas.addEventListener("pointerleave", () => {
+    // Keep sticky river / survey panels while the cursor moves onto the tooltip.
+    if (stickyHydroInfo || stickySurveyPoint || stickyBankErosion) return;
     clearStickySurvey();
     state.landUseTipActive = false;
     tooltip.hide();
     state.hover = null;
+  });
+
+  document.addEventListener("hydrology-inspect-opened", () => {
+    clearStickyHydro();
   });
 }
 

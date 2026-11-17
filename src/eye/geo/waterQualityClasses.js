@@ -43,7 +43,7 @@ export const TSS_CLASSES = /** @type {WqClass[]} */ ([
 ]);
 
 /**
- * Salinity — Mandovi smoothed PSU classes (Mandovi_Salinity_smoothed_v2.kml).
+ * Salinity — Mandovi smoothed ppt classes (Mandovi_Salinity_smoothed_v2.kml).
  * Colors match KML PolyStyle (aabbggrr → #RRGGBB).
  */
 export const SALINITY_CLASSES = /** @type {WqClass[]} */ ([
@@ -52,8 +52,8 @@ export const SALINITY_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "1 Very Low",
     label: "Very Low",
     color: "#00A651",
-    range: "< 0.5 PSU",
-    unit: "PSU",
+    range: "< 0.5 ppt",
+    unit: "ppt",
     min: 0,
     max: 0.5,
     inclusiveMax: false,
@@ -63,8 +63,8 @@ export const SALINITY_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "2 Low",
     label: "Low",
     color: "#00FF00",
-    range: "0.5–5 PSU",
-    unit: "PSU",
+    range: "0.5–5 ppt",
+    unit: "ppt",
     min: 0.5,
     max: 5,
     inclusiveMax: true,
@@ -74,8 +74,8 @@ export const SALINITY_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "3 Moderate",
     label: "Moderate",
     color: "#FFFF00",
-    range: "5–18 PSU",
-    unit: "PSU",
+    range: "5–18 ppt",
+    unit: "ppt",
     min: 5,
     max: 18,
     inclusiveMax: true,
@@ -85,8 +85,8 @@ export const SALINITY_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "4 High",
     label: "High",
     color: "#FFA500",
-    range: "18–30 PSU",
-    unit: "PSU",
+    range: "18–30 ppt",
+    unit: "ppt",
     min: 18,
     max: 30,
     inclusiveMax: true,
@@ -96,8 +96,8 @@ export const SALINITY_CLASSES = /** @type {WqClass[]} */ ([
     kmlClass: "5 Very High",
     label: "Very High",
     color: "#FF0000",
-    range: "> 30 PSU",
-    unit: "PSU",
+    range: "> 30 ppt",
+    unit: "ppt",
     min: 30,
     max: null,
     inclusiveMax: false,
@@ -245,9 +245,9 @@ export const WQ_LAYER_SCHEMES = {
     id: "salinity",
     title: "Salinity",
     metric: "Salinity",
-    unit: "PSU",
+    unit: "ppt",
     classes: SALINITY_CLASSES,
-    subtitle: "5 classes · Mandovi smoothed PSU",
+    subtitle: "5 classes · Mandovi smoothed ppt",
   },
 };
 

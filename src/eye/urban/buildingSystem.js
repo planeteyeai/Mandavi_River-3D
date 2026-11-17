@@ -52,9 +52,11 @@ export async function createBuildingSystem(dataset) {
       skippedWater++;
       continue;
     }
-    // Mandovi estuary settlements sit farther from the thalweg — keep a wider bank belt.
+    // Mandovi: lite = fast bank belt; full detail = wider clear settlement picture.
     const bankReach = dataset.isMandovi
-      ? Math.max(3200, info.half + 2800)
+      ? dataset.lite
+        ? Math.max(1100, info.half + 900)
+        : Math.max(2400, info.half + 2000)
       : Math.max(1200, info.half + 1100);
     if (info.lat > bankReach) continue;
     // Only run expensive polygon raycast & edge checks if building is near water edge
@@ -91,23 +93,24 @@ export async function createBuildingSystem(dataset) {
   const allRecs = [...heroRecs, ...nearRecs, ...midRecs, ...distantRecs];
   auditBuildingSample(allRecs, stations, 20);
 
+  // Lite = fast first paint; full Mandovi detail comes in a background enrich pass.
   const isLite = dataset.lite === true;
   const heroGroup = buildFootprintTier(heroRecs, stations, {
     name: "buildingsHero",
-    maxCount: isLite ? 80 : LOD.HERO_MAX,
+    maxCount: isLite ? 60 : LOD.HERO_MAX,
     individualHero: !isLite,
     roofSlab: true,
   });
 
   const nearGroup = buildFootprintTier(nearRecs, stations, {
     name: "buildingsNear",
-    maxCount: isLite ? 1600 : LOD.NEAR_MAX,
+    maxCount: isLite ? 900 : LOD.NEAR_MAX,
     roofSlab: true,
   });
 
   const midGroup = buildFootprintTier(midRecs, stations, {
     name: "buildingsMid",
-    maxCount: isLite ? 2400 : LOD.MID_MAX,
+    maxCount: isLite ? 1200 : LOD.MID_MAX,
     roofSlab: true,
     useMidMaterial: true,
   });
@@ -129,11 +132,13 @@ export async function createBuildingSystem(dataset) {
     hlod: hlodGroup,
   };
 
-  const doorPlacements = [...heroRecs, ...nearRecs].sort((a, b) => a.dist - b.dist);
-  group.add(createDoorInstances(doorPlacements, dataset, { maxDoors: isLite ? 350 : 2200, corridorM: LOD.NEAR_M }));
-
-  const roofSubset = doorPlacements.filter((r) => r.dist < 650).slice(0, isLite ? 200 : 1100);
-  group.add(createRooftopDetails(roofSubset, stations));
+  // Doors/rooftops are expensive — skip on Mandovi / lite for faster banks.
+  if (!isLite) {
+    const doorPlacements = [...heroRecs, ...nearRecs].sort((a, b) => a.dist - b.dist);
+    group.add(createDoorInstances(doorPlacements, dataset, { maxDoors: 2200, corridorM: LOD.NEAR_M }));
+    const roofSubset = doorPlacements.filter((r) => r.dist < 650).slice(0, 1100);
+    group.add(createRooftopDetails(roofSubset, stations));
+  }
 
   console.info("Urban buildings (4-tier open footprints)", {
     footprints: raw.length,

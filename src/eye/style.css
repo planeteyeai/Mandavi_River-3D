@@ -459,6 +459,27 @@ html, body, #app {
 .veg-status[data-kind="error"] { border-color: rgba(248, 113, 113, 0.4); color: #f8c8c8; }
 .veg-status[hidden] { display: none !important; }
 
+.water-extent-status {
+  position: absolute;
+  left: 16px;
+  bottom: 112px;
+  z-index: 28;
+  max-width: min(380px, 75vw);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(12, 20, 26, 0.62);
+  backdrop-filter: blur(10px);
+  color: #c8e7f2;
+  font: 500 12px/1.35 var(--font-ui);
+  pointer-events: none;
+}
+.water-extent-status[data-kind="bundled"] {
+  border-color: rgba(250, 204, 21, 0.3);
+  color: #f5e6a8;
+}
+.water-extent-status[hidden] { display: none !important; }
+
 .hud {
   position: absolute; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
   backdrop-filter: blur(16px);
@@ -514,6 +535,14 @@ html, body, #app {
   transform: translate(12px, 12px);
 }
 .tooltip.visible { display: block; }
+/* Click panels (cross-section / inspect actions) must receive pointer events. */
+.tooltip.tooltip--interactive {
+  pointer-events: auto;
+}
+.tooltip.tooltip--interactive button {
+  pointer-events: auto;
+  cursor: pointer;
+}
 .tooltip h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.1em; color: var(--accent); display: flex; align-items: center; gap: 8px; }
 .tooltip .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(200,220,230,0.35); flex: 0 0 auto; }
 .tooltip .kv { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; margin: 2px 0; }

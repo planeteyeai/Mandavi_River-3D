@@ -66,8 +66,9 @@ export const MANDOVI_HYDRO_DISPLAY_RAMP = [
 ];
 
 const PICK_MIN_ALPHA = 40;
-const GRID_SEG_X = 420;
-const GRID_SEG_Z = 84;
+/** Denser drape so the colour overlay fills the channel continuously. */
+const GRID_SEG_X = 520;
+const GRID_SEG_Z = 120;
 
 /**
  * Raster bathymetry layer — KMZ image draped just above the river surface.
@@ -163,15 +164,19 @@ export function createDepthZonesLayer(dataset) {
       void main() {
         vec4 c = texture2D(uMap, vUv);
         float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114));
-        float a = clamp(c.a * 1.45, 0.0, 1.0);
-        if (a < 0.02 || (uRemap > 0.5 && lum < 0.035)) discard;
-        float edge = uReveal * 1.08;
-        float mask = 1.0 - smoothstep(edge - 0.08, edge, vUv.x);
+        // Keep weak pixels so the channel stays continuously filled (no holes).
+        float a = clamp(max(c.a, lum > 0.04 ? 0.75 : c.a) * 1.55, 0.0, 1.0);
+        if (a < 0.012 || (uRemap > 0.5 && lum < 0.02)) discard;
+        // Soft reveal — never wipe the whole channel empty.
+        float edge = max(uReveal, 0.92) * 1.08;
+        float mask = 1.0 - smoothstep(edge - 0.06, edge, vUv.x);
+        mask = max(mask, 0.88);
         vec3 col = c.rgb;
         if (uRemap > 0.5) {
           float t = sourceDepthT(c.rgb);
           col = hydroColor(t);
-          a = mix(max(a, 0.55), 1.0, smoothstep(0.35, 0.95, t));
+          // Solid filled bathymetry sheet (mottled depth blues).
+          a = mix(0.88, 1.0, smoothstep(0.15, 0.95, t));
         }
         col *= (1.0 + uHighlight * 0.25);
         gl_FragColor = vec4(col, a * uOpacity * mask);
@@ -241,8 +246,9 @@ export function createDepthZonesLayer(dataset) {
   };
 
   group.userData.playReveal = () => {
-    revealT = 0;
-    material.uniforms.uReveal.value = 0;
+    // Short soft wipe — channel stays mostly filled from the first frame.
+    revealT = 0.88;
+    material.uniforms.uReveal.value = 0.88;
   };
 
   /** Depth (m) at a local XZ point, read from the KMZ raster colour. */
@@ -265,9 +271,10 @@ export function createDepthZonesLayer(dataset) {
 
   group.userData.update = (dt) => {
     if (!group.visible) return;
-    material.uniforms.uOpacity.value = Math.max(0.55, state.glassyWaterOpacity ?? 0.9);
+    // Near-opaque filled sheet so bathymetry reads as continuous water.
+    material.uniforms.uOpacity.value = Math.max(0.92, state.glassyWaterOpacity ?? 0.95);
     if (state.glassyRevealActive || revealT < 1) {
-      revealT = Math.min(1, revealT + dt * 0.45);
+      revealT = Math.min(1, revealT + dt * 0.85);
       material.uniforms.uReveal.value = revealT;
       if (revealT >= 1) state.glassyRevealActive = false;
     }

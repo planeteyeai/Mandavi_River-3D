@@ -478,26 +478,38 @@ export function mountCrossSectionModal(root) {
       return Number.isFinite(x) ? x : null;
     };
     const cs = bathymetryService.getCrossSectionAtChainage(st.chainage_m);
-    const width = Math.max(20, n(cs?.channelWidthM) || n(st.width_m) || 220);
+    // Prefer surveyed CS width, then station; reject absurd legacy widths (>2.5 km inland).
+    let width = n(cs?.channelWidthM) || n(st.width_m) || 220;
+    if (width > 2500 && n(st.width_m) && st.width_m <= 2500) width = st.width_m;
+    width = Math.max(20, Math.min(2200, width));
     const survey = n(cs?.thalwegDepthM) || n(st.survey_depth_m?.value);
     const solved = n(st.water_depth_m?.value);
     const depth = Math.max(0.8, survey ?? solved ?? 12.0);
     const isMandovi = (st.lat != null && st.lat < 17) || (window.__RIVER_DATASET__?.isMandovi !== false);
     const bed = n(cs?.bedElevationMsl) ?? n(st.bed_elevation_msl?.value) ?? (isMandovi ? -depth : 540 - 0.00052 * (n(st.chainage_m) || 0));
     const wse = isMandovi ? 0.0 : (n(st.wse_msl?.value) ?? bed + depth);
-    const q =
+    const qRaw =
       n(_liveQ) ??
       n(st.discharge_m3s?.value) ??
       n(hydrologyStore.getSummary()?.discharge_m3s) ??
-      450;
-    const area = n(cs?.crossSectionAreaM2) ?? n(st.cross_section_area_m2?.value) ?? (2 / 3) * width * depth;
+      null;
+    // Live estuary Q can be near-zero at slack tide; keep it, but fall back for missing data.
+    const q = qRaw != null ? Math.max(0, qRaw) : 450;
+    // Recompute area from corrected width when stored CS area was built with wrong width.
+    const areaFromCs = n(cs?.crossSectionAreaM2);
+    const areaExpected = (2 / 3) * width * depth;
+    const area =
+      areaFromCs != null && Math.abs(areaFromCs - areaExpected) / Math.max(1, areaExpected) < 0.85
+        ? areaFromCs
+        : areaExpected;
     const perim = n(cs?.wettedPerimeterM) ?? n(st.wetted_perimeter_m?.value) ?? width + (8 * depth * depth) / (3 * width);
     const radius = n(cs?.hydraulicRadiusM) ?? n(st.hydraulic_radius_m?.value) ?? (perim > 0 ? area / perim : depth);
-    const vel = n(st.velocity_ms?.value) ?? (area > 0.5 ? q / area : 0.6);
-    const hydD = area / width;
+    const velFromQ = area > 0.5 ? q / area : 0;
+    const vel = n(st.velocity_ms?.value) ?? velFromQ;
+    const hydD = area / Math.max(1, width);
     const froude =
       n(st.froude_number) ??
-      (hydD > 0 ? vel / Math.sqrt(9.80665 * hydD) : 0.08);
+      (hydD > 0 ? vel / Math.sqrt(9.80665 * hydD) : 0);
     return { width, depth, bed, wse, q, area, radius, vel, froude, cs };
   }
 

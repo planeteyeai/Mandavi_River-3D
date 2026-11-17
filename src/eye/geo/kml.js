@@ -411,7 +411,7 @@ function classLabelFromPlacemarkName(name) {
     /^(Very Low Salinity|Low Salinity|Moderate Salinity|High Salinity|Very High Salinity)/i,
   );
   if (salinity) return salinity[1];
-  // Mandovi salinity: "1 Very Low (below 0.5 PSU)" → "1 Very Low"
+  // Mandovi salinity: "1 Very Low (below 0.5 PSU|ppt)" → "1 Very Low"
   const numbered = n.match(
     /^(\d+\s+(?:Very\s+)?(?:Low|Moderate|High|Very\s+High))\b/i,
   );

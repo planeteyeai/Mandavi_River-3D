@@ -25,8 +25,11 @@ const WATER_DEPTH_URL = `${API_BASE.replace(/\/$/, "")}/api/water-depth`;
 export const SURVEY_DEPTH_MIN_M = 1.5;
 export const SURVEY_DEPTH_MAX_M = 8.0;
 
-const CACHE_PREFIX = "jalnetra-mandovi-water-depth-v1";
-const REQUEST_TIMEOUT_MS = 300_000;
+const CACHE_PREFIX = "jalnetra-mandovi-water-depth-v2";
+/** Re-fetch latest Sentinel water at least this often when the app is opened. */
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+/** Startup refresh must fail fast so banks/trees are not starved waiting on JalNetra. */
+const REQUEST_TIMEOUT_MS = 60_000;
 
 const isDev = typeof import.meta !== "undefined" && !!import.meta.env?.DEV;
 
@@ -104,6 +107,7 @@ export async function postWaterDepth({
   filename,
   depth_min_m = SURVEY_DEPTH_MIN_M,
   depth_max_m = SURVEY_DEPTH_MAX_M,
+  timeoutMs = REQUEST_TIMEOUT_MS,
 } = {}) {
   if (!kmlBlob) throw new Error("Water-depth API requires a KML file.");
   const form = new FormData();
@@ -111,11 +115,15 @@ export async function postWaterDepth({
   form.append("depth_min_m", String(depth_min_m));
   form.append("depth_max_m", String(depth_max_m));
 
-  const res = await fetchWithTimeout(WATER_DEPTH_URL, {
-    method: "POST",
-    body: form,
-    headers: { "ngrok-skip-browser-warning": "true" },
-  });
+  const res = await fetchWithTimeout(
+    WATER_DEPTH_URL,
+    {
+      method: "POST",
+      body: form,
+      headers: { "ngrok-skip-browser-warning": "true" },
+    },
+    timeoutMs,
+  );
 
   const text = await res.text();
   let body = null;
@@ -290,6 +298,7 @@ export async function buildWaterDepthMask(permanentOverlay, depthOverlay, meta =
   }
 
   return {
+    available: waterPixels > 0,
     north,
     south,
     east,
@@ -297,6 +306,8 @@ export async function buildWaterDepthMask(permanentOverlay, depthOverlay, meta =
     waterPixels,
     min_m: minM,
     max_m: maxM,
+    source: "Sentinel-1 SAR permanent_water",
+    provenance: "SAR_PERMANENT_WATER",
     isWaterAtLonLat: (lon, lat) => sampleAtLonLat(lon, lat).water,
     isWaterAtLocal: (x, z) => {
       const ll = localToLonLat(x, z);
@@ -345,12 +356,56 @@ async function loadPrebundledMandoviWaterDepth(depthMin, depthMax) {
   }
 }
 
+function cacheIsFresh(cached) {
+  const t = Number(cached?.fetchedAt) || 0;
+  return t > 0 && Date.now() - t < CACHE_TTL_MS;
+}
+
+async function maskFromCacheIds(cached, depthMin, depthMax) {
+  if (!cached?.permId || !cached?.depthId) return null;
+  const [permKml, depthKml] = await Promise.all([
+    downloadWaterDepthKml(cached.permId),
+    downloadWaterDepthKml(cached.depthId),
+  ]);
+  const permOverlay = parseFloodOverlayKml(permKml);
+  const depthOverlay = parseFloodOverlayKml(depthKml);
+  if (!permOverlay || !depthOverlay) return null;
+  const mask = await buildWaterDepthMask(permOverlay, depthOverlay, {
+    min_m: cached.meta?.depth?.min_m ?? depthMin,
+    max_m: cached.meta?.depth?.max_m ?? depthMax,
+  });
+  return {
+    mask,
+    water_area_ha: cached.water_area_ha,
+    depth_min_m: cached.depth_min_m,
+    depth_max_m: cached.depth_max_m,
+    meta: cached.meta,
+    asOf:
+      cached.meta?.sentinel1_image_date ||
+      cached.meta?.sentinel2_image_date ||
+      cached.meta?.image_date ||
+      null,
+    provenance: "CACHED_JALNETRA_API",
+  };
+}
+
 /**
- * Full pipeline: load Mandovi KML → POST water-depth (or use cached/prebundled) → mask.
+ * Full pipeline: load Mandovi KML → POST water-depth (fresh when possible) → mask.
+ *
+ * On each app run with preferFresh (default true): hit JalNetra for the latest
+ * Sentinel-1 permanent water + Sentinel-2 depth, so hosted users see current
+ * satellite water — not only the bundled Oct snapshot.
+ *
+ * Fallback order: live API → fresh localStorage cache → prebundled files.
+ *
+ * @param {{ depth_min_m?: number, depth_max_m?: number, preferFresh?: boolean, forceRefresh?: boolean }} [opts]
  */
 export async function fetchJalnetraWaterDepth(opts = {}) {
   const depthMin = Number(opts.depth_min_m) || SURVEY_DEPTH_MIN_M;
   const depthMax = Number(opts.depth_max_m) || SURVEY_DEPTH_MAX_M;
+  const preferFresh = opts.preferFresh !== false;
+  const forceRefresh = !!opts.forceRefresh;
+  const timeoutMs = Number(opts.timeoutMs) || REQUEST_TIMEOUT_MS;
 
   const kmlInfo = await loadMandoviRiverKml();
   let aoiHash = "mandovi";
@@ -361,34 +416,18 @@ export async function fetchJalnetraWaterDepth(opts = {}) {
 
   const key = cacheKey(aoiHash, depthMin, depthMax);
   const cached = readCache(key);
-  if (cached?.permId && cached?.depthId) {
+
+  // Soft cache: reuse only if still within TTL and caller did not ask for fresh.
+  if (!preferFresh && !forceRefresh && cacheIsFresh(cached)) {
     try {
-      const [permKml, depthKml] = await Promise.all([
-        downloadWaterDepthKml(cached.permId),
-        downloadWaterDepthKml(cached.depthId),
-      ]);
-      const permOverlay = parseFloodOverlayKml(permKml);
-      const depthOverlay = parseFloodOverlayKml(depthKml);
-      if (permOverlay && depthOverlay) {
-        const mask = await buildWaterDepthMask(permOverlay, depthOverlay, {
-          min_m: cached.meta?.depth?.min_m ?? depthMin,
-          max_m: cached.meta?.depth?.max_m ?? depthMax,
-        });
-        return {
-          mask,
-          water_area_ha: cached.water_area_ha,
-          depth_min_m: cached.depth_min_m,
-          depth_max_m: cached.depth_max_m,
-          meta: cached.meta,
-          provenance: "CACHED_JALNETRA_API",
-        };
-      }
+      const fromCache = await maskFromCacheIds(cached, depthMin, depthMax);
+      if (fromCache) return fromCache;
     } catch (cacheErr) {
       debug("cached KMLs expired or failed", cacheErr.message);
     }
   }
 
-  // Attempt live API with timeout
+  // Prefer live API so every run can pick up the newest Sentinel scene.
   try {
     const kmlBlob = new Blob([kmlInfo.text], { type: "application/vnd.google-earth.kml+xml" });
     const meta = await postWaterDepth({
@@ -396,6 +435,7 @@ export async function fetchJalnetraWaterDepth(opts = {}) {
       filename: kmlInfo.filename,
       depth_min_m: depthMin,
       depth_max_m: depthMax,
+      timeoutMs,
     });
     const permUrl = meta?.permanent_water?.kml_download_url || meta?.permanent_water?.kml_id;
     const depthUrl = meta?.depth?.kml_download_url || meta?.depth?.kml_id;
@@ -418,6 +458,7 @@ export async function fetchJalnetraWaterDepth(opts = {}) {
           depth_min_m: meta.depth?.min_m ?? depthMin,
           depth_max_m: meta.depth?.max_m ?? depthMax,
           meta,
+          fetchedAt: Date.now(),
         });
         return {
           mask,
@@ -425,17 +466,40 @@ export async function fetchJalnetraWaterDepth(opts = {}) {
           depth_min_m: meta.depth?.min_m ?? depthMin,
           depth_max_m: meta.depth?.max_m ?? depthMax,
           meta,
+          asOf:
+            meta?.sentinel1_image_date ||
+            meta?.sentinel2_image_date ||
+            meta?.image_date ||
+            null,
           provenance: "LIVE_JALNETRA_API",
         };
       }
     }
   } catch (apiErr) {
-    debug("Live API error, falling back to prebundled:", apiErr.message);
+    debug("Live API error, falling back to cache/prebundled:", apiErr.message);
   }
 
-  // Fallback to prebundled Mandovi data
+  // API down — use cache if any (even stale), then bundled files.
+  if (cached?.permId) {
+    try {
+      const fromCache = await maskFromCacheIds(cached, depthMin, depthMax);
+      if (fromCache) return fromCache;
+    } catch (cacheErr) {
+      debug("cache fallback failed", cacheErr.message);
+    }
+  }
+
   const prebundled = await loadPrebundledMandoviWaterDepth(depthMin, depthMax);
-  if (prebundled) return prebundled;
+  if (prebundled) {
+    return {
+      ...prebundled,
+      asOf:
+        prebundled.meta?.sentinel1_image_date ||
+        prebundled.meta?.sentinel2_image_date ||
+        prebundled.meta?.image_date ||
+        null,
+    };
+  }
 
   throw new Error("Unable to load Mandovi water-depth from live API or local prebundled cache.");
 }

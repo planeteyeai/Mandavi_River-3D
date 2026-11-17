@@ -225,14 +225,14 @@ export function createRiver(dataset) {
  */
 /**
  * Clip river water mesh to hydrology.
- * For Mandovi: authoritative mask is the user live_water_mandavi.kml GroundOverlay
- * (water_extent.png). Do not invent bay/apron water outside that mask.
+ * For Mandovi: prefer fused optical∪SAR mask (S2 MNDWI + S1 permanent water);
+ * fall back to live_water_mandavi.kml alone. Do not invent bay/apron water.
  *
  * @param {object} river
  * @param {object|null} lulc
  * @param {object|null} [_osmWater]
  * @param {object|null} [dataset]
- * @param {{ isWaterAtLocal?: Function, available?: boolean }|null} [liveWaterMask]
+ * @param {{ isWaterAtLocal?: Function, available?: boolean, provenance?: string, source?: string }|null} [liveWaterMask]
  */
 export function clipRiverToHydrology(river, lulc, _osmWater = null, dataset = null, liveWaterMask = null) {
   if (!river?.bathymetry) return;
@@ -259,23 +259,36 @@ export function clipRiverToHydrology(river, lulc, _osmWater = null, dataset = nu
     const x = (pos[a * 3] + pos[b * 3] + pos[c * 3]) / 3;
     const z = (pos[a * 3 + 2] + pos[b * 3 + 2] + pos[c * 3 + 2]) / 3;
 
-    // Mandovi: keep triangle if any vertex sits in live_water_mandavi.kml
-    // (centroid-only tests left hard walls / empty channel gaps).
-    if (isMandovi && useLiveMask) {
+    // Mandovi: KML water-boundary ring is the authoritative shoreline.
+    // Live/fused raster alone stair-steps and bleeds at creek/island endings.
+    if (isMandovi && ring && ring.length >= 3) {
       const ax = pos[a * 3];
       const az = pos[a * 3 + 2];
       const bx = pos[b * 3];
       const bz = pos[b * 3 + 2];
       const cx = pos[c * 3];
       const cz = pos[c * 3 + 2];
-      const wet =
-        liveWaterMask.isWaterAtLocal(x, z) ||
-        liveWaterMask.isWaterAtLocal(ax, az) ||
-        liveWaterMask.isWaterAtLocal(bx, bz) ||
-        liveWaterMask.isWaterAtLocal(cx, cz);
-      if (!wet) {
+      const inRing =
+        isPointInPolygon(x, z, ring) ||
+        isPointInPolygon(ax, az, ring) ||
+        isPointInPolygon(bx, bz, ring) ||
+        isPointInPolygon(cx, cz, ring);
+      if (!inRing) {
         removed++;
         continue;
+      }
+      // Optional: drop triangles that are clearly dry in the live mask (land
+      // pockets inside the ring), but never expand past the ring.
+      if (useLiveMask) {
+        const wet =
+          liveWaterMask.isWaterAtLocal(x, z) ||
+          liveWaterMask.isWaterAtLocal(ax, az) ||
+          liveWaterMask.isWaterAtLocal(bx, bz) ||
+          liveWaterMask.isWaterAtLocal(cx, cz);
+        if (!wet) {
+          removed++;
+          continue;
+        }
       }
       keep.push(a, b, c);
       continue;
@@ -318,7 +331,10 @@ export function clipRiverToHydrology(river, lulc, _osmWater = null, dataset = nu
     removed,
     profileReady,
     liveWaterMask: useLiveMask,
-    source: useLiveMask ? "live_water_mandavi.kml" : "hydrology/LULC",
+    source: useLiveMask
+      ? liveWaterMask.source || liveWaterMask.provenance || "live_water_mandavi.kml"
+      : "hydrology/LULC",
+    provenance: liveWaterMask?.provenance || null,
   });
 }
 
