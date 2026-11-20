@@ -77,7 +77,7 @@ Browser-based test page:
 | Small Ships | GLTF | 3 MB | `public/data/mandovi/Ships/Small_Ships/source/` | Sentinel-1 detections |
 | Silja Serenade | GLB | 3.83 MB | `src/data/silja-line-ms-silja-serenade-1990/source/` | Lucky Seven casino ship |
 | MS Gabriella | GLB | 2.86 MB | `src/data/viking-line-ms-gabriella-19922016/source/` | Pride of Goa II casino ship |
-| Fishing Vessel VII | DAE | 104 MB | `public/data/fishing-vessel-vii/` | Pride of Goa casino ship |
+| Fishing Vessel VII | GZIP DAE | ~29 MB | `public/data/fishing-vessel-vii/` | Pride of Goa casino ship |
 
 ## Verification Steps
 
@@ -165,7 +165,7 @@ vercel --prod
 **Solution:** This is just a warning, not an error. Models load fine.
 
 ### Issue: DAE model takes long to load
-**Solution:** 104MB Fishing Vessel is large. Consider converting to GLB for better compression.
+**Solution:** The DAE is gzip-compressed for deployment and decompressed in the browser before parsing.
 
 ## Testing Checklist
 

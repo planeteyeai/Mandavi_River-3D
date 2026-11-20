@@ -9,7 +9,7 @@ The application uses 3D ship models:
 - **Small Ship Detection Model** (GLTF, 3MB) - For Sentinel-1 detected vessels
 - **Silja Serenade** (GLB, 3.83MB) - Casino ship "Lucky Seven"
 - **MS Gabriella** (GLB, 2.86MB) - Casino ship "Pride of Goa II"
-- **Fishing Vessel VII** (DAE, 104MB) - Casino ship "Pride of Goa"
+- **Fishing Vessel VII** (gzip-compressed DAE, ~29MB) - Casino ship "Pride of Goa"
 
 ### Verify Models Before Deployment
 
@@ -85,6 +85,7 @@ The app is configured to:
 
 - **GLB/GLTF files in `src/`**: Bundled by Vite, get hashed filenames
 - **Files in `public/`**: Served as-is, keep original paths
+- The Fishing Vessel DAE is served as `Fishing Vessel VII.dae.gz` to stay below Vercel's per-file limit; the browser decompresses it before parsing.
 - All 3D models are automatically discovered and loaded
 
 ## 📦 File Structure
@@ -94,7 +95,7 @@ Mandavi_River-3D/
 ├── public/
 │   └── data/
 │       ├── fishing-vessel-vii/
-│       │   └── Fishing Vessel VII.dae
+│       │   └── Fishing Vessel VII.dae.gz
 │       └── mandovi/
 │           └── Ships/
 │               └── Small_Ships/source/model.gltf

@@ -17,7 +17,7 @@ import gabriellaUrl from "../../data/viking-line-ms-gabriella-19922016/source/Ga
 import casinoKmlUrl from "../../data/Casino Ship Kml.kml?url";
 
 const FISHING_DIR = "/data/fishing-vessel-vii/";
-const FISHING_DAE = `${FISHING_DIR}Fishing%20Vessel%20VII.dae`;
+const FISHING_DAE_GZIP = `${FISHING_DIR}Fishing%20Vessel%20VII.dae.gz`;
 
 const MODEL_LABEL = {
   silja: "Silja Serenade",
@@ -201,9 +201,26 @@ function prepareTemplate(object3d) {
 }
 
 async function loadFishingTemplate() {
+  const response = await fetch(FISHING_DAE_GZIP);
+  if (!response.ok) {
+    throw new Error(`Fishing Vessel model request failed: ${response.status}`);
+  }
+
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
+  let daeText;
+  if (isGzip) {
+    if (typeof DecompressionStream !== "function") {
+      throw new Error("This browser does not support gzip model decompression");
+    }
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    daeText = await new Response(stream).text();
+  } else {
+    daeText = new TextDecoder().decode(bytes);
+  }
+
   const loader = new ColladaLoader();
-  loader.setResourcePath(FISHING_DIR);
-  const collada = await loader.loadAsync(FISHING_DAE);
+  const collada = loader.parse(daeText, new URL(FISHING_DIR, document.baseURI).href);
   const scene = collada.scene || collada;
   scene.traverse((obj) => {
     if (!obj.isMesh) return;
@@ -292,11 +309,28 @@ export function createCasinoShipsLayer(scene, dataset) {
   async function load() {
     const placemarks = await loadCasinoPlacemarks();
     const needed = new Set(placemarks.map((m) => resolveVessel(m.name).model));
+    const loadOptionalTemplate = async (name, loadTemplate) => {
+      try {
+        return await loadTemplate();
+      } catch (error) {
+        console.warn(
+          `[casino-ships] ${name} model failed to load; continuing with other ships`,
+          error?.message || error,
+        );
+        return null;
+      }
+    };
 
     const [fishingTpl, siljaTpl, gabriellaTpl] = await Promise.all([
-      needed.has("fishing") ? loadFishingTemplate() : Promise.resolve(null),
-      needed.has("silja") ? loadGlbTemplate(siljaUrl) : Promise.resolve(null),
-      needed.has("gabriella") ? loadGlbTemplate(gabriellaUrl) : Promise.resolve(null),
+      needed.has("fishing")
+        ? loadOptionalTemplate("Fishing Vessel VII", loadFishingTemplate)
+        : Promise.resolve(null),
+      needed.has("silja")
+        ? loadOptionalTemplate("Silja Serenade", () => loadGlbTemplate(siljaUrl))
+        : Promise.resolve(null),
+      needed.has("gabriella")
+        ? loadOptionalTemplate("MS Gabriella", () => loadGlbTemplate(gabriellaUrl))
+        : Promise.resolve(null),
     ]);
 
     const templates = {

@@ -42,9 +42,9 @@ All ship 3D models are working and loading properly:
 - ✅ **Small Ships** (3MB GLTF) - Sentinel-1 vessel detections
 - ✅ **Silja Serenade** (3.8MB GLB) - Lucky Seven casino ship
 - ✅ **MS Gabriella** (2.9MB GLB) - Pride of Goa II casino ship
-- ✅ **Fishing Vessel VII** (104MB DAE) - Pride of Goa casino ship
+- ✅ **Fishing Vessel VII** (~29MB compressed DAE) - Pride of Goa casino ship
 
-**Total**: ~114MB of models, loaded progressively on-demand
+**Total**: ~40MB of ship models, loaded progressively on-demand
 
 ## 🔧 What Was Fixed
 
@@ -192,7 +192,7 @@ docker-compose up -d
 ## 📊 Performance
 
 - **Initial Load**: ~500KB (HTML, CSS, JS)
-- **Models**: Loaded on-demand (~114MB total)
+- **Models**: Loaded on-demand (~40MB total)
 - **Gzip**: ~70% size reduction
 - **Caching**: 1 year for models, 7 days for data
 - **Browser Cache**: Instant loading on repeat visits

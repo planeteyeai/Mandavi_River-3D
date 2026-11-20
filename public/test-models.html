@@ -55,10 +55,10 @@
                 expectedSize: 3000000
             },
             {
-                name: 'Fishing Vessel VII (DAE)',
-                url: '/data/fishing-vessel-vii/Fishing%20Vessel%20VII.dae',
-                type: 'DAE',
-                expectedSize: 100000000
+                name: 'Fishing Vessel VII (compressed DAE)',
+                url: '/data/fishing-vessel-vii/Fishing%20Vessel%20VII.dae.gz',
+                type: 'GZIP DAE',
+                expectedSize: 30300000
             }
         ];
 
@@ -125,7 +125,7 @@
                 <p style="font-size: 12px; color: #666;">
                     Note: Casino ship GLB files (Silja Serenade & MS Gabriella) are loaded from src/ 
                     and will be bundled by Vite during build. They won't appear in this test but will 
-                    work in the actual application.
+                    work in the actual application. Fishing Vessel VII is served as a compressed DAE.
                 </p>
             `;
             resultsDiv.appendChild(summary);

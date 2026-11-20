@@ -44,6 +44,7 @@ Thumbs.db
 # Still exclude oversized / unused assets (Vercel ~100MB file limit)
 public/data/fishing-vessel-vii/Fishing Vessel VII.dae
 dist/data/fishing-vessel-vii/Fishing Vessel VII.dae
+!public/data/fishing-vessel-vii/Fishing Vessel VII.dae.gz
 /Mandovi_AOI_FABDEM.tif
 /Mandovi_FABDEM.tif
 src/data/fishing-vessel-vii/source

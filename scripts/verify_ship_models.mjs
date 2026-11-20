@@ -26,9 +26,10 @@ const MODELS = [
     type: 'GLB'
   },
   {
-    name: 'Fishing Vessel VII',
-    path: 'public/data/fishing-vessel-vii/Fishing Vessel VII.dae',
-    type: 'DAE'
+    name: 'Fishing Vessel VII (compressed for deployment)',
+    path: 'public/data/fishing-vessel-vii/Fishing Vessel VII.dae.gz',
+    type: 'GZIP DAE',
+    maxSizeMB: 100
   }
 ];
 
@@ -59,6 +60,11 @@ for (const model of MODELS) {
   if (exists) {
     const stats = statSync(fullPath);
     const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+    if (model.maxSizeMB && stats.size >= model.maxSizeMB * 1024 * 1024) {
+      console.log(`  ✗ ${model.name} exceeds the ${model.maxSizeMB} MB deployment limit\n`);
+      allValid = false;
+      continue;
+    }
     console.log(`  ✓ ${model.name} (${model.type})`);
     console.log(`    Path: ${model.path}`);
     console.log(`    Size: ${sizeMB} MB\n`);
