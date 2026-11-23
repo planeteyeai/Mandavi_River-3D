@@ -50,16 +50,19 @@
 .gate-ghost { background: transparent; color: #d5e4ea; border: 1px solid rgba(154, 212, 224, 0.35) !important; }
 .gate-status {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 30;
-  max-width: 280px;
+  left: max(16px, env(safe-area-inset-left));
+  top: calc(max(14px, env(safe-area-inset-top)) + 108px);
+  right: auto;
+  bottom: auto;
+  z-index: 28;
+  max-width: min(280px, calc(100vw - 32px));
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(8, 14, 22, 0.86);
   color: #d5e7ee;
   font: 12px/1.4 Inter, system-ui, sans-serif;
   border: 1px solid rgba(154, 212, 224, 0.2);
+  pointer-events: none;
 }
 .gate-status[hidden] { display: none; }
 .gate-status b { display: block; margin-bottom: 4px; letter-spacing: 0.08em; font-size: 10px; color: #8fd0c8; }

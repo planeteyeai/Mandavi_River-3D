@@ -43,7 +43,8 @@ export async function applySurveyBathymetry(dataset) {
     const width = st.width || bath.widthM?.[i] || 80;
     const lateralOffsetMeters = (u - 0.5) * width;
     const rawCh = st.along ?? st.meters ?? st.chainage_m ?? 0;
-    // Survey CH 0+000 = Arabian Sea / Aguada mouth
+    // Survey CS0 = Arabian Sea / Aguada mouth. UI chainage is east→west (0+000 Old Goa),
+    // so map corridor meters into survey mouth-origin meters when needed.
     const chainageMeters = mouth.reversed ? Math.max(0, totalLen - rawCh) : rawCh;
 
     const sample = bathymetryService.getBathymetryAt({

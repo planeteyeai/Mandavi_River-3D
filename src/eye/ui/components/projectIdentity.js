@@ -1,4 +1,4 @@
-import riverEyeLogoUrl from "../../assets/river-eye-logo.png";
+import riverEyeLogoUrl from "../../assets/river-eye-logo.webp";
 
 function num(v) {
   const n = Number(v);
@@ -12,7 +12,7 @@ export function mountProjectIdentity(root, dataset = null) {
   el.title = "PLANET EYE AI · Mandovi River Intelligence Platform · Hydraulic profile telemetry";
   el.innerHTML = `
     <div class="gis-brand-mark gis-brand-mark--logo-only">
-      <img class="planet-eye-logo" src="${riverEyeLogoUrl}" alt="River Eye" width="88" height="88" decoding="async" />
+      <img class="planet-eye-logo" src="${riverEyeLogoUrl}" alt="RiverEye Mountain River" width="168" height="112" decoding="async" />
     </div>
     <div class="brand-telemetry-divider" aria-hidden="true" hidden style="display:none"></div>
     <div class="weather-wq water-telemetry-wq" aria-label="Hydraulic profile water level, flow velocity, and wetted area" hidden style="display:none">

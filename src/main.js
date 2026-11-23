@@ -11,7 +11,13 @@ import { createLoadingScene } from "./eye/loadingScene.js";
 import { FALLBACK_WEATHER_LL } from "./eye/services/weatherService.js";
 import { AQI_FALLBACK_LL } from "./eye/services/aqiService.js";
 import { bindRiverSession } from "./eye/session/riverSession.js";
-import { jalnetraEndpointIds, runJalNetra, tifDownloadUrl, waitForEndpoint } from "./eye/session/jalnetraClient.js";
+import {
+  jalnetraEndpointIds,
+  kickBodCodFirst,
+  runJalNetra,
+  tifDownloadUrl,
+  waitForEndpoint,
+} from "./eye/session/jalnetraClient.js";
 import { clearLiveOverlay } from "./eye/session/liveLayers.js";
 import { buildDatasetFromKml, prepareRiverUpload } from "./eye/geo/datasetFromKml.js";
 import { loadFabdemDtmWithTimeout } from "./eye/geo/dtm.js";
@@ -482,7 +488,14 @@ async function boot() {
     requestAnimationFrame(loop);
     saveSession(session);
 
-    // JalNetra after banks have a head start — 15 layers were starving OSM/buildings.
+    // BOD/COD first — do not wait for the delayed full JalNetra batch.
+    pill.show();
+    void kickBodCodFirst((evt) => {
+      pill.update(evt);
+      if (evt.state === "ok" || evt.state === "error") saveSession(session);
+    });
+
+    // Remaining JalNetra after banks have a head start — other layers were starving OSM/buildings.
     setTimeout(() => {
       runJalNetra((evt) => {
         pill.update(evt);

@@ -102,19 +102,20 @@ function buildPolygonCorridor(ringLocal, centerlineLocal, depthPoints, opts) {
     // Depth along center thalweg: CSIR-NIO official hydrographic & geophysical survey
     // Aguada Bay (11.5m-13.8m), Panaji/Atal Setu deep channel (12.8m-16.0m),
     // Ribandar/Chorao (11.0m-14.5m), Old Goa (9.8m-13.5m).
-    const tNorm = s.t; // 0 at Aguada, 1 at Old Goa
+    // Chainage runs east→west (0+000 Old Goa → Aguada); tMouth=0 at Aguada (west).
+    const tMouth = 1 - s.t;
     let centerDepth;
-    if (tNorm <= 0.22) {
-      const seg = tNorm / 0.22;
+    if (tMouth <= 0.22) {
+      const seg = tMouth / 0.22;
       centerDepth = 12.0 + 1.8 * Math.sin(seg * Math.PI) + (1.0 - seg) * 0.4;
-    } else if (tNorm <= 0.52) {
-      const seg = (tNorm - 0.22) / 0.30;
+    } else if (tMouth <= 0.52) {
+      const seg = (tMouth - 0.22) / 0.30;
       centerDepth = 12.8 + 2.8 * Math.sin(seg * Math.PI) + Math.sin(seg * 3.0 * Math.PI) * 0.5;
-    } else if (tNorm <= 0.77) {
-      const seg = (tNorm - 0.52) / 0.25;
+    } else if (tMouth <= 0.77) {
+      const seg = (tMouth - 0.52) / 0.25;
       centerDepth = 11.5 + 2.2 * Math.sin(seg * Math.PI);
     } else {
-      const seg = (tNorm - 0.77) / 0.23;
+      const seg = (tMouth - 0.77) / 0.23;
       centerDepth = 11.0 + 2.0 * Math.sin(seg * Math.PI * 0.8);
     }
     s.depth = THREE.MathUtils.clamp(centerDepth, 8.5, 16.5);
@@ -979,7 +980,11 @@ function sampleDepth(x, z, points, index, station) {
   // Parabolic bank-to-thalweg factor (0 at bank, 1 at center)
   const bankFactor = Math.max(0, 1.0 - Math.pow(u, 1.8));
 
-  // Mandovi CSIR-NIO reach thalweg profile:
+  // Mandovi CSIR-NIO reach thalweg profile (distance from Aguada mouth).
+  // Chainage is east→west (0+000 Old Goa), so mouth distance = total − ch when needed.
+  // Here `ch` is station chainage_m / along — convert via optional total on station.
+  const total = Number(station?.totalLengthM) || Number(station?.corridorLengthM) || 12715;
+  const fromMouth = Math.max(0, total - (Number(ch) || 0));
   // Aguada Bay (0 - 4km): 12.5 - 14.5m
   // Panaji Bridges & Atal Setu (4 - 7km): 13.5 - 16.2m
   // Ribandar / Chorao (7 - 11km): 11.5 - 14.8m
@@ -987,12 +992,12 @@ function sampleDepth(x, z, points, index, station) {
   // Amona / Navelim (14 - 17km): 9.5 - 16.5m
   // Volvoi / Khandepar (17 - 19km): 8.5 - 14.5m
   let centerDepth = 12.5;
-  if (ch < 4000) centerDepth = 13.2 + Math.sin(ch * 0.001) * 1.2;
-  else if (ch < 7500) centerDepth = 14.8 + Math.sin((ch - 4000) * 0.0012) * 1.4; // Scours near Atal Setu
-  else if (ch < 11000) centerDepth = 12.8 + Math.sin((ch - 7500) * 0.001) * 1.5;
-  else if (ch < 14000) centerDepth = 12.2 + Math.cos((ch - 11000) * 0.001) * 1.8;
-  else if (ch < 17000) centerDepth = 11.5 + Math.sin((ch - 14000) * 0.001) * 2.2;
-  else centerDepth = 10.2 + Math.cos((ch - 17000) * 0.001) * 1.8;
+  if (fromMouth < 4000) centerDepth = 13.2 + Math.sin(fromMouth * 0.001) * 1.2;
+  else if (fromMouth < 7500) centerDepth = 14.8 + Math.sin((fromMouth - 4000) * 0.0012) * 1.4; // Scours near Atal Setu
+  else if (fromMouth < 11000) centerDepth = 12.8 + Math.sin((fromMouth - 7500) * 0.001) * 1.5;
+  else if (fromMouth < 14000) centerDepth = 12.2 + Math.cos((fromMouth - 11000) * 0.001) * 1.8;
+  else if (fromMouth < 17000) centerDepth = 11.5 + Math.sin((fromMouth - 14000) * 0.001) * 2.2;
+  else centerDepth = 10.2 + Math.cos((fromMouth - 17000) * 0.001) * 1.8;
 
   const bankDepth = 0.85;
   const dEst = bankDepth + (centerDepth - bankDepth) * bankFactor;

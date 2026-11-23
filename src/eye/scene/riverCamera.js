@@ -366,7 +366,7 @@ export function fullRiverOverviewPose(stations, bounds, k, outP, outL, outUp, op
   const camHeight = horizontalDist * Math.tan(pitch) + heightBoost;
   const minHeight = opts.fullExtent ? 650 : 420;
 
-  // Due south of corridor center — screen left = west (0+000), right = east.
+  // Due south of corridor center — screen left = west (Aguada / high CH), right = east (0+000).
   // Do not add westBias: that skews the KML into a diagonal vs the reference map.
   const southBias = horizontalDist * 0.92;
   outP.set(

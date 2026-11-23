@@ -573,6 +573,17 @@ export function mountWeatherWidget(root) {
   void showSurveyBodCodNow();
   void ensureBodData(true);
   void renderDischarge();
+
+  // When kickBodCodFirst / runJalNetra finishes main-bod-cod, refresh HUD immediately.
+  function onJalnetraBodCod(e) {
+    if (e.detail?.id !== "bod-cod") return;
+    if (e.detail?.ok === true || e.detail?.state === "ok") {
+      clearBodCodCache();
+      void ensureBodData(true);
+    }
+  }
+  window.addEventListener("planeteye-endpoint", onJalnetraBodCod);
+
   // Refresh regularly: re-paint survey + retry live every 10 minutes
   const bodRefreshTimer = window.setInterval(() => {
     void showSurveyBodCodNow();
@@ -589,6 +600,7 @@ export function mountWeatherWidget(root) {
       window.clearInterval(timer);
       window.clearInterval(weatherRefreshTimer);
       window.clearInterval(bodRefreshTimer);
+      window.removeEventListener("planeteye-endpoint", onJalnetraBodCod);
       document.removeEventListener("bod-cod-time-change", onBodCodTime);
       document.removeEventListener("joining-stream-wq", onJoiningStreamWq);
       document.removeEventListener("pollution-hotspot-select", onPollutionHotspotSelect);

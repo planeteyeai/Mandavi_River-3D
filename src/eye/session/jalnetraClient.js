@@ -14,10 +14,14 @@ export { API_BASE, resolveJalnetraBase } from "./jalnetraBase.js";
 
 /** Fire these first on project start — no queue delay behind other layers. */
 const SILT_PRIORITY_IDS = ["silt-classification", "silt-volume"];
+/** Absolute first: live BOD/COD for weather HUD before any other JalNetra layer. */
+const BOD_COD_FIRST_IDS = ["bod-cod"];
 
 /** Paths match live JalNetra OpenAPI (Railway). Ids stay stable for session/UI. */
 const ENDPOINTS = [
-  // Silt first so date-wise overlays are ready as soon as Land Use opens.
+  // BOD/COD first so LIVE WEATHER numbers upgrade ASAP.
+  { id: "bod-cod", path: "/api/main-bod-cod" },
+  // Silt next so date-wise overlays are ready as soon as Land Use opens.
   { id: "silt-classification", path: "/api/silt-classification" },
   { id: "silt-volume", path: "/api/silt-volume" },
   { id: "flood-water", path: "/api/flood-water" },
@@ -30,8 +34,6 @@ const ENDPOINTS = [
   { id: "lithology", path: "/api/lithology" },
   { id: "vegetation-type", path: "/api/vegetation-type" },
   { id: "vegetation-health", path: "/api/vegetation-health" },
-  // OpenAPI: POST /api/main-bod-cod (alias /api/bod-cod). No dates — Landsat window is server-side.
-  { id: "bod-cod", path: "/api/main-bod-cod" },
   { id: "streams-bod-cod", path: "/api/streams-bod-cod" },
   { id: "lulc", path: "/api/lulc" },
   { id: "bank-erosion", path: "/api/bank-erosion" },
@@ -423,7 +425,7 @@ async function runOneEndpoint(spec, session, onProgress) {
 
 /**
  * POST every endpoint that does not already have a stored result.
- * Silt classification + volume start immediately in parallel (no queue wait).
+ * Order: bod-cod first → silt pair → remaining (low concurrency).
  * Same silt dates as cache → skip API (instant reuse).
  */
 export function runJalNetra(onProgress) {
@@ -437,22 +439,49 @@ export function runJalNetra(onProgress) {
     }
   }
   const todo = ENDPOINTS.filter((spec) => {
+    // Already kicked early (e.g. bod-cod) — do not double-POST.
+    if (session.pending?.[spec.id] && !session.results?.[spec.id]) return false;
     if (SILT_PRIORITY_IDS.includes(spec.id)) return !siltCacheIsFresh(spec.id);
     return !session.results[spec.id];
   });
   for (const spec of todo) session.pending[spec.id] = true;
 
-  const priority = todo.filter((spec) => SILT_PRIORITY_IDS.includes(spec.id));
-  const rest = todo.filter((spec) => !SILT_PRIORITY_IDS.includes(spec.id));
+  const bodFirst = todo.filter((spec) => BOD_COD_FIRST_IDS.includes(spec.id));
+  const siltPriority = todo.filter((spec) => SILT_PRIORITY_IDS.includes(spec.id));
+  const rest = todo.filter(
+    (spec) => !BOD_COD_FIRST_IDS.includes(spec.id) && !SILT_PRIORITY_IDS.includes(spec.id),
+  );
 
-  // Silt pair fires at once; keep other layers low-concurrency so banks/trees stay responsive.
-  running = Promise.all([
-    Promise.all(priority.map((spec) => runOneEndpoint(spec, session, onProgress))),
-    mapLimit(rest, 2, (spec) => runOneEndpoint(spec, session, onProgress)),
-  ]).finally(() => {
+  // BOD/COD fires immediately; silt follows in parallel; rest stays low-concurrency.
+  running = (async () => {
+    await Promise.all(bodFirst.map((spec) => runOneEndpoint(spec, session, onProgress)));
+    await Promise.all([
+      Promise.all(siltPriority.map((spec) => runOneEndpoint(spec, session, onProgress))),
+      mapLimit(rest, 2, (spec) => runOneEndpoint(spec, session, onProgress)),
+    ]);
+  })().finally(() => {
     running = null;
   });
   return running;
+}
+
+/** Fire main BOD/COD immediately (before the delayed full JalNetra batch). */
+export function kickBodCodFirst(onProgress) {
+  const session = getRiverSession();
+  if (!session?.kmlText) return Promise.resolve(null);
+  if (session.results?.["bod-cod"]) return Promise.resolve(session.results["bod-cod"]);
+  if (session.pending?.["bod-cod"]) return waitForEndpoint("bod-cod", TIMEOUT_MS);
+  return fetchEndpointNow("bod-cod").then((body) => {
+    onProgress?.({ id: "bod-cod", state: body ? "ok" : "error" });
+    return body;
+  }).catch((err) => {
+    onProgress?.({
+      id: "bod-cod",
+      state: "error",
+      message: err?.message || String(err),
+    });
+    return null;
+  });
 }
 
 /** True while either silt endpoint is in flight for the active river. */
