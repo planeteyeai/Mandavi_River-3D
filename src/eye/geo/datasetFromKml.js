@@ -65,8 +65,17 @@ async function loadMandoviReferenceKmls() {
   if (!parsedChainage.chainage.length) throw new Error("Mandovi 10 m chainage KML contains no named chainage points");
   if (!mainFeature) throw new Error("Mandovi main stream KML contains no usable line");
   const mainCenterline = (chainageCenterline?.length >= 2 ? chainageCenterline : mainFeature.coordinates).slice();
-  const chainageStart = parsedChainage.chainage[0];
-  if (coordinateDistanceSquared(mainCenterline.at(-1), chainageStart) < coordinateDistanceSquared(mainCenterline[0], chainageStart)) {
+  // Align river direction to KML Block_No 1 (authoritative CH start), not a hard-coded mouth.
+  const chainageStart = {
+    lon: parsedChainage.originLon ?? parsedChainage.chainage[0]?.lon,
+    lat: parsedChainage.originLat ?? parsedChainage.chainage[0]?.lat,
+  };
+  if (
+    Number.isFinite(chainageStart.lon) &&
+    Number.isFinite(chainageStart.lat) &&
+    coordinateDistanceSquared(mainCenterline.at(-1), chainageStart) <
+      coordinateDistanceSquared(mainCenterline[0], chainageStart)
+  ) {
     mainCenterline.reverse();
   }
   // One stream per Placemark only — count matches the supplied upstream KML (6/7/8…).
@@ -86,10 +95,17 @@ async function loadMandoviReferenceKmls() {
     chainageIntervalM: parsedChainage.intervalM,
     mainStreamPoints: mainCenterline.length,
     joiningStreamPaths: upstreams.length,
+    originMeters: parsedChainage.originMeters,
+    originLon: parsedChainage.originLon,
+    originLat: parsedChainage.originLat,
+    note: "UI chainage start = KML Block_No 1",
   });
   return {
     chainage: parsedChainage.chainage,
     chainageIntervalM: parsedChainage.intervalM || 10,
+    chainageOriginMeters: parsedChainage.originMeters ?? 0,
+    chainageOriginLon: parsedChainage.originLon,
+    chainageOriginLat: parsedChainage.originLat,
     mainCenterline,
     mainStemKml: textByKey.mainStreamKml,
     upstreams,
@@ -603,6 +619,10 @@ export async function buildDatasetFromKml(prepared, onProgress) {
     centerlineLocal,
     chainage,
     chainageIntervalM,
+    /** Authoritative UI start from KML Block_No 1 (Chainagekml_mandovi.kml). */
+    chainageOriginMeters: mandoviSources?.chainageOriginMeters ?? chainage[0]?.meters ?? 0,
+    chainageOriginLon: mandoviSources?.chainageOriginLon ?? null,
+    chainageOriginLat: mandoviSources?.chainageOriginLat ?? null,
     corridor,
     bathymetry,
     bridges,

@@ -109,7 +109,7 @@ export function computeSceneBounds(dataset) {
  */
 export function computeActiveSceneBounds(dataset, padRatio = 0.15) {
   const stations = dataset.corridor?.stations || [];
-  // For wide estuaries (Mandovi), keep the entire river from Old Goa 0+000 to Aguada Bay
+  // For wide estuaries (Mandovi), keep the entire river (Old Goa 0+000 → Aguada)
   const isEstuary = stations.some((s) => (s.leftWidth || s.halfWidth || 0) > 300);
   const lo = isEstuary ? 0 : Math.floor(stations.length * 0.12);
   const hi = isEstuary ? stations.length : Math.ceil(stations.length * 0.88);

@@ -65,12 +65,30 @@ export function parseTenMeterChainagePoints(text) {
     chainage[0].major = true;
     chainage[chainage.length - 1].major = true;
   }
+
+  // Block_No 1 in the KML is the authoritative chainage-view start (not a hard-coded mouth).
+  const block1 = String(text || "").match(
+    /<Data\s+name="Block_No"[^>]*>\s*<value>\s*1\s*<\/value>[\s\S]{0,700}?<coordinates>\s*([-\d.]+)\s*,\s*([-\d.]+)/i,
+  );
+  const block1StartM = String(text || "").match(
+    /<Data\s+name="Block_No"[^>]*>\s*<value>\s*1\s*<\/value>[\s\S]{0,400}?<Data\s+name="Start_CH_m"[^>]*>\s*<value>\s*([^<]+?)\s*<\/value>/i,
+  );
+  const originMeters = Number.isFinite(Number(block1StartM?.[1]))
+    ? Number(block1StartM[1])
+    : chainage[0]?.meters ?? 0;
+  const originLon = Number(block1?.[1]);
+  const originLat = Number(block1?.[2]);
+
   return {
     polygon: null,
     centerline: null,
     chainage,
     intervalM: detectChainageIntervalM(chainage),
     sourceName: "10 m chainage pins",
+    /** Meters for UI start = KML Block_No 1 / CH 0+000. */
+    originMeters,
+    originLon: Number.isFinite(originLon) ? originLon : chainage[0]?.lon ?? null,
+    originLat: Number.isFinite(originLat) ? originLat : chainage[0]?.lat ?? null,
   };
 }
 

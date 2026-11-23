@@ -61,7 +61,7 @@ export function buildPollutionSides(records = [], sidesList = POLLUTION_KEY_SIDE
 
   for (const b of buckets) {
     // Geographic order along corridor (lon west→east), then lat — not chainage,
-    // because many western sites snap to the same high chainage near Aguada.
+    // because many western sites snap to the same CH 0+000.
     b.sites.sort((a, c) => {
       const dLon = (a.lon ?? 0) - (c.lon ?? 0);
       if (Math.abs(dLon) > 1e-7) return dLon;

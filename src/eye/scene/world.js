@@ -1219,15 +1219,19 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     if (!pinnedShip && !state.hydrologyTipActive) tooltip.hide();
   });
 
-  // Same along-chainage framing for every station — path centered, never skewed right.
+  // Along-chainage framing — path centered. At Old Goa (reversed 0+000) use a
+  // slightly higher / longer shot so the confluence reads clearly.
   function chainageCameraOptions(point, dragging = false) {
+    const m = Number(point?.meters);
+    const atOldGoaStart =
+      !!dataset.isMandovi && Number.isFinite(m) && m <= 120;
     return {
-      cameraHeight: CHAINAGE_EYE_HEIGHT,
-      cameraDistance: CHAINAGE_BACK_M,
-      lookAheadDistance: CHAINAGE_LOOK_AHEAD,
-      lookY: SURFACE_Y + CHAINAGE_LOOK_ABOVE,
+      cameraHeight: atOldGoaStart ? 34 : CHAINAGE_EYE_HEIGHT,
+      cameraDistance: atOldGoaStart ? 120 : CHAINAGE_BACK_M,
+      lookAheadDistance: atOldGoaStart ? 200 : CHAINAGE_LOOK_AHEAD,
+      lookY: SURFACE_Y + (atOldGoaStart ? 10 : CHAINAGE_LOOK_ABOVE),
       lateralOffset: 0,
-      fov: CHAINAGE_FOV,
+      fov: atOldGoaStart ? 56 : CHAINAGE_FOV,
       meters: point?.meters,
       dur: dragging ? 0.12 : 0.85,
       transitLift: 0,
@@ -1384,10 +1388,12 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     if (cinematic.isActive() || isMap2DMode()) return false;
     const chain = dataset.chainage || [];
     if (!chain.length) return false;
-    const first = chain[0].meters;
+    // Explore starts at KML Block_No 1 (wherever that pin/block sits).
+    const first = Number.isFinite(Number(dataset.chainageOriginMeters))
+      ? Number(dataset.chainageOriginMeters)
+      : chain[0].meters;
     const last = chain[chain.length - 1].meters;
     let fromM = journey.active?.currentChainage ?? chainFocusM ?? state.selectedChainageMeters ?? first;
-    // Start at 0+000 unless already underway near the source.
     if (!cameraNearChainage(fromM) || fromM > first + 50) {
       const p0 = interpolateChainage(chain, first);
       journey.cancel();
@@ -1409,15 +1415,20 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   document.addEventListener("chainage-select", (e) => {
     if (state.cinematicActive) return;
     state.showChainage = true;
-    // 3D scene shows only the selected label — do not flood with all station texts
-    state.showChainageLabels = false;
-    const labelsEl = document.querySelector("#chain-labels");
-    if (labelsEl) {
-      labelsEl.checked = false;
-      labelsEl.dispatchEvent(new Event("change", { bubbles: true }));
-    }
     const m = e.detail?.meters;
     const src = e.detail?.source || "";
+    // Overview / GE-style start keeps km labels along the path; boat view does not.
+    const keepOverviewLabels =
+      src === "old-goa-reversed-start" ||
+      (e.detail?.focus === false && state.cameraMode === "overview");
+    if (!keepOverviewLabels) {
+      state.showChainageLabels = false;
+      const labelsEl = document.querySelector("#chain-labels");
+      if (labelsEl) {
+        labelsEl.checked = false;
+        labelsEl.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
     // Sources where Joining Streams already frames the nalla confluence
     const joiningOwnsCamera =
       src === "click" ||
@@ -1596,11 +1607,26 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   }
   window.addEventListener("resize", resize);
   resize();
-  // Initial load: oblique 3D perspective. Mandovi opens at settlement scale so
-  // houses and canopy are inspectable; the orthographic map remains available in VIEW → 2D.
-  // Leave selectedChainageMeters/chainFocusM unset — overlay.js defaults the HUD to the
-  // corridor midpoint, and the VIEW → 3D handler falls back to that same midpoint.
+  // Mandovi reversed chainage (Google Earth layout): full-river overview with
+  // CH 0+000 at Old Goa (east) → Aguada (west). Labels along the path like GE.
   cam.applyMode("overview");
+  if (dataset.isMandovi && dataset.chainage?.length) {
+    const startM = Number.isFinite(Number(dataset.chainageOriginMeters))
+      ? Number(dataset.chainageOriginMeters)
+      : Number(dataset.chainage[0]?.meters) || 0;
+    chainFocusM = startM;
+    state.selectedChainageMeters = startM;
+    state.showChainage = true;
+    state.showChainageLabels = true;
+    window.setTimeout(() => {
+      if (cinematic.isActive()) return;
+      document.dispatchEvent(
+        new CustomEvent("chainage-select", {
+          detail: { meters: startM, source: "old-goa-reversed-start", focus: false },
+        }),
+      );
+    }, 200);
+  }
 
   let lastExag = state.depthExaggeration;
   let lastVisual = state.visualMode;

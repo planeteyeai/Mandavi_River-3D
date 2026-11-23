@@ -1486,13 +1486,12 @@ export function mountUI(root, {
     chainStepHud.update?.();
   });
   const chainData = dataset.chainage || [];
-  let midMeters = 8000;
-  if (chainData.length > 0) {
-    const first = chainData[0].meters;
-    const last = chainData[chainData.length - 1].meters;
-    midMeters = first + (last - first) / 2;
-  }
-  const initialChainage = 0;
+  // River start = KML Block_No 1 (Chainagekml_mandovi.kml), not a hard-coded mouth.
+  const initialChainage = Number.isFinite(Number(dataset.chainageOriginMeters))
+    ? Number(dataset.chainageOriginMeters)
+    : chainData.length > 0 && Number.isFinite(Number(chainData[0].meters))
+      ? Number(chainData[0].meters)
+      : 0;
   state.selectedChainageMeters = initialChainage;
   syncSelectedChainage(initialChainage);
 

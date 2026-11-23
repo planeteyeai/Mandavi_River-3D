@@ -40,7 +40,7 @@ export function mountChainageStepHud(root, dataset) {
       <span class="chainage-step-arrow" aria-hidden="true">→</span>
     </button>
     <button type="button" class="chainage-step-btn is-explore" id="chainage-step-explore"
-      title="Explore River — travel 0+000 → end" aria-label="Explore river" aria-pressed="false">
+      title="Explore River — Old Goa 0+000 → Aguada (reversed chainage)" aria-label="Explore river from Old Goa to Aguada" aria-pressed="false">
       <span class="chainage-step-arrow" aria-hidden="true">▶</span>
     </button>
   `;

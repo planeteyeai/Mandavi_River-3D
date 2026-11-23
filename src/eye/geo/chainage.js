@@ -57,14 +57,17 @@ export const CHAINAGE_DESTINATIONS = [
   { id: "manjari", name: "Manjari", chainage_m: 15430 },
 ];
 
-/** Mandovi River place markers along chainage (west / mouth → east). */
+/** Mandovi place markers along reversed chainage (Old Goa 0+000 → Aguada 12+715). */
 export const MANDOVI_CHAINAGE_DESTINATIONS = [
-  { id: "miramar", name: "Miramar / Aguada Bay", chainage_m: 800 },
-  { id: "reis-magos", name: "Reis Magos / Betim", chainage_m: 3200 },
-  { id: "panaji", name: "Panaji", chainage_m: 5500 },
-  { id: "ribandar", name: "Ribandar", chainage_m: 9800 },
-  { id: "chorao", name: "Chorao / Chimbel", chainage_m: 14000 },
-  { id: "old-goa", name: "Old Goa / Divar", chainage_m: 18500 },
+  { id: "old-goa", name: "Old Goa Confluence", chainage_m: 0 },
+  { id: "divar", name: "Divar Island", chainage_m: 1515 },
+  { id: "ribandar", name: "Ribandar / Chorao", chainage_m: 3515 },
+  { id: "atal-setu", name: "Atal Setu / Mandovi Bridges", chainage_m: 5115 },
+  { id: "panaji-port", name: "Panaji Port / Betim", chainage_m: 6515 },
+  { id: "panaji-west", name: "Panaji / Kala Academy", chainage_m: 7915 },
+  { id: "miramar", name: "Miramar / Campal", chainage_m: 9215 },
+  { id: "reis-magos", name: "Reis Magos Fort Reach", chainage_m: 10715 },
+  { id: "aguada", name: "Aguada Bay", chainage_m: 12715 },
 ];
 
 export function getDestinations(sel, customList = null) {
