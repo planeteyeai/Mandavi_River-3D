@@ -15,6 +15,7 @@ export { API_BASE, resolveJalnetraBase } from "./jalnetraBase.js";
 /** Fire these first on project start — no queue delay behind other layers. */
 const SILT_PRIORITY_IDS = ["silt-classification", "silt-volume"];
 
+/** Paths match live JalNetra OpenAPI (Railway). Ids stay stable for session/UI. */
 const ENDPOINTS = [
   // Silt first so date-wise overlays are ready as soon as Land Use opens.
   { id: "silt-classification", path: "/api/silt-classification" },
@@ -22,16 +23,22 @@ const ENDPOINTS = [
   { id: "flood-water", path: "/api/flood-water" },
   { id: "salinity", path: "/api/salinity" },
   { id: "water-quality", path: "/api/water-quality" },
+  { id: "eutrophication", path: "/api/eutrophication" },
+  { id: "nitrogen", path: "/api/nitrogen" },
+  { id: "coliform", path: "/api/coliform" },
+  { id: "foam", path: "/api/foam" },
   { id: "lithology", path: "/api/lithology" },
   { id: "vegetation-type", path: "/api/vegetation-type" },
   { id: "vegetation-health", path: "/api/vegetation-health" },
-  { id: "bod-cod", path: "/api/bod-cod" },
+  // OpenAPI: POST /api/main-bod-cod (alias /api/bod-cod). No dates — Landsat window is server-side.
+  { id: "bod-cod", path: "/api/main-bod-cod" },
+  { id: "streams-bod-cod", path: "/api/streams-bod-cod" },
   { id: "lulc", path: "/api/lulc" },
   { id: "bank-erosion", path: "/api/bank-erosion" },
   { id: "water-depth", path: "/api/water-depth" },
   { id: "fishing-point", path: "/api/fishing-point" },
+  { id: "drainage", path: "/api/drainage" },
   { id: "fabdem-dtm", path: "/api/fabdem-dtm" },
-  { id: "copernicus-dsm", path: "/api/copernicus-dsm" },
 ];
 
 /** Latest complete calendar month as YYYY-MM (current month excluded). */
@@ -208,6 +215,10 @@ function uploadKmlFor(spec, session) {
   if (spec.id === "silt-classification" || spec.id === "silt-volume" || spec.id === "silt") {
     return siltAoiKml(raw);
   }
+  // main/streams BOD-COD expect LineString placemarks — do not strip centerlines.
+  if (spec.id === "bod-cod" || spec.id === "streams-bod-cod" || spec.id === "drainage") {
+    return raw;
+  }
   return polygonOnlyKml(raw);
 }
 
@@ -268,6 +279,8 @@ async function postEndpoint(spec, session) {
 function downloadEndpointId(endpoint) {
   const id = String(endpoint || "");
   if (id === "silt-classification" || id === "silt-volume" || id === "silt") return "silt";
+  // Session id stays "bod-cod"; download path is main-bod-cod.
+  if (id === "bod-cod") return "main-bod-cod";
   return id;
 }
 

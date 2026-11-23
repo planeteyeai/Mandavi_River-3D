@@ -6,6 +6,8 @@ import {
   buildBodCodTimeline,
   defaultTimeIndex,
   sampleReachAt,
+  sampleLiveBodCodAtMeters,
+  clearBodCodCache,
 } from "../../services/bodCodService.js";
 import {
   ensureBodCodPixels,
@@ -31,7 +33,7 @@ export function mountWeatherWidget(root) {
     <button type="button" class="weather-icon" id="weather-icon-btn" title="Open live weather details" aria-label="Open live weather details">
       ${lucideHtml(CloudSun, { size: 18 })}
     </button>
-    <div class="weather-wq" aria-label="Live BOD and COD at selected chainage">
+    <div class="weather-wq" aria-label="BOD and COD at selected chainage">
       <div class="weather-wq-row is-bod">
         <i data-short="BOD">BOD</i>
         <b id="weather-bod">—</b>
@@ -86,6 +88,10 @@ export function mountWeatherWidget(root) {
   let dischargeSerial = 0;
   /** @type {object | null} Selected joining stream — BOD/COD from its lat/lon (or stream table). */
   let lastJoiningRec = null;
+  /** @type {{ bod:number, cod:number, name?:string, label?:string } | null} */
+  let pinnedHotspotWq = null;
+  /** @type {string} */
+  let bodFailReason = "";
 
   const zone = (() => {
     const p = activeRiverPoint();
@@ -125,13 +131,34 @@ export function mountWeatherWidget(root) {
     return window.__MM_DATASET__?.chainage || window.__MM_SCENE__?.dataset?.chainage || [];
   }
 
-  function ensureBodData() {
-    if (bodData?.reaches?.length) return Promise.resolve(bodData);
+  /** Paint survey BOD/COD first so numbers stay on screen even if live API is slow/down. */
+  async function showSurveyBodCodNow() {
+    try {
+      await ensureBodCodPixels();
+    } catch {
+      /* pixels optional until CSV loads */
+    }
+    // Keep previous live payload until a new live fetch wins; survey paint is via renderBodCod fallback.
+    if (!bodData?.reaches?.length || bodData._source !== "live") {
+      renderBodCod();
+    }
+  }
+
+  function ensureBodData(forceLive = false) {
+    if (!forceLive && bodData?.reaches?.length && bodData._source === "live") {
+      return Promise.resolve(bodData);
+    }
     if (bodLoadPromise) return bodLoadPromise;
+    if (forceLive) clearBodCodCache();
+
+    // Always show survey BOD/COD regularly while live is fetching / failing.
+    void showSurveyBodCodNow();
+
     bodLoadPromise = Promise.all([
       ensureBodCodPixels().catch(() => null),
-      fetchBodCodViewerData().catch((err) => {
-        console.warn("[weather-wq]", err?.message || err);
+      fetchBodCodViewerData(undefined, { forceLive: !!forceLive }).catch((err) => {
+        bodFailReason = String(err?.message || err || "JalNetra BOD/COD failed");
+        console.warn("[weather-wq]", bodFailReason);
         return null;
       }),
     ])
@@ -140,7 +167,17 @@ export function mountWeatherWidget(root) {
           bodData = data;
           bodTimeline = buildBodCodTimeline(data);
           bodTimeIndex = defaultTimeIndex(bodTimeline);
+          if (data._source === "live") {
+            bodFailReason = "";
+            el.classList.add("weather-wq--live");
+          } else {
+            el.classList.remove("weather-wq--live");
+            if (!bodFailReason) bodFailReason = "JalNetra live BOD/COD unavailable";
+          }
+        } else if (!bodFailReason) {
+          bodFailReason = "JalNetra returned no BOD/COD reaches";
         }
+        el.title = "";
         renderBodCod();
         return data;
       })
@@ -213,11 +250,11 @@ export function mountWeatherWidget(root) {
       setWeatherWqVisible(true);
       if (bodEl) {
         bodEl.textContent = formatMetricNumber(q.bodMean, 1);
-        bodEl.title = `BOD · ${q.name || joiningStreamLabel(rec)} (joining stream)`;
+        bodEl.title = "";
       }
       if (codEl) {
         codEl.textContent = formatMetricNumber(q.codMean, 1);
-        codEl.title = `COD · ${q.name || joiningStreamLabel(rec)} (joining stream)`;
+        codEl.title = "";
       }
       return "ok";
     }
@@ -236,6 +273,22 @@ export function mountWeatherWidget(root) {
       return;
     }
 
+    // Pollution hotspot pin — show the exact card values.
+    if (pinnedHotspotWq) {
+      setWeatherWqVisible(true);
+      if (bodEl) {
+        bodEl.textContent = formatMetricNumber(pinnedHotspotWq.bod, 1);
+        bodEl.title = "";
+      }
+      if (codEl) {
+        codEl.textContent = formatMetricNumber(pinnedHotspotWq.cod, 1);
+        codEl.title = "";
+      }
+      el.classList.add("weather-wq--hotspot");
+      return;
+    }
+    el.classList.remove("weather-wq--hotspot");
+
     setWeatherWqVisible(true);
 
     const meters =
@@ -245,38 +298,74 @@ export function mountWeatherWidget(root) {
           ? state.selectedChainageMeters
           : 0;
 
-    // Prefer Mandovi pixel CSV at this chainage / lat-lon.
+    // 1) Live twin at this chainage (today index) — values only, no source label.
+    const live = sampleLiveBodCodAtMeters(meters, bodData);
+    if (
+      bodData?._source === "live" &&
+      live &&
+      (Number.isFinite(live.bod) || Number.isFinite(live.cod))
+    ) {
+      if (bodEl) {
+        bodEl.textContent = formatMetricNumber(live.bod, 1);
+        bodEl.title = "";
+      }
+      if (codEl) {
+        codEl.textContent = formatMetricNumber(live.cod, 1);
+        codEl.title = "";
+      }
+      return;
+    }
+
+    if (bodData?.reaches?.length && bodData._source === "live") {
+      const reach = reachAtMeters(meters);
+      const sample = sampleReachAt(reach, bodTimeIndex, bodData, bodTimeline);
+      if (bodEl) {
+        bodEl.textContent = formatMetricNumber(sample?.p50, 1);
+        bodEl.title = "";
+      }
+      if (codEl) {
+        codEl.textContent = formatMetricNumber(sample?.cod_p50, 1);
+        codEl.title = "";
+      }
+      if (Number.isFinite(sample?.p50) || Number.isFinite(sample?.cod_p50)) {
+        return;
+      }
+    }
+
+    // 2) Survey CSV fallback — values only.
     const chain = chainagePoints();
     const fromChain = sampleBodCodAtChainage(chain, meters);
     if (fromChain) {
       if (bodEl) {
         bodEl.textContent = formatMetricNumber(fromChain.bod, 1);
-        bodEl.title = "BOD from Mandovi pixel survey";
+        bodEl.title = "";
       }
       if (codEl) {
         codEl.textContent = formatMetricNumber(fromChain.cod, 1);
-        codEl.title = "COD from Mandovi pixel survey";
+        codEl.title = "";
       }
       return;
     }
     if (Number.isFinite(lastPoint?.lat) && Number.isFinite(lastPoint?.lon)) {
       const fromLl = sampleBodCodAtLonLat(lastPoint.lon, lastPoint.lat);
       if (fromLl) {
-        if (bodEl) bodEl.textContent = formatMetricNumber(fromLl.bod, 1);
-        if (codEl) codEl.textContent = formatMetricNumber(fromLl.cod, 1);
+        if (bodEl) {
+          bodEl.textContent = formatMetricNumber(fromLl.bod, 1);
+          bodEl.title = "";
+        }
+        if (codEl) {
+          codEl.textContent = formatMetricNumber(fromLl.cod, 1);
+          codEl.title = "";
+        }
         return;
       }
     }
 
-    if (!bodData?.reaches?.length) {
-      if (bodEl) bodEl.textContent = "—";
-      if (codEl) codEl.textContent = "—";
-      return;
-    }
-    const reach = reachAtMeters(meters);
-    const sample = sampleReachAt(reach, bodTimeIndex, bodData, bodTimeline);
-    if (bodEl) bodEl.textContent = formatMetricNumber(sample?.p50, 1);
-    if (codEl) codEl.textContent = formatMetricNumber(sample?.cod_p50, 1);
+    // Keep last painted numbers if we already have them; only blank when never loaded.
+    const hadBod = bodEl?.textContent && bodEl.textContent !== "—";
+    const hadCod = codEl?.textContent && codEl.textContent !== "—";
+    if (!hadBod && bodEl) bodEl.textContent = "—";
+    if (!hadCod && codEl) codEl.textContent = "—";
   }
 
   function updateFromJoiningStream(rec) {
@@ -343,6 +432,17 @@ export function mountWeatherWidget(root) {
 
   function updateBodCodForChainage(point) {
     lastMeters = point?.meters ?? state.selectedChainageMeters ?? null;
+    // Hotspot-driven chainage sync keeps pinned BOD/COD (exact card values).
+    if (point?.fromPollutionHotspot && pinnedHotspotWq) {
+      void renderDischarge();
+      renderBodCod();
+      return;
+    }
+    // Normal chainage move clears hotspot pin so LIVE WEATHER follows the station again.
+    if (!point?.fromPollutionHotspot) {
+      pinnedHotspotWq = null;
+      el.classList.remove("weather-wq--hotspot");
+    }
     // Chainage sync from joining-stream select must not wipe / invent stream BOD/COD.
     void ensureBodData().then(() => renderBodCod());
     void renderDischarge();
@@ -365,6 +465,45 @@ export function mountWeatherWidget(root) {
     updateFromJoiningStream(e.detail?.rec || null);
   }
   document.addEventListener("joining-stream-wq", onJoiningStreamWq);
+
+  function onPollutionHotspotSelect(e) {
+    const d = e.detail || {};
+    const bod = Number(d.bod);
+    const cod = Number(d.cod);
+    if (!Number.isFinite(bod) && !Number.isFinite(cod)) {
+      pinnedHotspotWq = null;
+      renderBodCod();
+      return;
+    }
+    pinnedHotspotWq = {
+      bod,
+      cod,
+      name: d.name || d.label || "Pollution hotspot",
+      label: d.label,
+      liveDate: d.liveDate || null,
+      source: d.source || null,
+    };
+    lastJoiningRec = null;
+    if (Number.isFinite(d.meters)) lastMeters = d.meters;
+    if (Number.isFinite(d.lat) && Number.isFinite(d.lon)) {
+      lastPoint = { lat: d.lat, lon: d.lon, label: d.label || d.name };
+      detail.setPoint?.(lastPoint);
+      if (location) {
+        location.textContent = `${d.name || "Hotspot"} · ${Number(d.lat).toFixed(5)}, ${Number(d.lon).toFixed(5)}`;
+      }
+    }
+    renderBodCod();
+  }
+  document.addEventListener("pollution-hotspot-select", onPollutionHotspotSelect);
+
+  function onPollutionHotspotToggle(e) {
+    if (e.detail?.open === false) {
+      pinnedHotspotWq = null;
+      el.classList.remove("weather-wq--hotspot");
+      void ensureBodData().then(() => renderBodCod());
+    }
+  }
+  document.addEventListener("pollution-hotspot-toggle", onPollutionHotspotToggle);
 
   function updateForChainage(point) {
     const river = activeRiverPoint();
@@ -430,9 +569,15 @@ export function mountWeatherWidget(root) {
   el.querySelector("#weather-icon-btn")?.addEventListener("click", openDetail);
   el.querySelector("#weather-open-detail")?.addEventListener("click", openDetail);
 
-  // Prefetch twin + live Q so numbers appear without waiting for Water Quality open
-  void ensureBodData();
+  // Survey BOD/COD first (regular on-screen values), then upgrade to JalNetra live.
+  void showSurveyBodCodNow();
+  void ensureBodData(true);
   void renderDischarge();
+  // Refresh regularly: re-paint survey + retry live every 10 minutes
+  const bodRefreshTimer = window.setInterval(() => {
+    void showSurveyBodCodNow();
+    void ensureBodData(true);
+  }, 10 * 60 * 1000);
 
   return {
     el,
@@ -443,8 +588,11 @@ export function mountWeatherWidget(root) {
       window.clearTimeout(requestTimer);
       window.clearInterval(timer);
       window.clearInterval(weatherRefreshTimer);
+      window.clearInterval(bodRefreshTimer);
       document.removeEventListener("bod-cod-time-change", onBodCodTime);
       document.removeEventListener("joining-stream-wq", onJoiningStreamWq);
+      document.removeEventListener("pollution-hotspot-select", onPollutionHotspotSelect);
+      document.removeEventListener("pollution-hotspot-toggle", onPollutionHotspotToggle);
       detail.dispose();
     },
   };

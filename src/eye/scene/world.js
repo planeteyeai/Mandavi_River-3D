@@ -42,6 +42,7 @@ import { createApiFloodLayer } from "./apiFloodLayer.js";
 import { createClimateImpactLayer } from "./climateImpactLayer.js";
 import { createHydrologyLayer } from "./hydrologyLayer.js";
 import { createBodCodLayer } from "./bodCodLayer.js";
+import { createPollutionHotspotLayer } from "./pollutionHotspotLayer.js";
 import { createAqiRiverLayer } from "./aqiRiverLayer.js";
 import { createMainStemLayer } from "./mainStemLayer.js";
 import { createBathymetrySurveyLayer } from "./bathymetrySurveyLayer.js";
@@ -509,6 +510,7 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   /** Hydrology thematic overlays (Geology + Salinity). */
   const hydrologyLayer = createHydrologyLayer(dataset);
   const bodCodLayer = createBodCodLayer(dataset);
+  const pollutionHotspotLayer = createPollutionHotspotLayer(dataset);
   const aqiRiverLayer = createAqiRiverLayer(dataset);
   const shipsLayer = createShipsLayer(scene);
   const casinoShipsLayer = createCasinoShipsLayer(scene, dataset);
@@ -564,6 +566,7 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
   scene.add(climateImpactLayer);
   scene.add(hydrologyLayer);
   scene.add(bodCodLayer);
+  scene.add(pollutionHotspotLayer);
   scene.add(aqiRiverLayer);
   scene.add(shipsLayer.group);
   scene.add(casinoShipsLayer.group);
@@ -2002,6 +2005,19 @@ export async function createWorld(canvas, dataset, tooltip, { onCoreReady } = {}
     },
     focusPollutionSide(sideId, opts = {}) {
       return hydrologyLayer.userData?.getPollutionLayer?.()?.userData?.focusSide?.(sideId, opts);
+    },
+    async ensurePollutionHotspots() {
+      return pollutionHotspotLayer.userData?.ensureLoaded?.();
+    },
+    setPollutionHotspotsVisible(on) {
+      pollutionHotspotLayer.userData?.setVisible?.(!!on);
+      pollutionHotspotLayer.visible = !!on;
+    },
+    focusPollutionHotspot(idOrRank, opts = {}) {
+      return pollutionHotspotLayer.userData?.focusHotspot?.(idOrRank, opts);
+    },
+    getPollutionHotspots() {
+      return pollutionHotspotLayer.userData?.getHotspots?.() || [];
     },
     clearPollutionSideFilter() {
       return hydrologyLayer.userData?.getPollutionLayer?.()?.userData?.clearSideFilter?.();

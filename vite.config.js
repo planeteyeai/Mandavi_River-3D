@@ -54,7 +54,9 @@ export default defineConfig({
         target: "https://jalnetra-software-production.up.railway.app",
         changeOrigin: true,
         secure: true,
-        timeout: 30000,
+        // BOD/COD + flood jobs regularly exceed 30s.
+        timeout: 300000,
+        proxyTimeout: 300000,
         // Client paths already include /api/... (API_BASE=/jalnetra-api).
         rewrite: (path) => path.replace(/^\/jalnetra-api/, ""),
         configure: createProxyErrorHandler("jalnetra-api"),
@@ -128,7 +130,8 @@ export default defineConfig({
         target: "https://jalnetra-software-production.up.railway.app",
         changeOrigin: true,
         secure: true,
-        timeout: 30000,
+        timeout: 300000,
+        proxyTimeout: 300000,
         rewrite: (path) => path.replace(/^\/jalnetra-api/, ""),
         configure: createProxyErrorHandler("jalnetra-api"),
       },

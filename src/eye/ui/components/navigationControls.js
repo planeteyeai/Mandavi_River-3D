@@ -3,7 +3,7 @@ import { state } from "../../state.js";
 import { lucideHtml } from "../icons.js";
 
 /**
- * Right-side view modes: Overview · 2D/3D · Silt Measure · Layers · Settings.
+ * Right-side view modes: Overview · 2D/3D · Silt · Pollution · Layers · Settings.
  * Drainage toggle lives in Layers / Geology — not on this toolbar.
  * Flood toolbar entry is intentionally omitted from this project.
  */
@@ -12,6 +12,7 @@ export function mountNavigationControls(root, {
   onRiverSide,
   on3D,
   onSiltToggle,
+  onPollutionHotspotToggle,
   onLayersToggle,
   onSettingsToggle,
   onFloodToggle: _onFloodToggle,
@@ -42,6 +43,10 @@ export function mountNavigationControls(root, {
       <span class="map-ctrl-icon" aria-hidden="true">${lucideHtml(Ruler, { size: 20, className: "map-ctrl-svg" })}</span>
       <span class="map-ctrl-label">Silt</span>
     </button>
+    <button type="button" class="map-ctrl-btn map-ctrl-btn--labeled toolbar-button pollution-hotspot-btn" id="pollution-hotspot-btn" aria-label="Pollution hotspot" aria-pressed="false" title="Pollution hotspot">
+      <span class="map-ctrl-icon map-ctrl-emoji" aria-hidden="true">☣️</span>
+      <span class="map-ctrl-label">Hotspot</span>
+    </button>
     <button type="button" class="map-ctrl-btn map-ctrl-btn--labeled toolbar-button layers-toggle-button" id="layers-btn" aria-label="Layers" aria-pressed="false">
       <span class="map-ctrl-icon" aria-hidden="true">${lucideHtml(Layers, { size: 20, className: "map-ctrl-svg" })}</span>
       <span class="map-ctrl-label">Layers</span>
@@ -57,6 +62,7 @@ export function mountNavigationControls(root, {
   const view2dBtn = modes.querySelector("#nav-2d");
   const view3dBtn = modes.querySelector("#nav-3d");
   const siltBtn = modes.querySelector("#silt-btn");
+  const pollutionBtn = modes.querySelector("#pollution-hotspot-btn");
   const layersBtn = modes.querySelector("#layers-btn");
   const settingsBtn = modes.querySelector("#settings-btn");
 
@@ -87,6 +93,16 @@ export function mountNavigationControls(root, {
     if (state.cinematicActive) return;
     onSiltToggle?.();
   });
+  pollutionBtn.addEventListener("click", () => {
+    if (state.cinematicActive) return;
+    clearRiverMeasure();
+    const next = pollutionBtn.getAttribute("aria-pressed") !== "true";
+    setPollutionHotspotPressed(next);
+    onPollutionHotspotToggle?.(next);
+    document.dispatchEvent(
+      new CustomEvent("pollution-hotspot-toggle", { detail: { open: next } }),
+    );
+  });
   layersBtn.addEventListener("click", () => {
     if (state.cinematicActive) return;
     clearRiverMeasure();
@@ -116,6 +132,11 @@ export function mountNavigationControls(root, {
     view3dBtn.classList.toggle("active", !map2d);
   }
 
+  function setPollutionHotspotPressed(open) {
+    pollutionBtn.setAttribute("aria-pressed", open ? "true" : "false");
+    pollutionBtn.classList.toggle("active", !!open);
+  }
+
   function setLayersPressed(open) {
     layersBtn.setAttribute("aria-pressed", open ? "true" : "false");
     layersBtn.classList.toggle("active", !!open);
@@ -135,5 +156,13 @@ export function mountNavigationControls(root, {
   }
 
   syncActive();
-  return { wrap: modes, syncActive, setLayersPressed, setSettingsPressed, setDrainagePressed, setFloodPressed };
+  return {
+    wrap: modes,
+    syncActive,
+    setPollutionHotspotPressed,
+    setLayersPressed,
+    setSettingsPressed,
+    setDrainagePressed,
+    setFloodPressed,
+  };
 }

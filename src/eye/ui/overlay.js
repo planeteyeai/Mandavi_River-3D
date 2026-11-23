@@ -20,6 +20,7 @@ import { mountWaterFlowControl } from "./components/waterFlowControl.js";
 import { mountChainageRuler } from "./components/chainageRuler.js";
 import { mountMap2dDataPanel } from "./components/map2dDataPanel.js";
 import { mountSiltAnalysisOverlay } from "./components/siltAnalysisOverlay.js";
+import { mountPollutionHotspotPanel } from "./components/pollutionHotspotPanel.js";
 import { mountJoiningStreamsNav } from "./components/joiningStreamsNav.js";
 import { mountChainageStepHud } from "./components/chainageStepHud.js";
 import { mountChainagePanel } from "./components/chainagePanel.js";
@@ -1378,6 +1379,7 @@ export function mountUI(root, {
   }
 
   let chainPanel = null;
+  let pollutionHotspotPanel = null;
   const nav = mountNavigationControls(root, {
     onOverview: () => {
       map2dData?.leave();
@@ -1411,12 +1413,36 @@ export function mountUI(root, {
         siltAnalysis?.open?.();
       }
     },
+    onPollutionHotspotToggle: async (open) => {
+      if (open) {
+        try {
+          const data = await window.__MM_SCENE__?.ensurePollutionHotspots?.();
+          window.__MM_SCENE__?.setPollutionHotspotsVisible?.(true);
+          await pollutionHotspotPanel?.show?.(data);
+          // Fly to #1 highest (Panaji peak from CSV).
+          const first = data?.hotspots?.[0];
+          if (first) {
+            window.__MM_SCENE__?.focusPollutionHotspot?.(first.id || first.rank);
+          }
+        } catch (err) {
+          console.warn("[pollution-hotspot]", err?.message || err);
+          nav.setPollutionHotspotPressed?.(false);
+        }
+      } else {
+        pollutionHotspotPanel?.hide?.();
+        window.__MM_SCENE__?.setPollutionHotspotsVisible?.(false);
+      }
+    },
     onLayersToggle: () => toggleLayers(),
     onDrainageToggle: () => toggleDrainage(),
     onSettingsToggle: () => toggleSettings(),
     onFloodToggle: () => toggleFloodBar(),
   });
-  window.__MM_NAV__ = { enter3D: (opts) => nav.enter3D(opts), view3DPose: VIEW_3D_POSE };
+  window.__MM_NAV__ = {
+    enter3D: (opts) => nav.enter3D(opts),
+    view3DPose: VIEW_3D_POSE,
+    setPollutionHotspotPressed: (v) => nav.setPollutionHotspotPressed?.(v),
+  };
   nav.setLayersPressed(state.showLayers);
   nav.setDrainagePressed?.(state.showDrainage);
   nav.setSettingsPressed?.(state.showSettings);
@@ -1425,17 +1451,23 @@ export function mountUI(root, {
   const chainRuler = mountChainageRuler(root, dataset);
   const map2dData = mountMap2dDataPanel(leftStack, riverData);
   const siltAnalysis = mountSiltAnalysisOverlay(root, dataset);
+  pollutionHotspotPanel = mountPollutionHotspotPanel(root);
   const chainStepHud = mountChainageStepHud(root, dataset);
   mountJoiningStreamsNav(root);
   chainPanel = mountChainagePanel(root, dataset);
 
-  function syncSelectedChainage(meters) {
+  function syncSelectedChainage(meters, extras = {}) {
     const raw = Number(meters);
     const snapped = Number.isFinite(raw) ? Math.round(raw / 10) * 10 : meters;
     const point = interpolateChainage(dataset.chainage, snapped);
     if (!point) return;
     point.meters = snapped;
     point.label = formatStation(snapped);
+    if (extras.fromPollutionHotspot) {
+      point.fromPollutionHotspot = true;
+      if (Number.isFinite(extras.lon)) point.lon = extras.lon;
+      if (Number.isFinite(extras.lat)) point.lat = extras.lat;
+    }
     riverData.update(point);
     weather.updateForChainage(point);
   }
@@ -1444,7 +1476,12 @@ export function mountUI(root, {
     const raw = Number(event.detail?.meters);
     const m = Number.isFinite(raw) ? Math.round(raw / 10) * 10 : null;
     if (m != null) state.selectedChainageMeters = m;
-    whenChainageSettled("river-data", m, () => syncSelectedChainage(m));
+    const extras = {
+      fromPollutionHotspot: !!event.detail?.fromPollutionHotspot,
+      lon: event.detail?.lon,
+      lat: event.detail?.lat,
+    };
+    whenChainageSettled("river-data", m, () => syncSelectedChainage(m, extras));
     chainRuler.update?.(true);
     chainStepHud.update?.();
   });

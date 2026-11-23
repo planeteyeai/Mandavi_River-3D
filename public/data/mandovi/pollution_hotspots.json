@@ -1,0 +1,1680 @@
+{
+  "source": [
+    "BOD_COD_pixelwise_latlon.csv",
+    "eutrophication_trophic_class (1).kml",
+    "nitrogen_risk_class (1).kml",
+    "coliform_ecoli_class (1).kml"
+  ],
+  "method": "Combined score = weighted BOD/COD (CSV) + Eutrophication + Nitrogen + Coliform (KML class severity). Red shades map composite 0–1. All values from source files — nothing invented.",
+  "generated": "2026-11-23T06:01:04.136Z",
+  "pixelCount": 25458,
+  "weights": {
+    "bod": 0.3,
+    "eutrophication": 0.25,
+    "nitrogen": 0.2,
+    "coliform": 0.25
+  },
+  "redShades": [
+    {
+      "id": "light",
+      "label": "Elevated",
+      "hex": "#FF8A80",
+      "min": 0,
+      "max": 0.35
+    },
+    {
+      "id": "medium",
+      "label": "High",
+      "hex": "#EF5350",
+      "min": 0.35,
+      "max": 0.55
+    },
+    {
+      "id": "strong",
+      "label": "Very High",
+      "hex": "#E53935",
+      "min": 0.55,
+      "max": 0.75
+    },
+    {
+      "id": "severe",
+      "label": "Severe",
+      "hex": "#C62828",
+      "min": 0.75,
+      "max": 0.9
+    },
+    {
+      "id": "extreme",
+      "label": "Extreme",
+      "hex": "#8B0000",
+      "min": 0.9,
+      "max": 1.01
+    }
+  ],
+  "legendNumbers": {
+    "eutrophication": {
+      "label": "Eutrophication",
+      "unit": "µg/L Chl-a · TSI",
+      "note": null,
+      "classes": [
+        {
+          "id": "oligo",
+          "label": "Oligotrophic",
+          "valueText": "< 2.6 µg/L",
+          "display": "< 2.6 µg/L (TSI < 40)",
+          "range": {
+            "chlUgL": [
+              null,
+              2.6
+            ],
+            "tsi": [
+              null,
+              40
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        },
+        {
+          "id": "meso",
+          "label": "Mesotrophic",
+          "valueText": "2.6–7.3 µg/L",
+          "display": "2.6–7.3 µg/L (TSI 40–50)",
+          "range": {
+            "chlUgL": [
+              2.6,
+              7.3
+            ],
+            "tsi": [
+              40,
+              50
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        },
+        {
+          "id": "eutro",
+          "label": "Eutrophic",
+          "valueText": "7.3–56 µg/L",
+          "display": "7.3–56 µg/L (TSI 50–70)",
+          "range": {
+            "chlUgL": [
+              7.3,
+              56
+            ],
+            "tsi": [
+              50,
+              70
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        },
+        {
+          "id": "hyper",
+          "label": "Hypereutrophic",
+          "valueText": "> 56 µg/L",
+          "display": "> 56 µg/L (TSI > 70)",
+          "range": {
+            "chlUgL": [
+              56,
+              null
+            ],
+            "tsi": [
+              70,
+              null
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        }
+      ]
+    },
+    "nitrogen": {
+      "label": "Nitrogen",
+      "unit": "risk class (not mg N/L)",
+      "note": "KML is high-nitrogen risk class — not concentration. Mandovi file: High class pixels = 0.",
+      "classes": [
+        {
+          "id": "low",
+          "label": "Low",
+          "valueText": "1 / 3",
+          "display": "Low risk (class 1 of 3)",
+          "range": null,
+          "classIndex": 1,
+          "classOf": 3
+        },
+        {
+          "id": "moderate",
+          "label": "Moderate",
+          "valueText": "2 / 3",
+          "display": "Moderate risk (class 2 of 3)",
+          "range": null,
+          "classIndex": 2,
+          "classOf": 3
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "valueText": "3 / 3",
+          "display": "High risk (class 3 of 3)",
+          "range": null,
+          "classIndex": 3,
+          "classOf": 3
+        }
+      ]
+    },
+    "coliform": {
+      "label": "Coliform",
+      "unit": "CFU/100 ml",
+      "note": null,
+      "classes": [
+        {
+          "id": "good",
+          "label": "Good",
+          "valueText": "≤ 250",
+          "display": "≤ 250 CFU/100 ml",
+          "range": {
+            "cfu": [
+              null,
+              250
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        },
+        {
+          "id": "moderate",
+          "label": "Moderate",
+          "valueText": "260–500",
+          "display": "260–500 CFU/100 ml",
+          "range": {
+            "cfu": [
+              260,
+              500
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "valueText": "500–2000",
+          "display": "500–2000 CFU/100 ml",
+          "range": {
+            "cfu": [
+              500,
+              2000
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        },
+        {
+          "id": "highly_risk",
+          "label": "Highly risk",
+          "valueText": "> 2000",
+          "display": "> 2000 CFU/100 ml",
+          "range": {
+            "cfu": [
+              2000,
+              null
+            ]
+          },
+          "classIndex": null,
+          "classOf": null
+        }
+      ]
+    }
+  },
+  "kmlSummaries": [
+    {
+      "id": "eutrophication",
+      "label": "Eutrophication",
+      "highPixels": 473,
+      "sampled": 12418,
+      "classCounts": {
+        "oligo": 98,
+        "meso": 168,
+        "eutro": 466,
+        "hyper": 7
+      },
+      "bounds": {
+        "north": 15.52859903,
+        "south": 15.4593098,
+        "east": 73.88313675,
+        "west": 73.76545998
+      }
+    },
+    {
+      "id": "nitrogen",
+      "label": "Nitrogen",
+      "highPixels": 4072,
+      "sampled": 12418,
+      "classCounts": {
+        "low": 6085,
+        "moderate": 4072,
+        "high": 0
+      },
+      "bounds": {
+        "north": 15.52859903,
+        "south": 15.4593098,
+        "east": 73.88313675,
+        "west": 73.76545998
+      }
+    },
+    {
+      "id": "coliform",
+      "label": "Coliform",
+      "highPixels": 78,
+      "sampled": 12418,
+      "classCounts": {
+        "good": 7871,
+        "moderate": 479,
+        "high": 0,
+        "highly_risk": 78
+      },
+      "bounds": {
+        "north": 15.52859903,
+        "south": 15.4593098,
+        "east": 73.88313675,
+        "west": 73.76545998
+      }
+    }
+  ],
+  "highest": {
+    "name": "Panaji / Santa Monica",
+    "sideId": "panaji",
+    "lat": 15.502572,
+    "lon": 73.823965,
+    "bod": 24.774,
+    "cod": 54.132,
+    "composite": 1,
+    "shade": "extreme",
+    "shadeLabel": "Extreme",
+    "color": "#8B0000",
+    "layers": [
+      {
+        "id": "bod_cod",
+        "label": "BOD–COD",
+        "score": 0.9565061990394284,
+        "weight": 0.3
+      },
+      {
+        "id": "eutrophication",
+        "label": "Eutrophication",
+        "score": 0.7,
+        "weight": 0.25,
+        "classLabel": "Eutrophic",
+        "pixelCount": 2
+      },
+      {
+        "id": "nitrogen",
+        "label": "Nitrogen",
+        "score": 0.55,
+        "weight": 0.2,
+        "classLabel": "Moderate",
+        "pixelCount": 225
+      },
+      {
+        "id": "coliform",
+        "label": "Coliform",
+        "score": 1,
+        "weight": 0.25,
+        "classLabel": "Highly risk",
+        "pixelCount": 18
+      }
+    ],
+    "eutrophication": {
+      "label": "Eutrophication",
+      "classId": "eutro",
+      "classLabel": "Eutrophic",
+      "severity": 0.7,
+      "unit": "µg/L Chl-a · TSI",
+      "valueText": "7.3–56 µg/L",
+      "display": "7.3–56 µg/L (TSI 50–70)",
+      "range": {
+        "chlUgL": [
+          7.3,
+          56
+        ],
+        "tsi": [
+          50,
+          70
+        ]
+      },
+      "classIndex": null,
+      "classOf": null,
+      "pixelCount": 2,
+      "meanSeverity": 0.7
+    },
+    "nitrogen": {
+      "label": "Nitrogen",
+      "classId": "moderate",
+      "classLabel": "Moderate",
+      "severity": 0.55,
+      "unit": "risk class (not mg N/L)",
+      "valueText": "2 / 3",
+      "display": "Moderate risk (class 2 of 3)",
+      "range": null,
+      "classIndex": 2,
+      "classOf": 3,
+      "pixelCount": 225,
+      "meanSeverity": 0.55
+    },
+    "coliform": {
+      "label": "Coliform",
+      "classId": "highly_risk",
+      "classLabel": "Highly risk",
+      "severity": 1,
+      "unit": "CFU/100 ml",
+      "valueText": "> 2000",
+      "display": "> 2000 CFU/100 ml",
+      "range": {
+        "cfu": [
+          2000,
+          null
+        ]
+      },
+      "classIndex": null,
+      "classOf": null,
+      "pixelCount": 18,
+      "meanSeverity": 1
+    },
+    "eutrophicationValue": "7.3–56 µg/L",
+    "nitrogenValue": "2 / 3",
+    "coliformValue": "> 2000"
+  },
+  "hotspots": [
+    {
+      "id": "73.816:15.496",
+      "rank": 1,
+      "name": "Panaji / Santa Monica",
+      "sideId": "panaji",
+      "lon": 73.823965,
+      "lat": 15.502572,
+      "composite": 1,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 257,
+      "layersPresent": [
+        "bod_cod",
+        "eutrophication",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.9565061990394284,
+          "weight": 0.3
+        },
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 0.7,
+          "weight": 0.25,
+          "classLabel": "Eutrophic",
+          "pixelCount": 2
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 225
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 18
+        }
+      ],
+      "maxBod": 24.774,
+      "maxCod": 54.132,
+      "meanBod": 14.601,
+      "meanCod": 34.235,
+      "bodPixelCount": 12,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "eutro",
+        "classLabel": "Eutrophic",
+        "severity": 0.7,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "7.3–56 µg/L",
+        "display": "7.3–56 µg/L (TSI 50–70)",
+        "range": {
+          "chlUgL": [
+            7.3,
+            56
+          ],
+          "tsi": [
+            50,
+            70
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 2,
+        "meanSeverity": 0.7
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 225,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 18,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": "7.3–56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.832:15.496",
+      "rank": 2,
+      "name": "Panaji / Santa Monica",
+      "sideId": "panaji",
+      "lon": 73.832363,
+      "lat": 15.501261,
+      "composite": 1,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 143,
+      "layersPresent": [
+        "bod_cod",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 1,
+          "weight": 0.3
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 84
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 3
+        }
+      ],
+      "maxBod": 25.917,
+      "maxCod": 56.544,
+      "meanBod": 12.029,
+      "meanCod": 28.99,
+      "bodPixelCount": 56,
+      "eutrophication": null,
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 84,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 3,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": null,
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.848:15.496",
+      "rank": 3,
+      "name": "Ribandar",
+      "sideId": "ribandar",
+      "lon": 73.852107,
+      "lat": 15.502652,
+      "composite": 1,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 88,
+      "layersPresent": [
+        "eutrophication",
+        "nitrogen",
+        "coliform",
+        "bod_cod"
+      ],
+      "layerScores": [
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Hypereutrophic",
+          "pixelCount": 2
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 77
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 9
+        }
+      ],
+      "maxBod": 8.237,
+      "maxCod": 21.89,
+      "meanBod": 8.237,
+      "meanCod": 21.89,
+      "bodPixelCount": 0,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "hyper",
+        "classLabel": "Hypereutrophic",
+        "severity": 1,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "> 56 µg/L",
+        "display": "> 56 µg/L (TSI > 70)",
+        "range": {
+          "chlUgL": [
+            56,
+            null
+          ],
+          "tsi": [
+            70,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 2,
+        "meanSeverity": 1
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 77,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 9,
+        "meanSeverity": 1
+      },
+      "bodFilledFrom": "nearest-csv",
+      "eutrophicationValue": "> 56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.880:15.512",
+      "rank": 4,
+      "name": "Old Goa / Divar",
+      "sideId": "old_goa_divar",
+      "lon": 73.881879,
+      "lat": 15.512955,
+      "composite": 1,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 28,
+      "layersPresent": [
+        "eutrophication",
+        "nitrogen",
+        "coliform",
+        "bod_cod"
+      ],
+      "layerScores": [
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Hypereutrophic",
+          "pixelCount": 5
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 22
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 1
+        }
+      ],
+      "maxBod": 8.128,
+      "maxCod": 21.113,
+      "meanBod": 8.128,
+      "meanCod": 21.113,
+      "bodPixelCount": 0,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "hyper",
+        "classLabel": "Hypereutrophic",
+        "severity": 1,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "> 56 µg/L",
+        "display": "> 56 µg/L (TSI > 70)",
+        "range": {
+          "chlUgL": [
+            56,
+            null
+          ],
+          "tsi": [
+            70,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 5,
+        "meanSeverity": 0.76
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 22,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 1,
+        "meanSeverity": 1
+      },
+      "bodFilledFrom": "nearest-csv",
+      "eutrophicationValue": "> 56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.824:15.496",
+      "rank": 5,
+      "name": "Panaji / Santa Monica",
+      "sideId": "panaji",
+      "lon": 73.827603,
+      "lat": 15.50232,
+      "composite": 0.9808,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 168,
+      "layersPresent": [
+        "bod_cod",
+        "eutrophication",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.8236643210841804,
+          "weight": 0.3
+        },
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 0.7,
+          "weight": 0.25,
+          "classLabel": "Eutrophic",
+          "pixelCount": 3
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 120
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 10
+        }
+      ],
+      "maxBod": 21.203,
+      "maxCod": 47.005,
+      "meanBod": 12.545,
+      "meanCod": 30.206,
+      "bodPixelCount": 35,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "eutro",
+        "classLabel": "Eutrophic",
+        "severity": 0.7,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "7.3–56 µg/L",
+        "display": "7.3–56 µg/L (TSI 50–70)",
+        "range": {
+          "chlUgL": [
+            7.3,
+            56
+          ],
+          "tsi": [
+            50,
+            70
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 3,
+        "meanSeverity": 0.7
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 120,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 10,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": "7.3–56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.832:15.504",
+      "rank": 6,
+      "name": "Panaji / Santa Monica",
+      "sideId": "panaji",
+      "lon": 73.833462,
+      "lat": 15.504792,
+      "composite": 0.9438,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 57,
+      "layersPresent": [
+        "bod_cod",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.8085855765292825,
+          "weight": 0.3
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 26
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 10
+        }
+      ],
+      "maxBod": 20.798,
+      "maxCod": 46.195,
+      "meanBod": 11.574,
+      "meanCod": 27.837,
+      "bodPixelCount": 21,
+      "eutrophication": null,
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 26,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 10,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": null,
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.872:15.504",
+      "rank": 7,
+      "name": "Old Goa / Divar",
+      "sideId": "old_goa_divar",
+      "lon": 73.877065,
+      "lat": 15.509357,
+      "composite": 0.9428,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 129,
+      "layersPresent": [
+        "bod_cod",
+        "eutrophication",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.458140660486243,
+          "weight": 0.3
+        },
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Hypereutrophic",
+          "pixelCount": 3
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 112
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 11
+        }
+      ],
+      "maxBod": 11.453,
+      "maxCod": 27.167,
+      "meanBod": 10.424,
+      "meanCod": 25.363,
+      "bodPixelCount": 3,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "hyper",
+        "classLabel": "Hypereutrophic",
+        "severity": 1,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "> 56 µg/L",
+        "display": "> 56 µg/L (TSI > 70)",
+        "range": {
+          "chlUgL": [
+            56,
+            null
+          ],
+          "tsi": [
+            70,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 3,
+        "meanSeverity": 0.9
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 112,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 11,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": "> 56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.872:15.512",
+      "rank": 8,
+      "name": "Old Goa / Divar",
+      "sideId": "old_goa_divar",
+      "lon": 73.876536,
+      "lat": 15.517152,
+      "composite": 0.9003,
+      "shade": "extreme",
+      "shadeLabel": "Extreme",
+      "color": "#8B0000",
+      "thickness": 85,
+      "layersPresent": [
+        "eutrophication",
+        "nitrogen",
+        "bod_cod",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Hypereutrophic",
+          "pixelCount": 3
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 82
+        }
+      ],
+      "maxBod": 8.352,
+      "maxCod": 21.976,
+      "meanBod": 8.352,
+      "meanCod": 21.976,
+      "bodPixelCount": 0,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "hyper",
+        "classLabel": "Hypereutrophic",
+        "severity": 1,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "> 56 µg/L",
+        "display": "> 56 µg/L (TSI > 70)",
+        "range": {
+          "chlUgL": [
+            56,
+            null
+          ],
+          "tsi": [
+            70,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 3,
+        "meanSeverity": 0.8
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 82,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.4,
+        "unit": "CFU/100 ml",
+        "valueText": "260–500",
+        "display": "260–500 CFU/100 ml",
+        "range": {
+          "cfu": [
+            260,
+            500
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 2,
+        "sampledAt": {
+          "lon": 73.876536,
+          "lat": 15.517152
+        }
+      },
+      "bodFilledFrom": "nearest-csv",
+      "eutrophicationValue": "> 56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "260–500"
+    },
+    {
+      "id": "73.800:15.488",
+      "rank": 9,
+      "name": "Reis Magos / Betim",
+      "sideId": "reis_magos_betim",
+      "lon": 73.806666,
+      "lat": 15.4957,
+      "composite": 0.8934,
+      "shade": "severe",
+      "shadeLabel": "Severe",
+      "color": "#C62828",
+      "thickness": 276,
+      "layersPresent": [
+        "bod_cod",
+        "eutrophication",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.5121784131948324,
+          "weight": 0.3
+        },
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 0.7,
+          "weight": 0.25,
+          "classLabel": "Eutrophic",
+          "pixelCount": 5
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 193
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 1
+        }
+      ],
+      "maxBod": 12.726,
+      "maxCod": 30.605,
+      "meanBod": 9.87,
+      "meanCod": 26.147,
+      "bodPixelCount": 77,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "eutro",
+        "classLabel": "Eutrophic",
+        "severity": 0.7,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "7.3–56 µg/L",
+        "display": "7.3–56 µg/L (TSI 50–70)",
+        "range": {
+          "chlUgL": [
+            7.3,
+            56
+          ],
+          "tsi": [
+            50,
+            70
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 5,
+        "meanSeverity": 0.7
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 193,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 1,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": "7.3–56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.808:15.488",
+      "rank": 10,
+      "name": "Reis Magos / Betim",
+      "sideId": "reis_magos_betim",
+      "lon": 73.808623,
+      "lat": 15.495711,
+      "composite": 0.8899,
+      "shade": "severe",
+      "shadeLabel": "Severe",
+      "color": "#C62828",
+      "thickness": 290,
+      "layersPresent": [
+        "bod_cod",
+        "eutrophication",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.4983134144979336,
+          "weight": 0.3
+        },
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 0.7,
+          "weight": 0.25,
+          "classLabel": "Eutrophic",
+          "pixelCount": 13
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 247
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 1
+        }
+      ],
+      "maxBod": 12.45,
+      "maxCod": 29.571,
+      "meanBod": 10.717,
+      "meanCod": 27.304,
+      "bodPixelCount": 29,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "eutro",
+        "classLabel": "Eutrophic",
+        "severity": 0.7,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "7.3–56 µg/L",
+        "display": "7.3–56 µg/L (TSI 50–70)",
+        "range": {
+          "chlUgL": [
+            7.3,
+            56
+          ],
+          "tsi": [
+            50,
+            70
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 13,
+        "meanSeverity": 0.7
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 247,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 1,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": "7.3–56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.840:15.496",
+      "rank": 11,
+      "name": "Ribandar",
+      "sideId": "ribandar",
+      "lon": 73.844938,
+      "lat": 15.502954,
+      "composite": 0.8691,
+      "shade": "severe",
+      "shadeLabel": "Severe",
+      "color": "#C62828",
+      "thickness": 194,
+      "layersPresent": [
+        "bod_cod",
+        "eutrophication",
+        "nitrogen",
+        "coliform"
+      ],
+      "layerScores": [
+        {
+          "id": "bod_cod",
+          "label": "BOD–COD",
+          "score": 0.44572768904277893,
+          "weight": 0.3
+        },
+        {
+          "id": "eutrophication",
+          "label": "Eutrophication",
+          "score": 0.7,
+          "weight": 0.25,
+          "classLabel": "Eutrophic",
+          "pixelCount": 5
+        },
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 180
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 7
+        }
+      ],
+      "maxBod": 10.83,
+      "maxCod": 27.369,
+      "meanBod": 10.631,
+      "meanCod": 26.761,
+      "bodPixelCount": 2,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "eutro",
+        "classLabel": "Eutrophic",
+        "severity": 0.7,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "7.3–56 µg/L",
+        "display": "7.3–56 µg/L (TSI 50–70)",
+        "range": {
+          "chlUgL": [
+            7.3,
+            56
+          ],
+          "tsi": [
+            50,
+            70
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 5,
+        "meanSeverity": 0.7
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 180,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 7,
+        "meanSeverity": 1
+      },
+      "eutrophicationValue": "7.3–56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    },
+    {
+      "id": "73.880:15.504",
+      "rank": 12,
+      "name": "Old Goa / Divar",
+      "sideId": "old_goa_divar",
+      "lon": 73.880734,
+      "lat": 15.51181,
+      "composite": 0.8691,
+      "shade": "severe",
+      "shadeLabel": "Severe",
+      "color": "#C62828",
+      "thickness": 6,
+      "layersPresent": [
+        "nitrogen",
+        "coliform",
+        "bod_cod",
+        "eutrophication"
+      ],
+      "layerScores": [
+        {
+          "id": "nitrogen",
+          "label": "Nitrogen",
+          "score": 0.55,
+          "weight": 0.2,
+          "classLabel": "Moderate",
+          "pixelCount": 3
+        },
+        {
+          "id": "coliform",
+          "label": "Coliform",
+          "score": 1,
+          "weight": 0.25,
+          "classLabel": "Highly risk",
+          "pixelCount": 3
+        }
+      ],
+      "maxBod": 8.538,
+      "maxCod": 21.906,
+      "meanBod": 8.538,
+      "meanCod": 21.906,
+      "bodPixelCount": 0,
+      "eutrophication": {
+        "label": "Eutrophication",
+        "classId": "hyper",
+        "classLabel": "Hypereutrophic",
+        "severity": 1,
+        "unit": "µg/L Chl-a · TSI",
+        "valueText": "> 56 µg/L",
+        "display": "> 56 µg/L (TSI > 70)",
+        "range": {
+          "chlUgL": [
+            56,
+            null
+          ],
+          "tsi": [
+            70,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 8,
+        "sampledAt": {
+          "lon": 73.880734,
+          "lat": 15.51181
+        }
+      },
+      "nitrogen": {
+        "label": "Nitrogen",
+        "classId": "moderate",
+        "classLabel": "Moderate",
+        "severity": 0.55,
+        "unit": "risk class (not mg N/L)",
+        "valueText": "2 / 3",
+        "display": "Moderate risk (class 2 of 3)",
+        "range": null,
+        "classIndex": 2,
+        "classOf": 3,
+        "pixelCount": 3,
+        "meanSeverity": 0.55
+      },
+      "coliform": {
+        "label": "Coliform",
+        "classId": "highly_risk",
+        "classLabel": "Highly risk",
+        "severity": 1,
+        "unit": "CFU/100 ml",
+        "valueText": "> 2000",
+        "display": "> 2000 CFU/100 ml",
+        "range": {
+          "cfu": [
+            2000,
+            null
+          ]
+        },
+        "classIndex": null,
+        "classOf": null,
+        "pixelCount": 3,
+        "meanSeverity": 1
+      },
+      "bodFilledFrom": "nearest-csv",
+      "eutrophicationValue": "> 56 µg/L",
+      "nitrogenValue": "2 / 3",
+      "coliformValue": "> 2000"
+    }
+  ]
+}

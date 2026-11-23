@@ -9474,6 +9474,13 @@
   width: calc(var(--ctrl-size) * 0.36);
   height: calc(var(--ctrl-size) * 0.36);
 }
+#ui-root.gis-ui .gis-tools-stack .map-ctrl-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--ctrl-size) * 0.34);
+  line-height: 1;
+}
 #ui-root.gis-ui .gis-tools-stack .map-ctrl-label {
   font-size: clamp(9px, calc(var(--ctrl-size) * 0.2), 11.5px);
   line-height: 1;
@@ -11673,3 +11680,237 @@ body.hydro-intel-open #dt-panel { display: none !important; }
   color: rgba(225, 240, 250, 0.9);
 }
 .joining-streams-nav__wq[hidden] { display: none; }
+
+/* -----------------------------------------------------------
+   Pollution Hotspot panel — clean, readable ranking UI
+   ----------------------------------------------------------- */
+.poll-hotspot-panel {
+  position: absolute;
+  left: max(14px, env(safe-area-inset-left));
+  top: calc(max(14px, env(safe-area-inset-top)) + 86px);
+  z-index: 42;
+  width: min(320px, calc(100vw - 88px));
+  max-height: min(72vh, 620px);
+  overflow: auto;
+  padding: 16px 14px 12px;
+  border-radius: 16px;
+  background: rgba(14, 22, 30, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  color: #eef4f8;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+}
+.poll-hotspot-panel[hidden] { display: none !important; }
+.php-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.php-title {
+  margin: 0;
+  font: 750 17px/1.2 var(--font-ui, system-ui);
+  color: #fff;
+}
+.php-sub {
+  margin: 4px 0 0;
+  font: 500 12px/1.35 var(--font-ui, system-ui);
+  color: rgba(200, 214, 224, 0.78);
+}
+.php-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.php-close:hover { background: rgba(255, 255, 255, 0.16); }
+.php-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+}
+.php-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 10px/1 var(--font-ui, system-ui);
+  color: rgba(210, 222, 232, 0.8);
+}
+.php-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--php-red, #e53935);
+}
+.php-detail {
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 4px solid var(--php-red, #e53935);
+}
+.php-detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.php-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--php-red, #e53935);
+  color: #fff;
+  font: 750 10px/1.2 var(--font-ui, system-ui);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.php-score {
+  font: 750 14px/1 var(--font-ui, system-ui);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.php-place {
+  margin: 0;
+  font: 750 16px/1.25 var(--font-ui, system-ui);
+  color: #fff;
+}
+.php-meta {
+  margin: 4px 0 10px;
+  font: 500 11px/1.3 var(--font-ui, system-ui);
+  color: rgba(190, 205, 218, 0.75);
+}
+.php-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.php-fact {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+.php-fact dt {
+  margin: 0;
+  font: 600 11px/1.3 var(--font-ui, system-ui);
+  color: rgba(170, 190, 205, 0.85);
+}
+.php-fact dd {
+  margin: 0;
+  font: 650 12px/1.35 var(--font-ui, system-ui);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.php-list-label {
+  margin: 0 0 8px;
+  font: 650 11px/1.2 var(--font-ui, system-ui);
+  color: rgba(190, 205, 218, 0.7);
+  letter-spacing: 0.02em;
+}
+.php-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.php-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--php-red, #e53935);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.php-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.php-item.is-active {
+  background: rgba(229, 57, 53, 0.14);
+  border-color: rgba(229, 57, 53, 0.4);
+}
+.php-rank {
+  flex: 0 0 auto;
+  min-width: 26px;
+  font: 750 13px/1 var(--font-ui, system-ui);
+  color: var(--php-red, #ff8a80);
+}
+.php-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.php-body strong {
+  font-size: 13px;
+  color: #fff;
+  font-weight: 650;
+}
+.php-brief {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(190, 205, 218, 0.8);
+}
+.php-brief em {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+.php-level {
+  color: var(--php-red, #ff8a80);
+  font-weight: 700;
+}
+.php-foot {
+  margin: 12px 0 0;
+  font: 500 11px/1.35 var(--font-ui, system-ui);
+  color: rgba(170, 190, 205, 0.65);
+}
+.php-loading,
+.php-error,
+.php-empty {
+  margin: 0;
+  padding: 12px 4px;
+  text-align: center;
+  color: rgba(190, 205, 218, 0.8);
+  font: 500 13px/1.4 var(--font-ui, system-ui);
+}
+
+#ui-root.gis-ui .weather-widget.weather-wq--hotspot .weather-wq-row b,
+body:has(.weather-wq--hotspot) .weather-wq-row b {
+  color: #ff8a80;
+}
+#ui-root.gis-ui .weather-widget.weather-wq--hotspot .weather-wq {
+  outline: 1px solid rgba(229, 57, 53, 0.55);
+  border-radius: 10px;
+}
+
+.weather-wq-note {
+  margin: 4px 0 0;
+  max-width: 160px;
+  font: 600 9px/1.25 var(--font-ui, system-ui);
+  color: rgba(200, 214, 224, 0.85);
+}
+.weather-wq-note[hidden] { display: none !important; }
+.weather-wq-note.is-live { color: #86efac; }
+.weather-wq-note.is-survey { color: #fbbf24; }
+.weather-wq-note.is-unavail { color: #fca5a5; }
